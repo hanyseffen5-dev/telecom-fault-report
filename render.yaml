@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: telecom-fault-report
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: APPS_SCRIPT_URL
+        sync: false

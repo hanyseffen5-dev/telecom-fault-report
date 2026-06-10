@@ -1,0 +1,7 @@
+.DS_Store
+Thumbs.db
+*.log
+.clasp.json
+node_modules/
+credentials.json
+.env

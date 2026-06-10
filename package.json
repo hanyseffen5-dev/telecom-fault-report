@@ -1,0 +1,13 @@
+{
+  "name": "telecom-fault-report",
+  "private": true,
+  "scripts": {
+    "dev": "node dev/server.js",
+    "start": "node dev/server.js",
+    "build:static": "node scripts/build-static.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "googleapis": "^144.0.0"
+  }
+}
