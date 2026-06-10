@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>متابعة بلاغات الأعطال الأرضية</title>
+  <style>
+    :root {
+      --primary: #1565c0;
+      --primary-dark: #0d47a1;
+      --primary-light: #e3f2fd;
+      --success: #2e7d32;
+      --success-bg: #e8f5e9;
+      --warning: #f57c00;
+      --warning-bg: #fff3e0;
+      --danger: #c62828;
+      --danger-bg: #ffebee;
+      --bg: #f0f4f8;
+      --card: #ffffff;
+      --text: #1a2332;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 14px;
+      --shadow: 0 4px 20px rgba(21, 101, 192, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: linear-gradient(160deg, #e3f2fd 0%, var(--bg) 50%, #f8fafc 100%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--primary), #42a5f5);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      font-size: 30px;
+      box-shadow: 0 8px 24px rgba(21, 101, 192, 0.25);
+    }
+
+    .header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .header p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .tabs {
+      display: flex;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 4px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 12px 8px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      background: #fafbfc;
+      direction: ltr;
+      text-align: right;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+    }
+
+    select { direction: rtl; text-align: right; }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #1976d2);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(21, 101, 192, 0.3);
+    }
+
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      margin-top: 10px;
+    }
+
+    .alert {
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .alert.show { display: block; }
+    .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #a5d6a7; }
+    .alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid #ef9a9a; }
+    .alert-info { background: var(--primary-light); color: var(--primary-dark); border: 1px solid #90caf9; }
+
+    .status-box {
+      display: none;
+      border-radius: 12px;
+      padding: 18px;
+      margin-top: 16px;
+      border: 1.5px solid var(--border);
+      background: #fafbfc;
+    }
+
+    .status-box.show { display: block; }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .status-row:last-child { border-bottom: none; }
+
+    .status-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .status-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: left;
+      direction: ltr;
+    }
+
+    .status-value.rtl {
+      direction: rtl;
+      text-align: right;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .badge-new { background: #e3f2fd; color: #1565c0; }
+    .badge-progress { background: var(--warning-bg); color: var(--warning); }
+    .badge-resolved { background: var(--success-bg); color: var(--success); }
+
+    .notifications-section {
+      margin-top: 12px;
+    }
+
+    .notifications-section .notif-section-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+    }
+
+    .notifications-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .notif-item {
+      background: var(--primary-light);
+      border-radius: 10px;
+      padding: 12px 14px;
+      border-right: 4px solid var(--primary);
+    }
+
+    .notif-item .notif-date {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      direction: ltr;
+      text-align: right;
+    }
+
+    .notif-item .notif-text {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      line-height: 1.7;
+    }
+
+    .notif-empty {
+      background: #f1f5f9;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-style: italic;
+      text-align: center;
+      border: 1px dashed var(--border);
+    }
+
+    .stars {
+      display: flex;
+      gap: 8px;
+      flex-direction: row-reverse;
+      justify-content: center;
+      margin: 8px 0 16px;
+    }
+
+    .star {
+      font-size: 2rem;
+      cursor: pointer;
+      color: #cbd5e1;
+      transition: color 0.15s, transform 0.15s;
+      user-select: none;
+    }
+
+    .star:hover, .star.active { color: #f59e0b; transform: scale(1.1); }
+
+    .rating-section {
+      display: none;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1.5px dashed var(--border);
+    }
+
+    .rating-section.show { display: block; }
+
+    .rating-pending {
+      display: none;
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 10px;
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      font-size: 0.88rem;
+      color: #e65100;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .rating-pending.show { display: block; }
+
+    .reopen-trigger-wrap {
+      margin-bottom: 16px;
+    }
+
+    .reopen-trigger-wrap .btn {
+      margin-top: 0;
+    }
+
+    .reopen-section {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1.5px dashed var(--border);
+    }
+
+    .reopen-modal-box {
+      text-align: right;
+      max-width: 440px;
+    }
+
+    .reopen-modal-box .modal-icon {
+      background: var(--warning-bg);
+    }
+
+    .reopen-modal-box h3 {
+      color: var(--warning);
+    }
+
+    .reopen-modal-box .modal-detail {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .reopen-modal-box .modal-actions {
+      margin-top: 8px;
+    }
+
+    .btn-warning {
+      background: transparent;
+      color: var(--warning);
+      border: 1.5px solid var(--warning);
+      margin-top: 10px;
+    }
+
+    .btn-warning:hover {
+      background: var(--warning-bg);
+    }
+
+    .reopen-done {
+      display: none;
+      text-align: center;
+      color: var(--warning);
+      font-weight: 600;
+      padding: 16px;
+      background: var(--warning-bg);
+      border-radius: 10px;
+      margin-top: 16px;
+      line-height: 1.7;
+    }
+
+    .reopen-done.show { display: block; }
+
+    .badge-reopened { background: #fce4ec; color: #c2185b; }
+
+    .new-complaint-section {
+      display: none;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1.5px dashed var(--border);
+    }
+
+    .new-complaint-section.show { display: block; }
+
+    .new-complaint-hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+      animation: modalFadeIn 0.2s ease;
+    }
+
+    .modal-overlay.hidden { display: none; }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-box {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 28px 24px 22px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+      text-align: center;
+      animation: modalSlideIn 0.25s ease;
+    }
+
+    .modal-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .modal-box h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+    }
+
+    .modal-box .modal-message {
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+
+    .modal-detail {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.65;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      text-align: right;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-direction: row-reverse;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+      margin: 0;
+      min-height: 46px;
+    }
+
+    .modal-actions .btn-outline {
+      background: #f1f5f9;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+
+    .rating-label {
+      text-align: center;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .auto-refresh {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+
+    .field-hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.55;
+    }
+
+    .access-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+    }
+
+    .access-tab {
+      flex: 1;
+      padding: 10px 8px;
+      border: none;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .access-tab.active {
+      background: var(--card);
+      color: var(--primary-dark);
+      box-shadow: 0 2px 8px rgba(13, 71, 161, 0.12);
+    }
+
+    .access-panel.hidden { display: none; }
+
+    .change-mobile-intro {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: var(--primary-light);
+      border-radius: 10px;
+      border: 1px solid #bbdefb;
+    }
+
+    .dot-pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .loader {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+    }
+
+    .loader.show { display: block; }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        max-width: 100%;
+        padding: 12px 12px calc(28px + env(safe-area-inset-bottom));
+      }
+
+      .header { margin-bottom: 16px; }
+      .header-icon { width: 52px; height: 52px; font-size: 24px; border-radius: 14px; }
+      .header h1 { font-size: 1.15rem; }
+      .header p { font-size: 0.82rem; }
+
+      .tabs { padding: 3px; gap: 3px; }
+      .tab-btn { padding: 11px 6px; font-size: 0.82rem; }
+
+      .card { padding: 16px 14px; border-radius: 12px; }
+
+      input, select, textarea {
+        font-size: 16px;
+        padding: 14px 12px;
+      }
+
+      .btn {
+        min-height: 48px;
+        padding: 14px 12px;
+        font-size: 0.95rem;
+      }
+
+      .status-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 10px 0;
+      }
+
+      .status-value {
+        text-align: right;
+        width: 100%;
+      }
+
+      .status-value.rtl { text-align: right; }
+
+      .star { font-size: 1.75rem; }
+
+      .notif-item { padding: 10px 12px; }
+
+      .reopen-section { margin-top: 12px; padding-top: 12px; }
+
+      .rating-pending {
+        font-size: 0.82rem;
+        padding: 12px;
+      }
+    }
+
+    .device-warning {
+      background: var(--danger-bg);
+      border: 1.5px solid #ef9a9a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      color: var(--danger);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+  </style>
+  <script src="config.js"></script>
+  <script src="api-bridge.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-icon">📞</div>
+      <h1>متابعة بلاغات الأعطال الأرضية</h1>
+      <p>تابع بلاغك وإشعارات السنترال على خطك الأرضي</p>
+    </header>
+
+    <section id="panel-follow">
+      <div class="card">
+        <div class="card-title">🔍 متابعة بلاغك</div>
+        <div id="follow-alert" class="alert"></div>
+
+        <div class="access-tabs">
+          <button type="button" class="access-tab active" id="tab-follow" data-panel="follow">🔍 متابعة البلاغ</button>
+          <button type="button" class="access-tab" id="tab-change-mobile" data-panel="change-mobile">📱 تغيير رقم الموبايل</button>
+        </div>
+
+        <div id="panel-follow-access" class="access-panel">
+        <form id="follow-form">
+          <div class="form-group">
+            <label for="follow-landline">رقم التليفون الأرضي</label>
+            <input type="tel" id="follow-landline" placeholder="09624******" required />
+          </div>
+
+          <div class="form-group">
+            <label for="follow-mobile">رقم الموبايل</label>
+            <input type="tel" id="follow-mobile" placeholder="01*********" required />
+            <p class="field-hint">يُستخدم للتحقق من هويتك وربط بصمة جهازك. التقييم يعمل فقط من نفس الجهاز الذي سجّل الموبايل (حتى من متصفح آخر على نفس الجهاز).</p>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="follow-submit">عرض التحديثات</button>
+          <button type="button" class="btn btn-outline" id="refresh-btn" style="display:none">تحديث الآن</button>
+        </form>
+        </div>
+
+        <div id="panel-change-mobile-access" class="access-panel hidden">
+          <p class="change-mobile-intro">إذا غيّرت رقم موبايلك، أدخل الرقم القديم المسجّل والرقم الجديد. بعد التحديث استخدم الرقم الجديد في المتابعة.</p>
+          <div id="change-mobile-alert" class="alert"></div>
+          <form id="change-mobile-form">
+            <div class="form-group">
+              <label for="change-landline">رقم التليفون الأرضي</label>
+              <input type="tel" id="change-landline" placeholder="09624******" required />
+            </div>
+            <div class="form-group">
+              <label for="change-old-mobile">رقم الموبايل القديم</label>
+              <input type="tel" id="change-old-mobile" placeholder="01*********" required />
+            </div>
+            <div class="form-group">
+              <label for="change-new-mobile">رقم الموبايل الجديد</label>
+              <input type="tel" id="change-new-mobile" placeholder="01*********" required />
+            </div>
+            <button type="submit" class="btn btn-primary" id="change-mobile-submit">تحديث رقم الموبايل</button>
+          </form>
+        </div>
+
+        <div id="loader" class="loader">
+          <div class="spinner"></div>
+          جاري التحميل...
+        </div>
+
+        <div id="status-box" class="status-box">
+          <div class="status-row">
+            <span class="status-label">رقم الموبايل المسجّل</span>
+            <span class="status-value ltr" id="s-mobile">—</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">رقم الخط</span>
+            <span class="status-value" id="s-landline">—</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">سبب الإبلاغ</span>
+            <span class="status-value rtl" id="s-reason">—</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">الحالة</span>
+            <span id="s-status">—</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">تاريخ الإبلاغ</span>
+            <span class="status-value" id="s-date">—</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">آخر تحديث</span>
+            <span class="status-value" id="s-update">—</span>
+          </div>
+
+          <div class="notifications-section" id="notif-section">
+            <div class="notif-section-title">📢 إشعارات السنترال</div>
+            <div id="notifications-list" class="notifications-list">
+              <div class="notif-empty">لا يوجد إشعار من السنترال حتى الآن</div>
+            </div>
+          </div>
+
+          <div class="auto-refresh" id="auto-refresh-info" style="display:none">
+            <span class="dot-pulse"></span>
+            تحديث تلقائي كل 45 ثانية
+          </div>
+
+          <div id="rating-pending" class="rating-pending">
+            ⏳ التقييم سيظهر هنا بعد أن يغيّر السنترال حالة العطل إلى <strong>تم الحل</strong>
+          </div>
+
+          <!-- التقييم -->
+          <div id="rating-section" class="rating-section">
+            <div class="card-title" style="justify-content:center">⭐ تقييم الخدمة</div>
+            <div id="device-warning" class="device-warning" style="display:none"></div>
+            <div id="rating-alert" class="alert"></div>
+
+            <div id="rating-form-area">
+              <div id="reopen-trigger-wrap" class="reopen-trigger-wrap" style="display:none">
+                <button type="button" class="btn btn-warning" id="reopen-open-btn">⚠️ الخط مازال به مشكلة؟ — إعادة فتح البلاغ</button>
+              </div>
+
+              <div class="reopen-section" style="margin-top:16px;padding-top:16px;border-top:1.5px dashed var(--border)">
+                <div class="rating-label" style="color:var(--primary-dark)">✅ إذا تم الإصلاح — قيّم الخدمة</div>
+              </div>
+
+              <div class="rating-label">تقييم إزالة العطل</div>
+              <div class="stars" id="stars-fault" data-rating="0">
+                <span class="star" data-val="1">★</span>
+                <span class="star" data-val="2">★</span>
+                <span class="star" data-val="3">★</span>
+                <span class="star" data-val="4">★</span>
+                <span class="star" data-val="5">★</span>
+              </div>
+
+              <div class="rating-label">تقييم الفني</div>
+              <div class="stars" id="stars-tech" data-rating="0">
+                <span class="star" data-val="1">★</span>
+                <span class="star" data-val="2">★</span>
+                <span class="star" data-val="3">★</span>
+                <span class="star" data-val="4">★</span>
+                <span class="star" data-val="5">★</span>
+              </div>
+
+              <div class="form-group">
+                <label for="rating-comment">تعليق (اختياري)</label>
+                <textarea id="rating-comment" placeholder="اكتب تعليقك هنا..."></textarea>
+              </div>
+
+              <button type="button" class="btn btn-primary" id="rating-submit">إرسال التقييم</button>
+            </div>
+
+            <div id="rating-done" style="display:none; text-align:center; color:var(--success); font-weight:600; padding:16px;">
+              ✅ شكراً! تم حفظ تقييمك بنجاح
+            </div>
+
+            <div id="reopen-done" class="reopen-done">
+              🔄 تم إعادة فتح البلاغ وإبلاغ السنترال. سيتم متابعة المشكلة مرة أخرى.
+            </div>
+          </div>
+
+          <div id="new-complaint-section" class="new-complaint-section">
+            <div class="card-title" style="justify-content:center">📋 شكوى جديدة على نفس الخط</div>
+            <div id="new-complaint-alert" class="alert"></div>
+            <p class="new-complaint-hint">بعد تقييم البلاغ السابق، يمكنك فتح شكوى جديدة إذا ظهر عطل مرة أخرى على نفس الخط</p>
+            <div class="form-group">
+              <label for="new-complaint-reason">سبب الشكوى الجديدة</label>
+              <select id="new-complaint-reason">
+                <option value="">— اختر السبب —</option>
+                <option value="انقطاع الخدمة">انقطاع الخدمة</option>
+                <option value="ضعف كفاءة الخط">ضعف كفاءة الخط</option>
+                <option value="طلب صيانة للخط">طلب صيانة للخط</option>
+              </select>
+            </div>
+            <button type="button" class="btn btn-primary" id="new-complaint-submit">فتح شكوى جديدة</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">متابعة بلاغات الأعطال الأرضية · الإصدار 3.2</footer>
+  </div>
+
+  <div id="confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-icon" id="confirm-modal-icon">📋</div>
+      <h3 id="confirm-modal-title">تأكيد</h3>
+      <p class="modal-message" id="confirm-modal-message"></p>
+      <p class="modal-detail" id="confirm-modal-detail"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary btn-sm" id="confirm-modal-ok">تأكيد</button>
+        <button type="button" class="btn btn-outline btn-sm" id="confirm-modal-cancel">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="reopen-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="reopen-modal-title">
+    <div class="modal-box reopen-modal-box">
+      <div class="modal-icon">⚠️</div>
+      <h3 id="reopen-modal-title">الخط مازال به مشكلة؟</h3>
+      <p class="modal-detail">إذا لم تُحل المشكلة بعد، أعد فتح البلاغ ليتابعه السنترال مرة أخرى</p>
+      <div id="reopen-modal-alert" class="alert"></div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label for="reopen-note">وصف المشكلة (اختياري)</label>
+        <textarea id="reopen-note" placeholder="مثال: الخط مازال منقطع أو الصوت ضعيف..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-warning btn-sm" id="reopen-submit">المشكلة مازالت موجودة — إعادة فتح البلاغ</button>
+        <button type="button" class="btn btn-outline btn-sm" id="reopen-cancel-btn">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let refreshTimer = null;
+    let currentFollow = { landline: '', mobile: '' };
+    let ratings = { fault: 0, tech: 0 };
+    let confirmModalResolver = null;
+    const DEVICE_FP_KEY = 'tfr_device_fp_v1';
+
+    function hashString(str) {
+      var h = 2166136261;
+      for (var i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0).toString(16).padStart(8, '0');
+    }
+
+    function getPlatform() {
+      if (navigator.userAgentData && navigator.userAgentData.platform) {
+        return navigator.userAgentData.platform;
+      }
+      return navigator.platform || '';
+    }
+
+    function getWebGlRenderer() {
+      try {
+        var canvas = document.createElement('canvas');
+        var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) return '';
+        var ext = gl.getExtension('WEBGL_debug_renderer_info');
+        if (!ext) return '';
+        return String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '');
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function buildDeviceFingerprint() {
+      var parts = [
+        screen.width + 'x' + screen.height,
+        screen.availWidth + 'x' + screen.availHeight,
+        String(screen.colorDepth || 0),
+        String(window.devicePixelRatio || 1),
+        String(new Date().getTimezoneOffset()),
+        (navigator.language || '').split('-')[0],
+        String(navigator.hardwareConcurrency || 0),
+        String(navigator.maxTouchPoints || 0),
+        String(navigator.deviceMemory || 0),
+        getPlatform(),
+        getWebGlRenderer()
+      ];
+      return hashString(parts.join('|'));
+    }
+
+    function getDeviceFingerprint() {
+      var cached = '';
+      try {
+        cached = localStorage.getItem(DEVICE_FP_KEY) || '';
+      } catch (e) {}
+      if (cached) return cached;
+
+      var fp = buildDeviceFingerprint();
+      try {
+        localStorage.setItem(DEVICE_FP_KEY, fp);
+      } catch (e) {}
+      return fp;
+    }
+
+    const deviceFingerprint = getDeviceFingerprint();
+
+    function updateBodyScrollLock() {
+      var locked = !document.getElementById('confirm-modal').classList.contains('hidden') ||
+        !document.getElementById('reopen-modal').classList.contains('hidden');
+      document.body.style.overflow = locked ? 'hidden' : '';
+    }
+
+    function showConfirmModal(options) {
+      return new Promise(function (resolve) {
+        var modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-modal-icon').textContent = options.icon || '📋';
+        document.getElementById('confirm-modal-title').textContent = options.title || 'تأكيد الإجراء';
+        document.getElementById('confirm-modal-message').textContent = options.message || '';
+        var detailEl = document.getElementById('confirm-modal-detail');
+        if (options.detail) {
+          detailEl.textContent = options.detail;
+          detailEl.style.display = 'block';
+        } else {
+          detailEl.style.display = 'none';
+        }
+        document.getElementById('confirm-modal-ok').textContent = options.confirmText || 'تأكيد';
+        document.getElementById('confirm-modal-cancel').textContent = options.cancelText || 'إلغاء';
+        confirmModalResolver = resolve;
+        modal.classList.remove('hidden');
+        updateBodyScrollLock();
+      });
+    }
+
+    function closeConfirmModal(result) {
+      document.getElementById('confirm-modal').classList.add('hidden');
+      updateBodyScrollLock();
+      if (confirmModalResolver) {
+        confirmModalResolver(result);
+        confirmModalResolver = null;
+      }
+    }
+
+    function openReopenModal() {
+      hideAlert('reopen-modal-alert');
+      document.getElementById('reopen-modal').classList.remove('hidden');
+      updateBodyScrollLock();
+    }
+
+    function closeReopenModal() {
+      document.getElementById('reopen-modal').classList.add('hidden');
+      updateBodyScrollLock();
+    }
+
+    document.getElementById('confirm-modal-ok').addEventListener('click', function () {
+      closeConfirmModal(true);
+    });
+
+    document.getElementById('confirm-modal-cancel').addEventListener('click', function () {
+      closeConfirmModal(false);
+    });
+
+    document.getElementById('confirm-modal').addEventListener('click', function (e) {
+      if (e.target === document.getElementById('confirm-modal')) {
+        closeConfirmModal(false);
+      }
+    });
+
+    function showAlert(elId, message, type) {
+      var el = document.getElementById(elId);
+      el.textContent = message;
+      el.className = 'alert show alert-' + type;
+    }
+
+    function hideAlert(elId) {
+      document.getElementById(elId).className = 'alert';
+    }
+
+    function setLoading(loading) {
+      document.getElementById('loader').classList.toggle('show', loading);
+      document.getElementById('follow-submit').disabled = loading;
+    }
+
+    function isResolvedStatus(status) {
+      var s = String(status || '').trim();
+      return s === 'تم الحل' || s === 'تم الاصلاح' || s === 'تم الإصلاح';
+    }
+
+    function statusBadge(status) {
+      var cls = 'badge-new';
+      if (status === 'قيد المعالجة') cls = 'badge-progress';
+      if (status === 'إعادة فتح') cls = 'badge-reopened';
+      if (isResolvedStatus(status)) cls = 'badge-resolved';
+      return '<span class="badge ' + cls + '">' + status + '</span>';
+    }
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function getNotifications(data) {
+      if (data.notifications && data.notifications.length) {
+        return data.notifications;
+      }
+      if (data.notification) {
+        return [{ date: data.lastUpdate || '', text: data.notification }];
+      }
+      return [];
+    }
+
+    function renderNotifications(data) {
+      var listEl = document.getElementById('notifications-list');
+      var notifications = getNotifications(data);
+
+      if (!notifications.length) {
+        listEl.innerHTML = '<div class="notif-empty">لا يوجد إشعار من السنترال حتى الآن</div>';
+        return;
+      }
+
+      listEl.innerHTML = notifications.map(function (item) {
+        var dateHtml = item.date
+          ? '<div class="notif-date">' + escapeHtml(item.date) + '</div>'
+          : '';
+        return '<div class="notif-item">' +
+          dateHtml +
+          '<div class="notif-text">' + escapeHtml(item.text) + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    function renderStatus(data) {
+      document.getElementById('s-landline').textContent = data.landline;
+      document.getElementById('s-mobile').textContent = data.mobile || '—';
+      document.getElementById('s-reason').textContent = data.reason;
+      document.getElementById('s-status').innerHTML = statusBadge(data.status);
+      document.getElementById('s-date').textContent = data.date || '—';
+      document.getElementById('s-update').textContent = data.lastUpdate || '—';
+
+      renderNotifications(data);
+
+      document.getElementById('status-box').classList.add('show');
+      document.getElementById('refresh-btn').style.display = 'block';
+      document.getElementById('auto-refresh-info').style.display = 'flex';
+
+      var ratingSection = document.getElementById('rating-section');
+      var ratingPending = document.getElementById('rating-pending');
+      var resolved = data.isResolved || isResolvedStatus(data.status);
+
+      document.getElementById('reopen-done').classList.remove('show');
+      document.getElementById('reopen-trigger-wrap').style.display = 'none';
+      closeReopenModal();
+
+      var newComplaintSection = document.getElementById('new-complaint-section');
+      if (data.canOpenNewComplaint) {
+        newComplaintSection.classList.add('show');
+      } else {
+        newComplaintSection.classList.remove('show');
+      }
+
+      var deviceWarningEl = document.getElementById('device-warning');
+      var deviceBlocked = data.hasDeviceFp && data.deviceTrusted === false;
+
+      if (resolved) {
+        ratingPending.classList.remove('show');
+        ratingSection.classList.add('show');
+        if (data.alreadyRated) {
+          document.getElementById('rating-form-area').style.display = 'none';
+          document.getElementById('rating-done').style.display = 'block';
+          deviceWarningEl.style.display = 'none';
+        } else if ((data.canRate || data.canReopen) && !deviceBlocked) {
+          document.getElementById('rating-form-area').style.display = 'block';
+          document.getElementById('rating-done').style.display = 'none';
+          deviceWarningEl.style.display = 'none';
+          if (data.canReopen) {
+            document.getElementById('reopen-trigger-wrap').style.display = 'block';
+          }
+        } else if (deviceBlocked) {
+          document.getElementById('rating-form-area').style.display = 'none';
+          document.getElementById('rating-done').style.display = 'none';
+          deviceWarningEl.textContent = '🔒 التقييم وإعادة الفتح متاحان فقط من الجهاز الذي سجّل رقم الموبايل أول مرة. استخدم نفس الجهاز (حتى لو من متصفح آخر) أو غيّر رقم الموبايل من القسم المخصص.';
+          deviceWarningEl.style.display = 'block';
+        }
+      } else {
+        deviceWarningEl.style.display = 'none';
+        ratingSection.classList.remove('show');
+        if (data.status === 'إعادة فتح') {
+          ratingPending.textContent = '🔄 تم إعادة فتح البلاغ. السنترال يتابع المشكلة مرة أخرى.';
+          ratingPending.classList.add('show');
+        } else if (!data.alreadyRated) {
+          ratingPending.innerHTML = '⏳ التقييم سيظهر هنا بعد أن يغيّر السنترال حالة العطل إلى <strong>تم الحل</strong>';
+          ratingPending.classList.add('show');
+        } else {
+          ratingPending.classList.remove('show');
+        }
+      }
+    }
+
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      refreshTimer = setInterval(function () {
+        if (currentFollow.landline && currentFollow.mobile) {
+          fetchStatus(currentFollow.landline, currentFollow.mobile, true);
+        }
+      }, 45000);
+    }
+
+    function stopAutoRefresh() {
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+      }
+    }
+
+    function fetchStatus(landline, mobile, silent) {
+      if (!silent) {
+        setLoading(true);
+        hideAlert('follow-alert');
+      }
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          setLoading(false);
+          renderStatus(data);
+          if (data.mobile) {
+            currentFollow.mobile = data.mobile;
+            document.getElementById('follow-mobile').value = data.mobile;
+          }
+          if (!silent) {
+            if (data.mobileJustRegistered) {
+              showAlert('follow-alert', 'تم تسجيل رقم الموبايل وبصمة الجهاز بنجاح. استخدم نفس الجهاز للتقييم لاحقاً.', 'success');
+            } else if (data.deviceFpBound) {
+              showAlert('follow-alert', 'تم ربط هذا الجهاز بالبلاغ للمتابعة والتقييم.', 'success');
+            } else {
+              showAlert('follow-alert', 'تم تحميل بيانات البلاغ', 'success');
+            }
+          }
+        })
+        .withFailureHandler(function (err) {
+          setLoading(false);
+          if (!silent) showAlert('follow-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .getStatus({
+          landline: landline,
+          mobile: mobile,
+          deviceFp: deviceFingerprint
+        });
+    }
+
+    // متابعة
+    document.getElementById('follow-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var landline = document.getElementById('follow-landline').value;
+      var mobile = document.getElementById('follow-mobile').value;
+      currentFollow = { landline: landline, mobile: mobile };
+      fetchStatus(landline, mobile, false);
+      startAutoRefresh();
+    });
+
+    document.querySelectorAll('.access-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var panel = tab.dataset.panel;
+        document.querySelectorAll('.access-tab').forEach(function (t) {
+          t.classList.toggle('active', t === tab);
+        });
+        document.getElementById('panel-follow-access').classList.toggle('hidden', panel !== 'follow');
+        document.getElementById('panel-change-mobile-access').classList.toggle('hidden', panel !== 'change-mobile');
+        hideAlert('follow-alert');
+        hideAlert('change-mobile-alert');
+      });
+    });
+
+    document.getElementById('change-mobile-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      hideAlert('change-mobile-alert');
+
+      var landline = document.getElementById('change-landline').value;
+      var oldMobile = document.getElementById('change-old-mobile').value;
+      var newMobile = document.getElementById('change-new-mobile').value;
+      var btn = document.getElementById('change-mobile-submit');
+      btn.disabled = true;
+      btn.textContent = 'جاري التحديث...';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          btn.textContent = 'تحديث رقم الموبايل';
+          showAlert('change-mobile-alert', result.message, 'success');
+          document.getElementById('follow-landline').value = landline;
+          document.getElementById('follow-mobile').value = result.mobile || newMobile;
+          document.getElementById('change-new-mobile').value = '';
+          document.getElementById('tab-follow').click();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'تحديث رقم الموبايل';
+          showAlert('change-mobile-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .changeCustomerMobile({
+          landline: landline,
+          oldMobile: oldMobile,
+          newMobile: newMobile,
+          deviceFp: deviceFingerprint
+        });
+    });
+
+    document.getElementById('refresh-btn').addEventListener('click', function () {
+      if (currentFollow.landline) {
+        fetchStatus(currentFollow.landline, currentFollow.mobile, false);
+      }
+    });
+
+    // النجوم
+    function setupStars(containerId, key) {
+      var container = document.getElementById(containerId);
+      container.querySelectorAll('.star').forEach(function (star) {
+        star.addEventListener('click', function () {
+          var val = parseInt(star.dataset.val);
+          ratings[key] = val;
+          container.dataset.rating = val;
+          container.querySelectorAll('.star').forEach(function (s) {
+            s.classList.toggle('active', parseInt(s.dataset.val) <= val);
+          });
+        });
+      });
+    }
+
+    setupStars('stars-fault', 'fault');
+    setupStars('stars-tech', 'tech');
+
+    // التقييم
+    document.getElementById('rating-submit').addEventListener('click', function () {
+      hideAlert('rating-alert');
+
+      if (!ratings.fault) {
+        showAlert('rating-alert', 'يرجى تقييم إزالة العطل', 'error');
+        return;
+      }
+      if (!ratings.tech) {
+        showAlert('rating-alert', 'يرجى تقييم الفني', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('rating-submit');
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          document.getElementById('rating-form-area').style.display = 'none';
+          document.getElementById('rating-done').style.display = 'block';
+          showAlert('follow-alert', result.message, 'success');
+          fetchStatus(currentFollow.landline, currentFollow.mobile, true);
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          showAlert('rating-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .submitRating({
+          landline: currentFollow.landline,
+          mobile: currentFollow.mobile,
+          deviceFp: deviceFingerprint,
+          ratingFault: ratings.fault,
+          ratingTech: ratings.tech,
+          comment: document.getElementById('rating-comment').value
+        });
+    });
+
+    document.getElementById('reopen-open-btn').addEventListener('click', openReopenModal);
+    document.getElementById('reopen-cancel-btn').addEventListener('click', closeReopenModal);
+    document.getElementById('reopen-modal').addEventListener('click', function (e) {
+      if (e.target === document.getElementById('reopen-modal')) closeReopenModal();
+    });
+
+    // إعادة فتح البلاغ
+    document.getElementById('reopen-submit').addEventListener('click', function () {
+      hideAlert('reopen-modal-alert');
+
+      var btn = document.getElementById('reopen-submit');
+      btn.disabled = true;
+      btn.textContent = 'جاري الإرسال...';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          btn.textContent = 'المشكلة مازالت موجودة — إعادة فتح البلاغ';
+          closeReopenModal();
+          document.getElementById('rating-form-area').style.display = 'none';
+          document.getElementById('reopen-done').classList.add('show');
+          document.getElementById('reopen-note').value = '';
+          showAlert('follow-alert', result.message, 'success');
+          fetchStatus(currentFollow.landline, currentFollow.mobile, true);
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'المشكلة مازالت موجودة — إعادة فتح البلاغ';
+          showAlert('reopen-modal-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .reopenTicket({
+          landline: currentFollow.landline,
+          mobile: currentFollow.mobile,
+          deviceFp: deviceFingerprint,
+          note: document.getElementById('reopen-note').value
+        });
+    });
+
+    // شكوى جديدة بعد التقييم
+    document.getElementById('new-complaint-submit').addEventListener('click', function () {
+      hideAlert('new-complaint-alert');
+
+      var reason = document.getElementById('new-complaint-reason').value;
+      if (!reason) {
+        showAlert('new-complaint-alert', 'يرجى اختيار سبب الشكوى', 'error');
+        return;
+      }
+
+      showConfirmModal({
+        icon: '📋',
+        title: 'تأكيد فتح شكوى جديدة',
+        message: 'هل ترغب في تسجيل شكوى جديدة على نفس الخط الأرضي؟',
+        detail: 'سيتم إرسال البلاغ إلى السنترال للمتابعة، وستتمكن من متابعة حالة البلاغ الجديد من هذه الصفحة.',
+        confirmText: 'نعم، افتح الشكوى',
+        cancelText: 'إلغاء'
+      }).then(function (confirmed) {
+        if (!confirmed) return;
+
+        var btn = document.getElementById('new-complaint-submit');
+        btn.disabled = true;
+        btn.textContent = 'جاري الفتح...';
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            btn.disabled = false;
+            btn.textContent = 'فتح شكوى جديدة';
+            document.getElementById('new-complaint-reason').value = '';
+            showAlert('follow-alert', result.message, 'success');
+            fetchStatus(currentFollow.landline, currentFollow.mobile, false);
+          })
+          .withFailureHandler(function (err) {
+            btn.disabled = false;
+            btn.textContent = 'فتح شكوى جديدة';
+            showAlert('new-complaint-alert', err.message || 'حدث خطأ', 'error');
+          })
+          .submitNewComplaint({
+            landline: currentFollow.landline,
+            mobile: currentFollow.mobile,
+            deviceFp: deviceFingerprint,
+            reason: reason
+          });
+      });
+    });
+  </script>
+</body>
+</html>

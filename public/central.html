@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>لوحة السنترال — متابعة الأعطال</title>
+  <style>
+    :root {
+      --primary: #0d47a1;
+      --primary-dark: #002171;
+      --primary-light: #e3f2fd;
+      --accent: #ff6f00;
+      --accent-bg: #fff3e0;
+      --success: #2e7d32;
+      --success-bg: #e8f5e9;
+      --warning: #f57c00;
+      --warning-bg: #fff3e0;
+      --danger: #c62828;
+      --danger-bg: #ffebee;
+      --bg: #eceff1;
+      --card: #ffffff;
+      --text: #1a2332;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 14px;
+      --shadow: 0 4px 20px rgba(13, 71, 161, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: linear-gradient(160deg, #cfd8dc 0%, var(--bg) 50%, #f5f5f5 100%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .app {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--primary), #1976d2);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      font-size: 30px;
+      box-shadow: 0 8px 24px rgba(13, 71, 161, 0.25);
+    }
+
+    .header h1 { font-size: 1.4rem; font-weight: 700; color: var(--primary-dark); }
+    .header p { font-size: 0.9rem; color: var(--muted); margin-top: 4px; }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-group { margin-bottom: 16px; }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: #fafbfc;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+      direction: rtl;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #1565c0);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(13, 71, 161, 0.3);
+    }
+
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      margin-top: 8px;
+    }
+
+    .btn-sm {
+      width: auto;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+    }
+
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-warning { background: var(--warning); color: #fff; }
+    .btn-accent { background: var(--accent); color: #fff; }
+
+    .alert {
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .alert.show { display: block; }
+    .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #a5d6a7; }
+    .alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid #ef9a9a; }
+
+    .hidden { display: none !important; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-box {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .stat-box.active { border-color: var(--primary); background: var(--primary-light); }
+    .stat-box .num { font-size: 1.5rem; font-weight: 800; color: var(--primary-dark); }
+    .stat-box .lbl { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+
+    .toolbar input { flex: 1; min-width: 180px; margin: 0; }
+    .toolbar .btn { width: auto; white-space: nowrap; }
+
+    .ticket-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .ticket-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      border-right: 4px solid var(--primary);
+      transition: transform 0.15s;
+    }
+
+    .ticket-card:hover { transform: translateY(-1px); }
+    .ticket-card.status-new { border-right-color: #1565c0; }
+    .ticket-card.status-progress { border-right-color: var(--warning); }
+    .ticket-card.status-reopened { border-right-color: #c2185b; }
+    .ticket-card.status-resolved { border-right-color: var(--success); }
+
+    .ticket-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .ticket-phone {
+      font-weight: 700;
+      font-size: 1rem;
+      direction: ltr;
+      text-align: right;
+    }
+
+    .ticket-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+    }
+
+    .ticket-preview {
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge-new { background: #e3f2fd; color: #1565c0; }
+    .badge-progress { background: var(--warning-bg); color: var(--warning); }
+    .badge-reopened { background: #fce4ec; color: #c2185b; }
+    .badge-resolved { background: var(--success-bg); color: var(--success); }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .back-btn {
+      width: auto;
+      padding: 8px 16px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .detail-item {
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+    }
+
+    .detail-item .lbl { font-size: 0.75rem; color: var(--muted); }
+    .detail-item .val { font-size: 0.9rem; font-weight: 600; margin-top: 2px; }
+    .detail-item .val.ltr { direction: ltr; text-align: right; }
+
+    .notif-history {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+
+    .notif-item {
+      background: var(--primary-light);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border-right: 3px solid var(--primary);
+    }
+
+    .notif-item .date { font-size: 0.72rem; color: var(--muted); direction: ltr; text-align: right; }
+    .notif-item .text { font-size: 0.88rem; margin-top: 4px; }
+
+    .quick-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .quick-btns .btn { width: auto; flex: 1; min-width: 140px; font-size: 0.82rem; padding: 10px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+
+    .loader {
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 24px;
+    }
+
+    .archive-btn {
+      margin-right: auto;
+      width: auto;
+      padding: 8px 14px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.82rem;
+    }
+
+    .archive-btn.has-archive {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .resolved-notice {
+      background: var(--success-bg);
+      border: 1px solid #a5d6a7;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      color: var(--success);
+      margin-bottom: 16px;
+    }
+
+    .form-disabled {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-overlay.hidden { display: none !important; }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+      color: var(--primary-dark);
+    }
+
+    .modal-close {
+      width: auto;
+      padding: 6px 12px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .archive-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .archive-item {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .archive-item:hover { background: var(--primary-light); }
+
+    .archive-item .archive-date {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      direction: ltr;
+      text-align: right;
+    }
+
+    .archive-item .archive-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .archive-detail {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .archive-detail .notif-item {
+      margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
+      }
+
+      .header { margin-bottom: 14px; }
+      .header-icon { width: 52px; height: 52px; font-size: 24px; }
+      .header h1 { font-size: 1.15rem; }
+      .header p { font-size: 0.82rem; }
+
+      .card { padding: 16px 14px; }
+
+      input, select, textarea {
+        font-size: 16px;
+        padding: 14px 12px;
+      }
+
+      .btn {
+        min-height: 48px;
+        padding: 14px 12px;
+        font-size: 0.95rem;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .stat-box { padding: 10px 8px; }
+      .stat-box .num { font-size: 1.25rem; }
+      .stat-box .lbl { font-size: 0.68rem; }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar input { min-width: 0; width: 100%; }
+      .toolbar .btn { width: 100%; }
+
+      .ticket-card { padding: 12px 14px; }
+      .ticket-top { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .ticket-meta { flex-direction: column; gap: 4px; }
+
+      .detail-header {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .detail-grid { grid-template-columns: 1fr; }
+      .quick-btns { flex-direction: column; }
+      .quick-btns .btn { min-width: 100%; width: 100%; }
+
+      .notif-history { max-height: 180px; }
+    }
+  </style>
+  <script src="config.js"></script>
+  <script src="api-bridge.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-icon">🏢</div>
+      <h1>لوحة السنترال</h1>
+      <p>متابعة بلاغات الأعطال وإرسال الإشعارات للعملاء</p>
+    </header>
+
+    <!-- تسجيل الدخول -->
+    <section id="login-section" class="card">
+      <div class="card-title">🔐 دخول السنترال</div>
+      <div id="login-alert" class="alert"></div>
+      <div class="form-group">
+        <label for="pin-input">رمز الدخول</label>
+        <input type="password" id="pin-input" placeholder="أدخل رمز السنترال" autocomplete="current-password" />
+      </div>
+      <button type="button" class="btn btn-primary" id="login-btn">دخول</button>
+      <p style="margin-top:12px;font-size:0.78rem;color:var(--muted);text-align:center">
+        الرمز الافتراضي: 1234 — غيّره من محرر Apps Script عبر دالة setCentralPin
+      </p>
+    </section>
+
+    <!-- القائمة الرئيسية -->
+    <section id="main-section" class="hidden">
+      <div class="stats" id="stats-bar"></div>
+
+      <div class="toolbar">
+        <input type="search" id="search-input" placeholder="بحث برقم الخط أو الموبايل..." />
+        <button type="button" class="btn btn-outline btn-sm" id="refresh-btn">تحديث</button>
+        <button type="button" class="btn btn-outline btn-sm" id="logout-btn">خروج</button>
+      </div>
+
+      <div id="list-alert" class="alert"></div>
+      <div id="list-loader" class="loader hidden">
+        <div class="spinner"></div>
+        جاري التحميل...
+      </div>
+      <div id="ticket-list" class="ticket-list"></div>
+      <div id="empty-state" class="empty-state hidden">لا توجد بلاغات مطابقة</div>
+    </section>
+
+    <!-- تفاصيل البلاغ -->
+    <section id="detail-section" class="hidden">
+      <div class="card">
+        <div class="detail-header">
+          <button type="button" class="back-btn" id="back-btn">← رجوع</button>
+          <button type="button" class="archive-btn" id="archive-btn">📁 أرشيف شكاوى الخط</button>
+          <div class="card-title" style="margin:0">تفاصيل البلاغ</div>
+        </div>
+
+        <div id="detail-alert" class="alert"></div>
+        <div id="detail-content"></div>
+        <div id="resolved-notice" class="resolved-notice hidden">
+          🔒 البلاغ مغلق (تم الحل). لا يمكن إرسال إشعار حتى يعيد العميل فتح الشكوى أو يسجّل أن المشكلة مازالت موجودة.
+        </div>
+
+        <div id="notify-form">
+          <div class="form-group">
+            <label for="status-select">حالة العطل</label>
+            <select id="status-select">
+              <option value="جديد">جديد</option>
+              <option value="قيد المعالجة">قيد المعالجة</option>
+              <option value="إعادة فتح">إعادة فتح</option>
+              <option value="تم الحل">تم الحل</option>
+            </select>
+          </div>
+
+          <div class="card-title" style="font-size:0.9rem">📢 إشعار جديد للعميل</div>
+          <div class="quick-btns">
+            <button type="button" class="btn btn-accent btn-sm quick-msg" data-msg="جاري مراجعة بلاغكم وإرسال الفني المختص">مراجعة البلاغ</button>
+            <button type="button" class="btn btn-warning btn-sm quick-msg" data-msg="جاري إرسال الفني لسيادتكم">إرسال فني</button>
+            <button type="button" class="btn btn-success btn-sm quick-msg" data-msg="تم إصلاح العطل بنجاح">تم الإصلاح</button>
+          </div>
+
+          <div class="form-group">
+            <label for="message-input">نص الإشعار</label>
+            <textarea id="message-input" placeholder="اكتب رسالة للعميل..."></textarea>
+          </div>
+
+          <button type="button" class="btn btn-primary" id="save-btn">حفظ وإرسال للعميل</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">لوحة السنترال · الإصدار 1.3</footer>
+  </div>
+
+  <div id="archive-modal" class="modal-overlay hidden">
+    <div class="modal" role="dialog" aria-labelledby="archive-modal-title">
+      <div class="modal-header">
+        <h3 id="archive-modal-title">📁 أرشيف شكاوى الخط</h3>
+        <button type="button" class="modal-close" id="archive-close-btn">إغلاق</button>
+      </div>
+      <div id="archive-modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    var PIN_KEY = 'central_pin';
+    var currentPin = '';
+    var currentFilter = 'all';
+    var currentTicket = null;
+    var refreshTimer = null;
+
+    function getPin() {
+      return sessionStorage.getItem(PIN_KEY) || '';
+    }
+
+    function setPin(pin) {
+      sessionStorage.setItem(PIN_KEY, pin);
+      currentPin = pin;
+    }
+
+    function clearPin() {
+      sessionStorage.removeItem(PIN_KEY);
+      currentPin = '';
+    }
+
+    function showAlert(id, msg, type) {
+      var el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'alert show alert-' + type;
+    }
+
+    function hideAlert(id) {
+      document.getElementById(id).className = 'alert';
+    }
+
+    function statusClass(status) {
+      if (status === 'قيد المعالجة') return 'status-progress';
+      if (status === 'إعادة فتح') return 'status-reopened';
+      if (status === 'تم الحل' || status === 'تم الاصلاح' || status === 'تم الإصلاح') return 'status-resolved';
+      return 'status-new';
+    }
+
+    function statusBadge(status) {
+      var cls = 'badge-new';
+      if (status === 'قيد المعالجة') cls = 'badge-progress';
+      if (status === 'إعادة فتح') cls = 'badge-reopened';
+      if (status === 'تم الحل' || status === 'تم الاصلاح' || status === 'تم الإصلاح') cls = 'badge-resolved';
+      return '<span class="badge ' + cls + '">' + status + '</span>';
+    }
+
+    function escapeHtml(t) {
+      return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function showSection(name) {
+      document.getElementById('login-section').classList.toggle('hidden', name !== 'login');
+      document.getElementById('main-section').classList.toggle('hidden', name !== 'main');
+      document.getElementById('detail-section').classList.toggle('hidden', name !== 'detail');
+    }
+
+    function renderStats(counts) {
+      var items = [
+        { key: 'all', label: 'الكل', num: counts.all || 0 },
+        { key: 'جديد', label: 'جديد', num: counts['جديد'] || 0 },
+        { key: 'قيد المعالجة', label: 'قيد المعالجة', num: counts['قيد المعالجة'] || 0 },
+        { key: 'إعادة فتح', label: 'إعادة فتح', num: counts['إعادة فتح'] || 0 },
+        { key: 'resolved', label: 'تم الحل', num: counts.resolved || 0 }
+      ];
+
+      document.getElementById('stats-bar').innerHTML = items.map(function (item) {
+        return '<div class="stat-box' + (currentFilter === item.key ? ' active' : '') + '" data-filter="' + item.key + '">' +
+          '<div class="num">' + item.num + '</div>' +
+          '<div class="lbl">' + item.label + '</div></div>';
+      }).join('');
+
+      document.querySelectorAll('.stat-box').forEach(function (box) {
+        box.addEventListener('click', function () {
+          currentFilter = box.dataset.filter;
+          loadTickets();
+        });
+      });
+    }
+
+    function renderTicketList(tickets) {
+      var list = document.getElementById('ticket-list');
+      var empty = document.getElementById('empty-state');
+
+      if (!tickets.length) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      list.innerHTML = tickets.map(function (t) {
+        var preview = t.lastNotification
+          ? '<div class="ticket-preview">📢 ' + escapeHtml(t.lastNotification) + '</div>'
+          : '';
+        return '<div class="ticket-card ' + statusClass(t.status) + '" data-row="' + t.row + '">' +
+          '<div class="ticket-top">' +
+            '<div class="ticket-phone">☎ ' + escapeHtml(t.landline) + '</div>' +
+            statusBadge(t.status) +
+          '</div>' +
+          '<div class="ticket-meta">' +
+            '<span>📱 ' + escapeHtml(t.mobile) + '</span>' +
+            '<span>📋 ' + escapeHtml(t.reason) + '</span>' +
+            '<span>🕐 ' + escapeHtml(t.date) + '</span>' +
+          '</div>' + preview +
+        '</div>';
+      }).join('');
+
+      list.querySelectorAll('.ticket-card').forEach(function (card) {
+        card.addEventListener('click', function () {
+          openTicket(Number(card.dataset.row));
+        });
+      });
+    }
+
+    function loadTickets() {
+      document.getElementById('list-loader').classList.remove('hidden');
+      hideAlert('list-alert');
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          document.getElementById('list-loader').classList.add('hidden');
+          renderStats(data.counts || {});
+          renderTicketList(data.tickets || []);
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('list-loader').classList.add('hidden');
+          showAlert('list-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralListTickets({
+          pin: currentPin,
+          filter: currentFilter,
+          search: document.getElementById('search-input').value
+        });
+    }
+
+    function isResolvedStatus(status) {
+      return status === 'تم الحل' || status === 'تم الاصلاح' || status === 'تم الإصلاح';
+    }
+
+    function updateNotifyFormState(ticket) {
+      var canSend = ticket.canSendNotification === true;
+      var form = document.getElementById('notify-form');
+      var saveBtn = document.getElementById('save-btn');
+      var notice = document.getElementById('resolved-notice');
+
+      form.classList.toggle('form-disabled', !canSend);
+      saveBtn.disabled = !canSend;
+      notice.classList.toggle('hidden', canSend);
+    }
+
+    function updateArchiveButton(ticket) {
+      var btn = document.getElementById('archive-btn');
+      var count = (ticket.archive && ticket.archive.length) || 0;
+      var hasArchive = count > 0;
+      btn.classList.toggle('has-archive', hasArchive);
+      btn.textContent = hasArchive
+        ? '📁 أرشيف شكاوى الخط (' + count + ')'
+        : '📁 أرشيف شكاوى الخط';
+      btn.title = hasArchive
+        ? 'عرض ' + count + ' شكوى سابقة لهذا الخط'
+        : 'لا يوجد أرشيف سابق';
+    }
+
+    function renderArchiveModal(archive) {
+      var body = document.getElementById('archive-modal-body');
+
+      if (!archive || !archive.length) {
+        body.innerHTML = '<div class="empty-state" style="padding:24px">لا يوجد أرشيف سابق لهذا الخط</div>';
+        return;
+      }
+
+      body.innerHTML = '<div class="archive-list">' + archive.map(function (item, idx) {
+        var notifs = item.notifications && item.notifications.length
+          ? item.notifications.map(function (n) {
+              return '<div class="notif-item">' +
+                (n.date ? '<div class="date">' + escapeHtml(n.date) + '</div>' : '') +
+                '<div class="text">' + escapeHtml(n.text) + '</div></div>';
+            }).join('')
+          : '<div style="font-size:0.82rem;color:var(--muted)">لا توجد إشعارات</div>';
+
+        return '<div class="archive-item" data-idx="' + idx + '">' +
+          '<div class="archive-date">📅 ' + escapeHtml(item.date) + '</div>' +
+          '<div class="archive-meta">' +
+            statusBadge(item.status) +
+            ' · ' + escapeHtml(item.reason) +
+            (item.lastUpdate ? ' · آخر تحديث: ' + escapeHtml(item.lastUpdate) : '') +
+          '</div>' +
+          '<div class="archive-detail hidden" id="archive-detail-' + idx + '">' +
+            '<div class="card-title" style="font-size:0.82rem;margin-top:8px">سجل الإشعارات</div>' +
+            notifs +
+          '</div></div>';
+      }).join('') + '</div>';
+
+      body.querySelectorAll('.archive-item').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var detail = document.getElementById('archive-detail-' + el.dataset.idx);
+          if (!detail) return;
+          var wasHidden = detail.classList.contains('hidden');
+          body.querySelectorAll('.archive-detail').forEach(function (d) { d.classList.add('hidden'); });
+          if (wasHidden) detail.classList.remove('hidden');
+        });
+      });
+    }
+
+    function openArchiveModal() {
+      if (!currentTicket) return;
+      renderArchiveModal(currentTicket.archive || []);
+      document.getElementById('archive-modal').classList.remove('hidden');
+    }
+
+    function closeArchiveModal() {
+      document.getElementById('archive-modal').classList.add('hidden');
+    }
+
+    function renderDetail(ticket) {
+      currentTicket = ticket;
+      var notifs = ticket.notifications && ticket.notifications.length
+        ? ticket.notifications.map(function (n) {
+            return '<div class="notif-item">' +
+              (n.date ? '<div class="date">' + escapeHtml(n.date) + '</div>' : '') +
+              '<div class="text">' + escapeHtml(n.text) + '</div></div>';
+          }).join('')
+        : '<div class="empty-state" style="padding:16px">لا توجد إشعارات بعد</div>';
+
+      var ratingHtml = '';
+      var deviceHtml = '';
+      if (ticket.deviceFp) {
+        deviceHtml = '<div class="detail-item"><div class="lbl">بصمة جهاز التسجيل</div><div class="val ltr">' + escapeHtml(ticket.deviceFp) + '</div></div>';
+      }
+      if (ticket.alreadyRated) {
+        var mismatchNote = ticket.deviceFpMismatch
+          ? ' <span style="color:var(--danger);font-weight:700">⚠️ بصمة التقييم مختلفة عن بصمة التسجيل</span>'
+          : ' <span style="color:var(--success);font-weight:600">✓ نفس جهاز التسجيل</span>';
+        ratingHtml = '<div class="detail-item" style="grid-column:1/-1;background:var(--success-bg)">' +
+          '<div class="lbl">تقييم العميل</div>' +
+          '<div class="val">إزالة العطل: ' + ticket.ratingFault + '/5 — الفني: ' + ticket.ratingTech + '/5' +
+          (ticket.comment ? ' — «' + escapeHtml(ticket.comment) + '»' : '') + mismatchNote + '</div></div>';
+        if (ticket.ratingDeviceFp) {
+          deviceHtml += '<div class="detail-item"><div class="lbl">بصمة جهاز التقييم</div><div class="val ltr">' + escapeHtml(ticket.ratingDeviceFp) + '</div></div>';
+        }
+      }
+
+      document.getElementById('detail-content').innerHTML =
+        '<div class="detail-grid">' +
+          '<div class="detail-item"><div class="lbl">رقم الخط</div><div class="val ltr">' + escapeHtml(ticket.landline) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">رقم الموبايل</div><div class="val ltr">' + escapeHtml(ticket.mobile) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">سبب الإبلاغ</div><div class="val">' + escapeHtml(ticket.reason) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">تاريخ الإبلاغ</div><div class="val ltr">' + escapeHtml(ticket.date) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">آخر تحديث</div><div class="val ltr">' + escapeHtml(ticket.lastUpdate) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">الحالة الحالية</div><div class="val">' + statusBadge(ticket.status) + '</div></div>' +
+          deviceHtml +
+          ratingHtml +
+        '</div>' +
+        '<div class="card-title" style="font-size:0.9rem">📜 سجل الإشعارات</div>' +
+        '<div class="notif-history">' + notifs + '</div>';
+
+      document.getElementById('status-select').value =
+        ticket.status === 'تم الاصلاح' || ticket.status === 'تم الإصلاح' ? 'تم الحل' : ticket.status;
+      document.getElementById('message-input').value = '';
+      hideAlert('detail-alert');
+      updateNotifyFormState(ticket);
+      updateArchiveButton(ticket);
+    }
+
+    function openTicket(row) {
+      showSection('detail');
+      document.getElementById('detail-content').innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+      google.script.run
+        .withSuccessHandler(function (ticket) {
+          renderDetail(ticket);
+        })
+        .withFailureHandler(function (err) {
+          showAlert('detail-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralGetTicket({ pin: currentPin, row: row });
+    }
+
+    function saveTicket(statusOverride) {
+      if (!currentTicket) return;
+
+      if (!currentTicket.canSendNotification) {
+        showAlert('detail-alert', 'لا يمكن الإرسال — البلاغ مغلق (تم الحل) حتى يعيد العميل فتح الشكوى', 'error');
+        return;
+      }
+
+      var status = statusOverride || document.getElementById('status-select').value;
+      var message = document.getElementById('message-input').value.trim();
+
+      if (statusOverride === 'تم الحل' && !message) {
+        message = 'تم إصلاح العطل بنجاح';
+        document.getElementById('message-input').value = message;
+      }
+
+      if (!message && status === currentTicket.status) {
+        showAlert('detail-alert', 'اكتب إشعاراً للعميل أو غيّر الحالة', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('save-btn');
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          showAlert('detail-alert', result.message, 'success');
+          renderDetail(result.ticket);
+          loadTickets();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          showAlert('detail-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralUpdateTicket({
+          pin: currentPin,
+          row: currentTicket.row,
+          status: status,
+          message: message
+        });
+    }
+
+    function tryLogin(pin) {
+      var btn = document.getElementById('login-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري التحقق...';
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          btn.disabled = false;
+          btn.textContent = 'دخول';
+          setPin(pin);
+          showSection('main');
+          loadTickets();
+          startAutoRefresh();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'دخول';
+          showAlert('login-alert', err.message || 'رمز غير صحيح', 'error');
+        })
+        .centralListTickets({ pin: pin, filter: 'all' });
+    }
+
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      refreshTimer = setInterval(loadTickets, 45000);
+    }
+
+    function stopAutoRefresh() {
+      if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+    }
+
+    document.getElementById('login-btn').addEventListener('click', function () {
+      var pin = document.getElementById('pin-input').value.trim();
+      if (!pin) { showAlert('login-alert', 'أدخل رمز الدخول', 'error'); return; }
+      hideAlert('login-alert');
+      tryLogin(pin);
+    });
+
+    document.getElementById('pin-input').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') document.getElementById('login-btn').click();
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', function () {
+      stopAutoRefresh();
+      clearPin();
+      showSection('login');
+      document.getElementById('pin-input').value = '';
+    });
+
+    document.getElementById('refresh-btn').addEventListener('click', loadTickets);
+
+    document.getElementById('search-input').addEventListener('input', function () {
+      clearTimeout(window._searchTimer);
+      window._searchTimer = setTimeout(loadTickets, 350);
+    });
+
+    document.getElementById('back-btn').addEventListener('click', function () {
+      closeArchiveModal();
+      showSection('main');
+      currentTicket = null;
+    });
+
+    document.getElementById('archive-btn').addEventListener('click', openArchiveModal);
+    document.getElementById('archive-close-btn').addEventListener('click', closeArchiveModal);
+    document.getElementById('archive-modal').addEventListener('click', function (e) {
+      if (e.target === document.getElementById('archive-modal')) closeArchiveModal();
+    });
+
+    document.getElementById('save-btn').addEventListener('click', function () { saveTicket(); });
+
+    document.querySelectorAll('.quick-msg').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.getElementById('message-input').value = btn.dataset.msg;
+        if (btn.dataset.msg.indexOf('إصلاح') !== -1) {
+          document.getElementById('status-select').value = 'تم الحل';
+        } else if (btn.dataset.msg.indexOf('فني') !== -1) {
+          document.getElementById('status-select').value = 'قيد المعالجة';
+        }
+      });
+    });
+
+    // بدء التشغيل
+    currentPin = getPin();
+    if (currentPin) {
+      showSection('main');
+      loadTickets();
+      startAutoRefresh();
+    } else {
+      showSection('login');
+    }
+  </script>
+</body>
+</html>
