@@ -3,7 +3,18 @@
  * داخل Apps Script يبقى google.script.run الأصلي دون تغيير.
  */
 (function () {
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
+  function isInsideAppsScript() {
+    try {
+      return typeof google !== 'undefined' &&
+        google.script &&
+        google.script.run &&
+        typeof google.script.host !== 'undefined';
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  if (isInsideAppsScript()) {
     return;
   }
 
@@ -24,7 +35,8 @@
         redirect: 'follow'
       };
     } else {
-      url = apiBase + '/api/' + fnName;
+      var origin = apiBase || (typeof window !== 'undefined' && window.location ? window.location.origin : '');
+      url = origin + '/api/' + fnName;
       options = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,9 +44,38 @@
       };
     }
 
-    return fetch(url, options)
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
+    var timeoutMs = 60000;
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    if (controller) {
+      options.signal = controller.signal;
+    }
+
+    var fetchPromise = fetch(url, options);
+    if (controller) {
+      fetchPromise = Promise.race([
+        fetchPromise,
+        new Promise(function (_, reject) {
+          setTimeout(function () {
+            controller.abort();
+            reject({ message: 'انتهت مهلة الاتصال — حاول مرة أخرى' });
+          }, timeoutMs);
+        })
+      ]);
+    }
+
+    return fetchPromise
+      .then(function (res) { return res.text(); })
+      .then(function (text) {
+        var data;
+        try {
+          data = JSON.parse(text);
+        } catch (_err) {
+          throw {
+            message: appsScriptUrl
+              ? 'تعذر الاتصال بـ Apps Script — تحقق من رابط النشر'
+              : 'تعذر الاتصال بالخادم — تأكد أن npm run dev يعمل'
+          };
+        }
         if (data && data.error) {
           throw { message: data.error };
         }
@@ -42,41 +83,47 @@
       });
   }
 
-  function createRunner(fnName, args) {
-    var payload = args.length === 1 ? args[0] : args[0];
-    var runner = {
-      _success: function () {},
-      _failure: function () {},
-      withSuccessHandler: function (fn) {
-        this._success = fn;
-        return this;
-      },
-      withFailureHandler: function (fn) {
-        this._failure = fn;
-        return this;
-      }
+  function createRunInstance() {
+    var state = {
+      success: function () {},
+      failure: function () {}
     };
 
-    callApi(fnName, payload)
-      .then(function (data) {
-        runner._success(data);
-      })
-      .catch(function (err) {
-        runner._failure({ message: (err && err.message) || 'حدث خطأ' });
-      });
+    var proxy = new Proxy(state, {
+      get: function (target, prop) {
+        if (prop === 'withSuccessHandler') {
+          return function (fn) {
+            target.success = typeof fn === 'function' ? fn : target.success;
+            return proxy;
+          };
+        }
+        if (prop === 'withFailureHandler') {
+          return function (fn) {
+            target.failure = typeof fn === 'function' ? fn : target.failure;
+            return proxy;
+          };
+        }
+        return function () {
+          var payload = arguments.length >= 1 ? arguments[0] : undefined;
+          callApi(String(prop), payload)
+            .then(function (data) {
+              target.success(data);
+            })
+            .catch(function (err) {
+              target.failure({ message: (err && err.message) || 'حدث خطأ' });
+            });
+        };
+      }
+    });
 
-    return runner;
+    return proxy;
   }
 
   window.google = {
     script: {
-      run: new Proxy({}, {
-        get: function (_, fnName) {
-          return function () {
-            return createRunner(fnName, Array.prototype.slice.call(arguments));
-          };
-        }
-      })
+      get run() {
+        return createRunInstance();
+      }
     }
   };
 })();

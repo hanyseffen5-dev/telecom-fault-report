@@ -13,7 +13,15 @@ async function proxyToAppsScript(fnName, payload) {
     redirect: 'follow'
   });
 
-  const data = await response.json();
+  const text = await response.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (_err) {
+    throw new Error(
+      'APPS_SCRIPT_URL غير صالح أو غير منشور. افتح Deploy → Manage deployments في Apps Script وتأكد أن الرابط ينتهي بـ /exec'
+    );
+  }
   if (data.error) {
     throw new Error(data.error);
   }

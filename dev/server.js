@@ -28,6 +28,14 @@ const indexPath = path.join(rootDir, 'apps-script', 'Index.html');
 const centralPath = path.join(rootDir, 'apps-script', 'Central.html');
 
 app.use(express.json());
+
+app.get('/config.js', function (_req, res) {
+  res.set('Cache-Control', 'no-store');
+  res.type('application/javascript').send(
+    "window.APP_CONFIG = { appsScriptUrl: '' };\n"
+  );
+});
+
 app.use(express.static(publicDir));
 
 function serveHtml(filePath, res) {
