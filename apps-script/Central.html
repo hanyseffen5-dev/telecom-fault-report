@@ -637,7 +637,7 @@
   <script>
     var PIN_KEY = 'central_pin';
     var currentPin = '';
-    var currentFilter = 'all';
+    var currentFilter = 'active';
     var currentTicket = null;
     var refreshTimer = null;
 
@@ -692,7 +692,7 @@
 
     function renderStats(counts) {
       var items = [
-        { key: 'all', label: 'الكل', num: counts.all || 0 },
+        { key: 'active', label: 'مفتوحة', num: counts.active || 0 },
         { key: 'جديد', label: 'جديد', num: counts['جديد'] || 0 },
         { key: 'قيد المعالجة', label: 'قيد المعالجة', num: counts['قيد المعالجة'] || 0 },
         { key: 'إعادة فتح', label: 'إعادة فتح', num: counts['إعادة فتح'] || 0 },
@@ -752,11 +752,15 @@
       document.getElementById('list-loader').classList.remove('hidden');
       hideAlert('list-alert');
 
+      var apiFilter = currentFilter === 'active' ? 'all' : currentFilter;
+
       google.script.run
         .withSuccessHandler(function (data) {
           document.getElementById('list-loader').classList.add('hidden');
-          renderStats(data.counts || {});
-          renderTicketList(data.tickets || []);
+          var counts = normalizeCounts(data.counts);
+          var tickets = applyClientFilter(data.tickets || [], currentFilter);
+          renderStats(counts);
+          renderTicketList(tickets);
         })
         .withFailureHandler(function (err) {
           document.getElementById('list-loader').classList.add('hidden');
@@ -764,13 +768,34 @@
         })
         .centralListTickets({
           pin: currentPin,
-          filter: currentFilter,
+          filter: apiFilter,
           search: document.getElementById('search-input').value
         });
     }
 
     function isResolvedStatus(status) {
       return status === 'تم الحل' || status === 'تم الاصلاح' || status === 'تم الإصلاح';
+    }
+
+    function applyClientFilter(tickets, filter) {
+      if (filter === 'active') {
+        return tickets.filter(function (t) { return !isResolvedStatus(t.status); });
+      }
+      if (filter === 'resolved') {
+        return tickets.filter(function (t) { return isResolvedStatus(t.status); });
+      }
+      if (filter && filter !== 'all') {
+        return tickets.filter(function (t) { return t.status === filter; });
+      }
+      return tickets;
+    }
+
+    function normalizeCounts(counts) {
+      counts = counts || {};
+      if (counts.active === undefined) {
+        counts.active = Math.max(0, (counts.all || 0) - (counts.resolved || 0));
+      }
+      return counts;
     }
 
     function updateNotifyFormState(ticket) {
@@ -974,7 +999,7 @@
           btn.textContent = 'دخول';
           showAlert('login-alert', err.message || 'رمز غير صحيح', 'error');
         })
-        .centralListTickets({ pin: pin, filter: 'all' });
+        .centralListTickets({ pin: pin, filter: 'active' });
     }
 
     function startAutoRefresh() {

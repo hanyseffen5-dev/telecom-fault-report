@@ -625,6 +625,7 @@ function rowToObject_(row, rowNumber) {
 
 function ticketMatchesFilter_(status, filter) {
   if (!filter || filter === 'all') return true;
+  if (filter === 'active') return !isResolvedStatus_(status);
   if (filter === 'resolved') return isResolvedStatus_(status);
   return status === filter;
 }
@@ -656,13 +657,14 @@ function centralListTickets(payload) {
   verifyCentralAuth_(payload.pin);
   ensureHeaders_();
 
-  const filter = String(payload.filter || 'all');
+  const filter = String(payload.filter || 'active');
   const search = String(payload.search || '').trim().toLowerCase();
   const data = getSheet_().getDataRange().getValues();
   const latestByLine = getLatestRowByLine_(data);
   const tickets = [];
   const counts = {
     all: 0,
+    active: 0,
     [STATUS_NEW]: 0,
     [STATUS_IN_PROGRESS]: 0,
     [STATUS_REOPENED]: 0,
@@ -681,6 +683,7 @@ function centralListTickets(payload) {
     const notifications = parseNotifications_(row[COL.NOTIFICATION - 1], lastUpdate);
 
     counts.all++;
+    if (!isResolvedStatus_(status)) counts.active++;
     if (counts[status] !== undefined) counts[status]++;
     if (isResolvedStatus_(status)) counts.resolved++;
 

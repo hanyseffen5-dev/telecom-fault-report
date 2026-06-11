@@ -592,6 +592,7 @@ function verifyCentralAuth(pin) {
 
 function ticketMatchesFilter(status, filter) {
   if (!filter || filter === 'all') return true;
+  if (filter === 'active') return !isResolvedStatus(status);
   if (filter === 'resolved') return isResolvedStatus(status);
   return status === filter;
 }
@@ -616,12 +617,13 @@ async function centralListTickets(payload) {
   verifyCentralAuth(payload.pin);
   await ensureHeaders();
 
-  const filter = String(payload.filter || 'all');
+  const filter = String(payload.filter || 'active');
   const search = String(payload.search || '').trim().toLowerCase();
   const data = await getAllRows();
   const tickets = [];
   const counts = {
     all: 0,
+    active: 0,
     [STATUS_NEW]: 0,
     [STATUS_IN_PROGRESS]: 0,
     [STATUS_REOPENED]: 0,
@@ -637,6 +639,7 @@ async function centralListTickets(payload) {
     const notifications = parseNotifications(row[COL.NOTIFICATION - 1], lastUpdate);
 
     counts.all++;
+    if (!isResolvedStatus(status)) counts.active++;
     if (counts[status] !== undefined) counts[status]++;
     if (isResolvedStatus(status)) counts.resolved++;
 
