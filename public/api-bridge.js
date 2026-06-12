@@ -80,6 +80,16 @@
           throw { message: data.error };
         }
         return data;
+      })
+      .catch(function (err) {
+        if (err && err.message) {
+          throw err;
+        }
+        throw {
+          message: appsScriptUrl
+            ? 'تعذر الاتصال بـ Apps Script — تحقق من الاتصال بالإنترنت'
+            : 'تعذر الاتصال بالخادم — تأكد أن npm run dev يعمل على المنفذ 3000'
+        };
       });
   }
 

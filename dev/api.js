@@ -1,17 +1,27 @@
 const sheets = require('./sheets');
 
 async function proxyToAppsScript(fnName, payload) {
-  const url = process.env.APPS_SCRIPT_URL;
+  const url = (process.env.APPS_SCRIPT_URL || '').trim();
   if (!url) {
     throw new Error('APPS_SCRIPT_URL غير مضبوط');
   }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ fn: fnName, payload }),
-    redirect: 'follow'
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fnName, payload }),
+      redirect: 'follow'
+    });
+  } catch (err) {
+    const detail = err.cause && (err.cause.code || err.cause.message);
+    throw new Error(
+      detail
+        ? 'تعذر الاتصال بـ Apps Script (' + detail + ') — أعد تشغيل الخادم أو تحقق من الاتصال بالإنترنت'
+        : 'تعذر الاتصال بـ Apps Script — أعد تشغيل الخادم (npm run dev) أو تحقق من APPS_SCRIPT_URL'
+    );
+  }
 
   const text = await response.text();
   let data;
@@ -95,6 +105,13 @@ async function centralUpdateTicket(payload) {
   return sheets.centralUpdateTicket(payload);
 }
 
+async function centralAddRepairedLandline(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralAddRepairedLandline', payload);
+  }
+  return sheets.centralAddRepairedLandline(payload);
+}
+
 function getBackendMode() {
   if (useAppsScriptProxy()) {
     return 'apps-script';
@@ -115,5 +132,6 @@ module.exports = {
   centralListTickets,
   centralGetTicket,
   centralUpdateTicket,
+  centralAddRepairedLandline,
   getBackendMode
 };

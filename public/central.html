@@ -389,6 +389,29 @@
       pointer-events: none;
     }
 
+    .add-repaired-card { margin-bottom: 16px; }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .readonly-field {
+      background: #eef2f7 !important;
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    input[type="date"] {
+      direction: ltr;
+      text-align: right;
+    }
+
+    @media (max-width: 560px) {
+      .form-row-2 { grid-template-columns: 1fr; }
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -534,8 +557,8 @@
       .notif-history { max-height: 180px; }
     }
   </style>
-  <script src="config.js"></script>
-  <script src="api-bridge.js"></script>
+  <script src="config.js?v=4"></script>
+  <script src="api-bridge.js?v=4"></script>
 </head>
 <body>
   <div class="app">
@@ -567,6 +590,39 @@
         <input type="search" id="search-input" placeholder="بحث برقم الخط أو الموبايل..." />
         <button type="button" class="btn btn-outline btn-sm" id="refresh-btn">تحديث</button>
         <button type="button" class="btn btn-outline btn-sm" id="logout-btn">خروج</button>
+      </div>
+
+      <div class="card add-repaired-card" id="add-repaired-card">
+        <div class="card-title">➕ إضافة خط أرضي مُصلح للتقييم</div>
+        <p style="font-size:0.82rem;color:var(--muted);margin:-8px 0 14px">
+          أدخل بيانات الخط المُصلح ليظهر في شيت «ابلاغ عميل» ويتمكن العميل من التقييم
+        </p>
+        <div id="add-repaired-alert" class="alert"></div>
+        <div class="form-group">
+          <label for="repaired-landline">رقم التليفون الأرضي</label>
+          <input type="tel" id="repaired-landline" placeholder="مثال: 09624******" dir="ltr" autocomplete="off" />
+        </div>
+        <div class="form-row-2">
+          <div class="form-group" style="margin-bottom:0">
+            <label for="repaired-complaint-date">تاريخ الشكوى</label>
+            <input type="date" id="repaired-complaint-date" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label for="repaired-last-update">تاريخ آخر تحديث</label>
+            <input type="date" id="repaired-last-update" />
+          </div>
+        </div>
+        <div class="form-row-2" style="margin-top:16px">
+          <div class="form-group" style="margin-bottom:0">
+            <label for="repaired-status">حالة العطل</label>
+            <input type="text" id="repaired-status" class="readonly-field" value="تم الحل" readonly tabindex="-1" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label for="repaired-reason">سبب الإبلاغ</label>
+            <input type="text" id="repaired-reason" class="readonly-field" value="عطل" readonly tabindex="-1" />
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary" id="add-repaired-btn" style="margin-top:16px">إضافة للشيت وإتاحة التقييم</button>
       </div>
 
       <div id="list-alert" class="alert"></div>
@@ -621,7 +677,7 @@
       </div>
     </section>
 
-    <footer class="footer">لوحة السنترال · الإصدار 1.3</footer>
+    <footer class="footer">لوحة السنترال · الإصدار 1.4</footer>
   </div>
 
   <div id="archive-modal" class="modal-overlay hidden">
@@ -637,7 +693,7 @@
   <script>
     var PIN_KEY = 'central_pin';
     var currentPin = '';
-    var currentFilter = 'all';
+    var currentFilter = 'active';
     var currentTicket = null;
     var refreshTimer = null;
 
@@ -692,7 +748,7 @@
 
     function renderStats(counts) {
       var items = [
-        { key: 'all', label: 'الكل', num: counts.all || 0 },
+        { key: 'active', label: 'مفتوحة', num: counts.active || 0 },
         { key: 'جديد', label: 'جديد', num: counts['جديد'] || 0 },
         { key: 'قيد المعالجة', label: 'قيد المعالجة', num: counts['قيد المعالجة'] || 0 },
         { key: 'إعادة فتح', label: 'إعادة فتح', num: counts['إعادة فتح'] || 0 },
@@ -752,11 +808,15 @@
       document.getElementById('list-loader').classList.remove('hidden');
       hideAlert('list-alert');
 
+      var apiFilter = currentFilter === 'active' ? 'all' : currentFilter;
+
       google.script.run
         .withSuccessHandler(function (data) {
           document.getElementById('list-loader').classList.add('hidden');
-          renderStats(data.counts || {});
-          renderTicketList(data.tickets || []);
+          var counts = normalizeCounts(data.counts);
+          var tickets = applyClientFilter(data.tickets || [], currentFilter);
+          renderStats(counts);
+          renderTicketList(tickets);
         })
         .withFailureHandler(function (err) {
           document.getElementById('list-loader').classList.add('hidden');
@@ -764,13 +824,34 @@
         })
         .centralListTickets({
           pin: currentPin,
-          filter: currentFilter,
+          filter: apiFilter,
           search: document.getElementById('search-input').value
         });
     }
 
     function isResolvedStatus(status) {
       return status === 'تم الحل' || status === 'تم الاصلاح' || status === 'تم الإصلاح';
+    }
+
+    function applyClientFilter(tickets, filter) {
+      if (filter === 'active') {
+        return tickets.filter(function (t) { return !isResolvedStatus(t.status); });
+      }
+      if (filter === 'resolved') {
+        return tickets.filter(function (t) { return isResolvedStatus(t.status); });
+      }
+      if (filter && filter !== 'all') {
+        return tickets.filter(function (t) { return t.status === filter; });
+      }
+      return tickets;
+    }
+
+    function normalizeCounts(counts) {
+      counts = counts || {};
+      if (counts.active === undefined) {
+        counts.active = Math.max(0, (counts.all || 0) - (counts.resolved || 0));
+      }
+      return counts;
     }
 
     function updateNotifyFormState(ticket) {
@@ -966,6 +1047,7 @@
           btn.textContent = 'دخول';
           setPin(pin);
           showSection('main');
+          initRepairedFormDates();
           loadTickets();
           startAutoRefresh();
         })
@@ -974,7 +1056,7 @@
           btn.textContent = 'دخول';
           showAlert('login-alert', err.message || 'رمز غير صحيح', 'error');
         })
-        .centralListTickets({ pin: pin, filter: 'all' });
+        .centralListTickets({ pin: pin, filter: 'active' });
     }
 
     function startAutoRefresh() {
@@ -984,6 +1066,69 @@
 
     function stopAutoRefresh() {
       if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+    }
+
+    function todayIsoDate() {
+      var d = new Date();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return d.getFullYear() + '-' + m + '-' + day;
+    }
+
+    function initRepairedFormDates() {
+      var today = todayIsoDate();
+      var complaint = document.getElementById('repaired-complaint-date');
+      var lastUpdate = document.getElementById('repaired-last-update');
+      if (!complaint.value) complaint.value = today;
+      if (!lastUpdate.value) lastUpdate.value = today;
+    }
+
+    function resetRepairedForm() {
+      document.getElementById('repaired-landline').value = '';
+      document.getElementById('repaired-complaint-date').value = todayIsoDate();
+      document.getElementById('repaired-last-update').value = todayIsoDate();
+      hideAlert('add-repaired-alert');
+    }
+
+    function submitRepairedLandline() {
+      var landline = document.getElementById('repaired-landline').value.trim();
+      var complaintDate = document.getElementById('repaired-complaint-date').value;
+      var lastUpdateDate = document.getElementById('repaired-last-update').value;
+
+      if (!landline) {
+        showAlert('add-repaired-alert', 'أدخل رقم التليفون الأرضي', 'error');
+        return;
+      }
+      if (!complaintDate || !lastUpdateDate) {
+        showAlert('add-repaired-alert', 'اختر تاريخ الشكوى وتاريخ آخر تحديث', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('add-repaired-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري الإضافة...';
+      hideAlert('add-repaired-alert');
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          btn.textContent = 'إضافة للشيت وإتاحة التقييم';
+          showAlert('add-repaired-alert', result.message, 'success');
+          resetRepairedForm();
+          currentFilter = 'resolved';
+          loadTickets();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'إضافة للشيت وإتاحة التقييم';
+          showAlert('add-repaired-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralAddRepairedLandline({
+          pin: currentPin,
+          landline: landline,
+          complaintDate: complaintDate,
+          lastUpdateDate: lastUpdateDate
+        });
     }
 
     document.getElementById('login-btn').addEventListener('click', function () {
@@ -1005,6 +1150,8 @@
     });
 
     document.getElementById('refresh-btn').addEventListener('click', loadTickets);
+    document.getElementById('add-repaired-btn').addEventListener('click', submitRepairedLandline);
+    initRepairedFormDates();
 
     document.getElementById('search-input').addEventListener('input', function () {
       clearTimeout(window._searchTimer);
@@ -1040,6 +1187,7 @@
     currentPin = getPin();
     if (currentPin) {
       showSection('main');
+      initRepairedFormDates();
       loadTickets();
       startAutoRefresh();
     } else {

@@ -388,6 +388,14 @@
       margin-top: 8px;
     }
 
+    .no-report-modal-box .modal-icon {
+      background: var(--primary-light);
+    }
+
+    .no-report-modal-box h3 {
+      color: var(--primary);
+    }
+
     .btn-warning {
       background: transparent;
       color: var(--warning);
@@ -694,8 +702,8 @@
       line-height: 1.5;
     }
   </style>
-  <script src="config.js"></script>
-  <script src="api-bridge.js"></script>
+  <script src="config.js?v=4"></script>
+  <script src="api-bridge.js?v=4"></script>
 </head>
 <body>
   <div class="app">
@@ -902,11 +910,45 @@
     </div>
   </div>
 
+  <div id="no-report-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="no-report-modal-title">
+    <div class="modal-box reopen-modal-box no-report-modal-box">
+      <div id="no-report-step-info">
+        <div class="modal-icon">ℹ️</div>
+        <h3 id="no-report-modal-title">لا يوجد بلاغ على هذا الرقم</h3>
+        <p class="modal-detail">لا يوجد بلاغ مسجّل على رقم التليفون الأرضي المدخل.<br>للتواصل مع السنترال وتسجيل بلاغ جديد، اضغط <strong>استمرار</strong>.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="no-report-continue-btn">استمرار</button>
+          <button type="button" class="btn btn-outline btn-sm" id="no-report-cancel-btn">إلغاء</button>
+        </div>
+      </div>
+      <div id="no-report-step-form" class="hidden">
+        <div class="modal-icon">📋</div>
+        <h3>تسجيل بلاغ جديد</h3>
+        <p class="modal-detail">اختر سبب الإبلاغ وسيصل البلاغ إلى السنترال في شيت «ابلاغ عميل»</p>
+        <div id="no-report-modal-alert" class="alert"></div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label for="no-report-reason">سبب الإبلاغ</label>
+          <select id="no-report-reason">
+            <option value="">— اختر السبب —</option>
+            <option value="انقطاع الخدمة">انقطاع الخدمة</option>
+            <option value="ضعف كفاءة الخط">ضعف كفاءة الخط</option>
+            <option value="طلب صيانة للخط">طلب صيانة للخط</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="no-report-submit-btn">إرسال البلاغ للسنترال</button>
+          <button type="button" class="btn btn-outline btn-sm" id="no-report-back-btn">رجوع</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let refreshTimer = null;
     let currentFollow = { landline: '', mobile: '' };
     let ratings = { fault: 0, tech: 0 };
     let confirmModalResolver = null;
+    let pendingNewReport = { landline: '', mobile: '' };
     const DEVICE_FP_KEY = 'tfr_device_fp_v1';
 
     function hashString(str) {
@@ -973,8 +1015,33 @@
 
     function updateBodyScrollLock() {
       var locked = !document.getElementById('confirm-modal').classList.contains('hidden') ||
-        !document.getElementById('reopen-modal').classList.contains('hidden');
+        !document.getElementById('reopen-modal').classList.contains('hidden') ||
+        !document.getElementById('no-report-modal').classList.contains('hidden');
       document.body.style.overflow = locked ? 'hidden' : '';
+    }
+
+    function isLandlineNotFoundError(message) {
+      return String(message || '').indexOf('لم يتم العثور على بلاغ بهذا الرقم الأرضي') !== -1;
+    }
+
+    function openNoReportModal(landline, mobile) {
+      pendingNewReport = { landline: landline, mobile: mobile };
+      hideAlert('no-report-modal-alert');
+      document.getElementById('no-report-reason').value = '';
+      document.getElementById('no-report-step-info').classList.remove('hidden');
+      document.getElementById('no-report-step-form').classList.add('hidden');
+      document.getElementById('no-report-modal').classList.remove('hidden');
+      updateBodyScrollLock();
+    }
+
+    function closeNoReportModal() {
+      document.getElementById('no-report-modal').classList.add('hidden');
+      updateBodyScrollLock();
+    }
+
+    function showNoReportFormStep() {
+      document.getElementById('no-report-step-info').classList.add('hidden');
+      document.getElementById('no-report-step-form').classList.remove('hidden');
     }
 
     function showConfirmModal(options) {
@@ -1191,6 +1258,7 @@
         .withSuccessHandler(function (data) {
           setLoading(false);
           renderStatus(data);
+          startAutoRefresh();
           if (data.mobile) {
             currentFollow.mobile = data.mobile;
             document.getElementById('follow-mobile').value = data.mobile;
@@ -1207,6 +1275,11 @@
         })
         .withFailureHandler(function (err) {
           setLoading(false);
+          if (!silent && isLandlineNotFoundError(err.message)) {
+            stopAutoRefresh();
+            openNoReportModal(landline, mobile);
+            return;
+          }
           if (!silent) showAlert('follow-alert', err.message || 'حدث خطأ', 'error');
         })
         .getStatus({
@@ -1223,7 +1296,6 @@
       var mobile = document.getElementById('follow-mobile').value;
       currentFollow = { landline: landline, mobile: mobile };
       fetchStatus(landline, mobile, false);
-      startAutoRefresh();
     });
 
     document.querySelectorAll('.access-tab').forEach(function (tab) {
@@ -1339,6 +1411,54 @@
     document.getElementById('reopen-cancel-btn').addEventListener('click', closeReopenModal);
     document.getElementById('reopen-modal').addEventListener('click', function (e) {
       if (e.target === document.getElementById('reopen-modal')) closeReopenModal();
+    });
+
+    document.getElementById('no-report-continue-btn').addEventListener('click', showNoReportFormStep);
+    document.getElementById('no-report-cancel-btn').addEventListener('click', closeNoReportModal);
+    document.getElementById('no-report-back-btn').addEventListener('click', function () {
+      document.getElementById('no-report-step-form').classList.add('hidden');
+      document.getElementById('no-report-step-info').classList.remove('hidden');
+    });
+    document.getElementById('no-report-modal').addEventListener('click', function (e) {
+      if (e.target === document.getElementById('no-report-modal')) closeNoReportModal();
+    });
+
+    document.getElementById('no-report-submit-btn').addEventListener('click', function () {
+      hideAlert('no-report-modal-alert');
+
+      var reason = document.getElementById('no-report-reason').value;
+      if (!reason) {
+        showAlert('no-report-modal-alert', 'يرجى اختيار سبب الإبلاغ', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('no-report-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري الإرسال...';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          btn.textContent = 'إرسال البلاغ للسنترال';
+          closeNoReportModal();
+          currentFollow = {
+            landline: pendingNewReport.landline,
+            mobile: pendingNewReport.mobile
+          };
+          showAlert('follow-alert', result.message || 'تم إرسال البلاغ بنجاح', 'success');
+          fetchStatus(currentFollow.landline, currentFollow.mobile, false);
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'إرسال البلاغ للسنترال';
+          showAlert('no-report-modal-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .submitReport({
+          landline: pendingNewReport.landline,
+          mobile: pendingNewReport.mobile,
+          deviceFp: deviceFingerprint,
+          reason: reason
+        });
     });
 
     // إعادة فتح البلاغ

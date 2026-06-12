@@ -151,6 +151,8 @@ function doPost(e) {
       result = centralGetTicket(payload);
     } else if (fn === 'centralUpdateTicket') {
       result = centralUpdateTicket(payload);
+    } else if (fn === 'centralAddRepairedLandline') {
+      result = centralAddRepairedLandline(payload);
     } else {
       throw new Error('دالة غير معروفة');
     }
@@ -342,42 +344,44 @@ function findLatestByLandline_(landline) {
 }
 
 function findLatestRowForCustomer_(landline, mobile) {
-  const sheet = getSheet_();
-  const data = sheet.getDataRange().getValues();
-  const targetLandline = normalizeLandlineForMatch_(landline);
   const targetMobile = normalizeMobileForMatch_(mobile);
+  const latest = findLatestByLandline_(landline);
 
-  for (let i = data.length - 1; i >= 1; i--) {
-    const rowLandline = normalizeLandlineForMatch_(data[i][COL.LANDLINE - 1]);
-    if (rowLandline !== targetLandline) continue;
+  if (latest.row === -1) {
+    return {
+      sheet: latest.sheet,
+      data: latest.data,
+      row: -1,
+      index: -1,
+      needsMobileRegistration: false
+    };
+  }
 
-    const storedMobile = normalizeMobileForMatch_(data[i][COL.MOBILE - 1]);
-    const rowNumber = i + 1;
+  const storedMobile = normalizeMobileForMatch_(latest.data[latest.index][COL.MOBILE - 1]);
 
-    if (isEmptyMobile_(data[i][COL.MOBILE - 1])) {
-      return {
-        sheet: sheet,
-        data: data,
-        row: rowNumber,
-        index: i,
-        needsMobileRegistration: true
-      };
-    }
+  if (isEmptyMobile_(latest.data[latest.index][COL.MOBILE - 1])) {
+    return {
+      sheet: latest.sheet,
+      data: latest.data,
+      row: latest.row,
+      index: latest.index,
+      needsMobileRegistration: true
+    };
+  }
 
-    if (storedMobile === targetMobile) {
-      return {
-        sheet: sheet,
-        data: data,
-        row: rowNumber,
-        index: i,
-        needsMobileRegistration: false
-      };
-    }
+  if (storedMobile === targetMobile) {
+    return {
+      sheet: latest.sheet,
+      data: latest.data,
+      row: latest.row,
+      index: latest.index,
+      needsMobileRegistration: false
+    };
   }
 
   return {
-    sheet: sheet,
-    data: data,
+    sheet: latest.sheet,
+    data: latest.data,
     row: -1,
     index: -1,
     needsMobileRegistration: false
@@ -395,7 +399,7 @@ function getCustomerAccessError_(landline, mobile) {
   const targetMobile = normalizeMobileForMatch_(mobile);
 
   if (storedMobile && storedMobile !== targetMobile) {
-    return 'رقم الموبايل غير مسجل لهذا الخط. تحقق من الرقم أو استخدم «تغيير رقم الموبايل» أدناه.';
+    return 'رقم الموبايل المُدخل مختلف عن الرقم المسجّل مسبقاً لهذا الخط. استخدم الرقم الصحيح أو «تغيير رقم الموبايل» أدناه.';
   }
 
   return 'لم يتم العثور على بلاغ بهذا الرقم. تأكد من البيانات المدخلة.';
@@ -500,30 +504,29 @@ function canCentralSendNotification_(status, notifications) {
   return lastReopenIdx > lastResolutionIdx;
 }
 
-function getLineKey_(landline, mobile) {
-  return normalizeLandlineForMatch_(landline) + '|' + normalizeMobileForMatch_(mobile);
+function getLineKey_(landline) {
+  return normalizeLandlineForMatch_(landline);
 }
 
-/** أحدث صف لكل خط (أرضي + موبايل) — للعرض في لوحة السنترال فقط */
+/** أحدث صف لكل خط أرضي — للعرض في لوحة السنترال فقط */
 function getLatestRowByLine_(data) {
   const latest = {};
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
-    latest[getLineKey_(row[COL.LANDLINE - 1], row[COL.MOBILE - 1])] = i + 1;
+    latest[getLineKey_(row[COL.LANDLINE - 1])] = i + 1;
   }
   return latest;
 }
 
 function isLatestTicketForLine_(rowNumber, row, latestByLine) {
-  const key = getLineKey_(row[COL.LANDLINE - 1], row[COL.MOBILE - 1]);
+  const key = getLineKey_(row[COL.LANDLINE - 1]);
   return latestByLine[key] === rowNumber;
 }
 
 function getTicketArchive_(landline, mobile, excludeRow) {
   const data = getSheet_().getDataRange().getValues();
   const targetLandline = normalizeLandlineForMatch_(landline);
-  const targetMobile = normalizeMobileForMatch_(mobile);
   const archive = [];
 
   for (let i = 1; i < data.length; i++) {
@@ -534,8 +537,7 @@ function getTicketArchive_(landline, mobile, excludeRow) {
     if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
 
     const rowLandline = normalizeLandlineForMatch_(row[COL.LANDLINE - 1]);
-    const rowMobile = normalizeMobileForMatch_(row[COL.MOBILE - 1]);
-    if (rowLandline !== targetLandline || rowMobile !== targetMobile) continue;
+    if (rowLandline !== targetLandline) continue;
 
     const lastUpdate = row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '';
     const notifications = parseNotifications_(row[COL.NOTIFICATION - 1], lastUpdate);
@@ -776,6 +778,76 @@ function formatDate_(value) {
   const d = value instanceof Date ? value : new Date(value);
   if (isNaN(d.getTime())) return String(value);
   return Utilities.formatDate(d, Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
+}
+
+function parseDateInput_(value, label) {
+  const str = String(value || '').trim();
+  if (!str) {
+    throw new Error('يرجى اختيار ' + label);
+  }
+
+  const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const d = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]), 10, 0, 0);
+    if (!isNaN(d.getTime())) {
+      return d;
+    }
+  }
+
+  throw new Error(label + ' غير صالح');
+}
+
+const CENTRAL_REPAIRED_REASON = 'عطل';
+const CENTRAL_REPAIRED_NOTIFICATION = 'تم إصلاح العطل بنجاح';
+
+function centralAddRepairedLandline(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const landline = validateLandline_(payload.landline);
+  const complaintDate = parseDateInput_(payload.complaintDate, 'تاريخ الشكوى');
+  const lastUpdateDate = parseDateInput_(payload.lastUpdateDate, 'تاريخ آخر تحديث');
+
+  if (lastUpdateDate.getTime() < complaintDate.getTime()) {
+    throw new Error('تاريخ آخر تحديث يجب أن يكون بعد أو يساوي تاريخ الشكوى');
+  }
+
+  const latest = findLatestByLandline_(landline);
+  if (latest.row !== -1) {
+    const status = String(latest.data[latest.index][COL.STATUS - 1] || '');
+    if (!isResolvedStatus_(status)) {
+      throw new Error('يوجد بلاغ مفتوح لهذا الخط. أغلقه أولاً أو حدّثه من القائمة.');
+    }
+    const rated = latest.data[latest.index][COL.RATING_FAULT - 1] ||
+      latest.data[latest.index][COL.RATING_TECH - 1];
+    if (!rated) {
+      throw new Error('يوجد بلاغ سابق بانتظار تقييم العميل لهذا الخط.');
+    }
+  }
+
+  const sheet = getSheet_();
+  const notification = appendNotificationLine_('', CENTRAL_REPAIRED_NOTIFICATION, lastUpdateDate);
+
+  sheet.appendRow([
+    complaintDate,
+    landline,
+    CENTRAL_REPAIRED_REASON,
+    '',
+    STATUS_RESOLVED,
+    notification,
+    lastUpdateDate,
+    '',
+    '',
+    '',
+    '',
+    ''
+  ]);
+
+  return {
+    success: true,
+    message: 'تمت إضافة الخط المُصلح. يمكن للعميل البحث بالرقم الأرضي وتسجيل الموبايل للتقييم.',
+    landline: landline
+  };
 }
 
 function findLatestRow_(landline, mobile) {
