@@ -389,7 +389,43 @@
       pointer-events: none;
     }
 
-    .add-repaired-card { margin-bottom: 16px; }
+    .add-repaired-card {
+      margin-bottom: 16px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .add-repaired-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 18px 20px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: right;
+    }
+
+    .add-repaired-toggle .card-title { margin: 0; }
+
+    .add-repaired-chevron {
+      flex-shrink: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      transition: transform 0.2s;
+    }
+
+    .add-repaired-card.is-open .add-repaired-chevron {
+      transform: rotate(180deg);
+    }
+
+    .add-repaired-body {
+      padding: 0 20px 22px;
+      border-top: 1px solid var(--border);
+    }
 
     .form-row-2 {
       display: grid;
@@ -706,8 +742,12 @@
 
       <div id="tickets-panel">
       <div class="card add-repaired-card" id="add-repaired-card">
-        <div class="card-title">➕ إضافة خط أرضي مُصلح للتقييم</div>
-        <p style="font-size:0.82rem;color:var(--muted);margin:-8px 0 14px">
+        <button type="button" class="add-repaired-toggle" id="add-repaired-toggle" aria-expanded="false">
+          <span class="card-title">➕ إضافة خط أرضي مُصلح للتقييم</span>
+          <span class="add-repaired-chevron" aria-hidden="true">▼</span>
+        </button>
+        <div class="add-repaired-body hidden" id="add-repaired-body">
+        <p style="font-size:0.82rem;color:var(--muted);margin:14px 0">
           أدخل بيانات الخط المُصلح ليظهر في شيت «ابلاغ عميل» ويتمكن العميل من التقييم
         </p>
         <div id="add-repaired-alert" class="alert"></div>
@@ -736,6 +776,7 @@
           </div>
         </div>
         <button type="button" class="btn btn-primary" id="add-repaired-btn" style="margin-top:16px">إضافة للشيت وإتاحة التقييم</button>
+        </div>
       </div>
 
       <div id="list-alert" class="alert"></div>
@@ -1398,6 +1439,15 @@
       window._ratedSearchTimer = setTimeout(loadRatedTickets, 350);
     });
     document.getElementById('add-repaired-btn').addEventListener('click', submitRepairedLandline);
+    document.getElementById('add-repaired-toggle').addEventListener('click', function () {
+      var card = document.getElementById('add-repaired-card');
+      var body = document.getElementById('add-repaired-body');
+      var toggle = document.getElementById('add-repaired-toggle');
+      body.classList.toggle('hidden');
+      var isOpen = !body.classList.contains('hidden');
+      card.classList.toggle('is-open', isOpen);
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
     initRepairedFormDates();
 
     document.getElementById('search-input').addEventListener('input', function () {
