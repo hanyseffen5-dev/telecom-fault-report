@@ -196,6 +196,19 @@
     .toolbar input { flex: 1; min-width: 180px; margin: 0; }
     .toolbar .btn { width: auto; white-space: nowrap; }
 
+    .toolbar-actions {
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+
+    .tickets-search-toolbar {
+      margin-bottom: 16px;
+    }
+
+    .tickets-search-toolbar input {
+      width: 100%;
+    }
+
     .ticket-list { display: flex; flex-direction: column; gap: 10px; }
 
     .ticket-card {
@@ -734,8 +747,7 @@
     <section id="main-section" class="hidden">
       <div class="stats" id="stats-bar"></div>
 
-      <div class="toolbar">
-        <input type="search" id="search-input" placeholder="بحث برقم الخط أو الموبايل..." />
+      <div class="toolbar toolbar-actions">
         <button type="button" class="btn btn-outline btn-sm" id="refresh-btn">تحديث</button>
         <button type="button" class="btn btn-outline btn-sm" id="logout-btn">خروج</button>
       </div>
@@ -777,6 +789,10 @@
         </div>
         <button type="button" class="btn btn-primary" id="add-repaired-btn" style="margin-top:16px">إضافة للشيت وإتاحة التقييم</button>
         </div>
+      </div>
+
+      <div class="toolbar tickets-search-toolbar" id="tickets-search-toolbar">
+        <input type="search" id="search-input" placeholder="بحث برقم الخط أو الموبايل..." />
       </div>
 
       <div id="list-alert" class="alert"></div>
@@ -920,7 +936,6 @@
       var isRated = currentFilter === 'rated';
       document.getElementById('tickets-panel').classList.toggle('hidden', isRated);
       document.getElementById('rated-section').classList.toggle('hidden', !isRated);
-      document.getElementById('search-input').classList.toggle('hidden', isRated);
     }
 
     function renderStats(counts) {
