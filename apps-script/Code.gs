@@ -634,15 +634,30 @@ function ticketMatchesFilter_(status, filter) {
 
 function ticketMatchesSearch_(row, query) {
   if (!query) return true;
-  const q = query.toLowerCase();
+
+  const qRaw = String(query).trim().toLowerCase();
+  const reason = String(row[COL.REASON - 1] || '').toLowerCase();
+  if (reason.indexOf(qRaw) !== -1) return true;
+
   const landline = normalizeLandlineForMatch_(row[COL.LANDLINE - 1]);
   const mobile = normalizeMobileForMatch_(row[COL.MOBILE - 1]);
-  const reason = String(row[COL.REASON - 1] || '').toLowerCase();
-  return landline.indexOf(q) !== -1 ||
-    mobile.indexOf(q) !== -1 ||
-    reason.indexOf(q) !== -1 ||
-    String(row[COL.LANDLINE - 1] || '').indexOf(q) !== -1 ||
-    String(row[COL.MOBILE - 1] || '').indexOf(q) !== -1;
+  const qLandline = normalizeLandlineForMatch_(query);
+  const qMobile = normalizeMobileForMatch_(query);
+
+  if (qLandline && landline.indexOf(qLandline) !== -1) return true;
+  if (qMobile && mobile.indexOf(qMobile) !== -1) return true;
+
+  const qDigits = digitsOnly_(query).replace(/^0+/, '');
+  if (qDigits) {
+    const landDigits = digitsOnly_(row[COL.LANDLINE - 1]).replace(/^0+/, '');
+    const mobDigits = digitsOnly_(row[COL.MOBILE - 1]).replace(/^0+/, '');
+    if (landDigits.indexOf(qDigits) !== -1) return true;
+    if (mobDigits.indexOf(qDigits) !== -1) return true;
+  }
+
+  const rawLandline = String(row[COL.LANDLINE - 1] || '').toLowerCase();
+  const rawMobile = String(row[COL.MOBILE - 1] || '').toLowerCase();
+  return rawLandline.indexOf(qRaw) !== -1 || rawMobile.indexOf(qRaw) !== -1;
 }
 
 function getTicketRow_(rowNumber) {

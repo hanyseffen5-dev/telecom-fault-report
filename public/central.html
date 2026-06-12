@@ -751,8 +751,7 @@
         { key: 'active', label: 'مفتوحة', num: counts.active || 0 },
         { key: 'جديد', label: 'جديد', num: counts['جديد'] || 0 },
         { key: 'قيد المعالجة', label: 'قيد المعالجة', num: counts['قيد المعالجة'] || 0 },
-        { key: 'إعادة فتح', label: 'إعادة فتح', num: counts['إعادة فتح'] || 0 },
-        { key: 'resolved', label: 'تم الحل', num: counts.resolved || 0 }
+        { key: 'إعادة فتح', label: 'إعادة فتح', num: counts['إعادة فتح'] || 0 }
       ];
 
       document.getElementById('stats-bar').innerHTML = items.map(function (item) {
@@ -808,13 +807,18 @@
       document.getElementById('list-loader').classList.remove('hidden');
       hideAlert('list-alert');
 
-      var apiFilter = currentFilter === 'active' ? 'all' : currentFilter;
+      var searchVal = document.getElementById('search-input').value.trim();
+      var listFilter = currentFilter === 'resolved' ? 'active' : currentFilter;
+      var apiFilter = listFilter === 'active' ? 'all' : listFilter;
+      if (searchVal) {
+        apiFilter = 'all';
+      }
 
       google.script.run
         .withSuccessHandler(function (data) {
           document.getElementById('list-loader').classList.add('hidden');
           var counts = normalizeCounts(data.counts);
-          var tickets = applyClientFilter(data.tickets || [], currentFilter);
+          var tickets = applyClientFilter(data.tickets || [], searchVal ? 'all' : listFilter);
           renderStats(counts);
           renderTicketList(tickets);
         })
@@ -825,7 +829,7 @@
         .centralListTickets({
           pin: currentPin,
           filter: apiFilter,
-          search: document.getElementById('search-input').value
+          search: searchVal
         });
     }
 
@@ -1115,7 +1119,6 @@
           btn.textContent = 'إضافة للشيت وإتاحة التقييم';
           showAlert('add-repaired-alert', result.message, 'success');
           resetRepairedForm();
-          currentFilter = 'resolved';
           loadTickets();
         })
         .withFailureHandler(function (err) {
