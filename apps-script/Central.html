@@ -412,6 +412,118 @@
       .form-row-2 { grid-template-columns: 1fr; }
     }
 
+    .rated-section { margin-top: 20px; }
+
+    .rated-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .rated-count-badge {
+      background: var(--success-bg);
+      color: var(--success);
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid #a5d6a7;
+    }
+
+    .rated-section-hint {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .rated-toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+
+    .rated-toolbar input { flex: 1; margin: 0; min-width: 0; }
+    .rated-toolbar .btn { width: auto; margin: 0; white-space: nowrap; }
+
+    .rated-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .rated-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      border-right: 4px solid var(--success);
+    }
+
+    .rated-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .rated-phone { font-weight: 700; font-size: 1rem; }
+    .rated-phone .ltr { direction: ltr; display: inline-block; }
+
+    .rated-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin-bottom: 10px;
+    }
+
+    .rated-meta .ltr { direction: ltr; display: inline-block; }
+
+    .rated-scores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .rated-score {
+      background: var(--success-bg);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid #c8e6c9;
+    }
+
+    .rated-score .lbl {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .rated-score .star-row { color: #f9a825; letter-spacing: 1px; }
+    .rated-score .star-num { font-size: 0.82rem; font-weight: 700; color: var(--success); }
+
+    .rated-comment {
+      font-size: 0.88rem;
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .rated-comment.muted { color: var(--muted); font-style: italic; }
+
+    .rated-card-footer { display: flex; justify-content: flex-end; }
+    .rated-card-footer .btn { width: auto; margin: 0; }
+    .rated-no-archive { font-size: 0.78rem; color: var(--muted); }
+
+    @media (max-width: 560px) {
+      .rated-scores { grid-template-columns: 1fr; }
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -632,6 +744,25 @@
       </div>
       <div id="ticket-list" class="ticket-list"></div>
       <div id="empty-state" class="empty-state hidden">لا توجد بلاغات مطابقة</div>
+
+      <div class="card rated-section" id="rated-section">
+        <div class="rated-section-header">
+          <div class="card-title" style="margin:0">⭐ تقييمات العملاء</div>
+          <span class="rated-count-badge" id="rated-count-badge">0</span>
+        </div>
+        <p class="rated-section-hint">البلاغات التي تم حلها وحصلت على تقييم من العميل</p>
+        <div class="rated-toolbar">
+          <input type="search" id="rated-search-input" placeholder="بحث برقم الخط أو الموبايل في التقييمات..." />
+          <button type="button" class="btn btn-outline btn-sm" id="rated-refresh-btn">تحديث</button>
+        </div>
+        <div id="rated-alert" class="alert"></div>
+        <div id="rated-loader" class="loader hidden">
+          <div class="spinner"></div>
+          جاري تحميل التقييمات...
+        </div>
+        <div id="rated-list" class="rated-list"></div>
+        <div id="rated-empty" class="empty-state hidden">لا توجد تقييمات بعد</div>
+      </div>
     </section>
 
     <!-- تفاصيل البلاغ -->
@@ -925,8 +1056,96 @@
 
     function openArchiveModal() {
       if (!currentTicket) return;
+      document.getElementById('archive-modal-title').textContent = '📁 أرشيف شكاوى الخط';
       renderArchiveModal(currentTicket.archive || []);
       document.getElementById('archive-modal').classList.remove('hidden');
+    }
+
+    function starsHtml(n) {
+      n = Math.max(0, Math.min(5, Number(n) || 0));
+      var stars = '';
+      var i;
+      for (i = 0; i < 5; i++) {
+        stars += i < n ? '★' : '☆';
+      }
+      return '<span class="star-row">' + stars + '</span> <span class="star-num">' + n + '/5</span>';
+    }
+
+    function renderRatedList(tickets) {
+      var list = document.getElementById('rated-list');
+      var empty = document.getElementById('rated-empty');
+
+      if (!tickets.length) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      list.innerHTML = tickets.map(function (t) {
+        var commentHtml = t.comment
+          ? '<div class="rated-comment">💬 «' + escapeHtml(t.comment) + '»</div>'
+          : '<div class="rated-comment muted">— بدون تعليق —</div>';
+        var archiveHtml = t.archiveCount > 0
+          ? '<button type="button" class="btn btn-outline btn-sm rated-archive-btn" data-row="' + t.row + '">📁 أرشيف هذا الرقم (' + t.archiveCount + ')</button>'
+          : '<span class="rated-no-archive">لا يوجد أرشيف سابق</span>';
+
+        return '<div class="rated-card">' +
+          '<div class="rated-card-top">' +
+            '<div class="rated-phone">☎ <span class="ltr">' + escapeHtml(t.landline) + '</span></div>' +
+            statusBadge(t.status) +
+          '</div>' +
+          '<div class="rated-meta">' +
+            '<span>📱 <span class="ltr">' + escapeHtml(t.mobile || '—') + '</span></span>' +
+            '<span>📋 ' + escapeHtml(t.reason) + '</span>' +
+            '<span>🕐 ' + escapeHtml(t.date) + '</span>' +
+          '</div>' +
+          '<div class="rated-scores">' +
+            '<div class="rated-score"><span class="lbl">تقييم إزالة العطل</span>' + starsHtml(t.ratingFault) + '</div>' +
+            '<div class="rated-score"><span class="lbl">تقييم تعامل الفني</span>' + starsHtml(t.ratingTech) + '</div>' +
+          '</div>' +
+          commentHtml +
+          '<div class="rated-card-footer">' + archiveHtml + '</div>' +
+        '</div>';
+      }).join('');
+
+      list.querySelectorAll('.rated-archive-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var row = Number(btn.dataset.row);
+          var ticket = tickets.find(function (t) { return t.row === row; });
+          if (ticket) openRatedArchive(ticket);
+        });
+      });
+    }
+
+    function openRatedArchive(ticket) {
+      document.getElementById('archive-modal-title').textContent =
+        '📁 أرشيف شكاوى الخط — ' + ticket.landline;
+      renderArchiveModal(ticket.archive || []);
+      document.getElementById('archive-modal').classList.remove('hidden');
+    }
+
+    function loadRatedTickets() {
+      if (!currentPin) return;
+
+      document.getElementById('rated-loader').classList.remove('hidden');
+      hideAlert('rated-alert');
+
+      google.script.run
+        .withSuccessHandler(function (data) {
+          document.getElementById('rated-loader').classList.add('hidden');
+          document.getElementById('rated-count-badge').textContent = data.total || 0;
+          renderRatedList(data.tickets || []);
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('rated-loader').classList.add('hidden');
+          showAlert('rated-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralListRatedTickets({
+          pin: currentPin,
+          search: document.getElementById('rated-search-input').value
+        });
     }
 
     function closeArchiveModal() {
@@ -1053,6 +1272,7 @@
           showSection('main');
           initRepairedFormDates();
           loadTickets();
+          loadRatedTickets();
           startAutoRefresh();
         })
         .withFailureHandler(function (err) {
@@ -1065,7 +1285,10 @@
 
     function startAutoRefresh() {
       stopAutoRefresh();
-      refreshTimer = setInterval(loadTickets, 45000);
+      refreshTimer = setInterval(function () {
+        loadTickets();
+        loadRatedTickets();
+      }, 45000);
     }
 
     function stopAutoRefresh() {
@@ -1153,6 +1376,12 @@
     });
 
     document.getElementById('refresh-btn').addEventListener('click', loadTickets);
+    document.getElementById('refresh-btn').addEventListener('click', loadRatedTickets);
+    document.getElementById('rated-refresh-btn').addEventListener('click', loadRatedTickets);
+    document.getElementById('rated-search-input').addEventListener('input', function () {
+      clearTimeout(window._ratedSearchTimer);
+      window._ratedSearchTimer = setTimeout(loadRatedTickets, 350);
+    });
     document.getElementById('add-repaired-btn').addEventListener('click', submitRepairedLandline);
     initRepairedFormDates();
 
@@ -1192,6 +1421,7 @@
       showSection('main');
       initRepairedFormDates();
       loadTickets();
+      loadRatedTickets();
       startAutoRefresh();
     } else {
       showSection('login');

@@ -745,6 +745,63 @@ function rowToCentralObject(row, rowNumber) {
   return { ...base, row: rowNumber };
 }
 
+function isTicketRated(row) {
+  return !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]);
+}
+
+function countRatedTickets(data) {
+  let count = 0;
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
+    const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+    if (!isResolvedStatus(status) || !isTicketRated(row)) continue;
+    count++;
+  }
+  return count;
+}
+
+async function centralListRatedTickets(payload) {
+  verifyCentralAuth(payload.pin);
+  await ensureHeaders();
+
+  const search = String(payload.search || '').trim().toLowerCase();
+  const data = await getAllRows();
+  const tickets = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
+
+    const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+    if (!isResolvedStatus(status) || !isTicketRated(row)) continue;
+    if (!ticketMatchesSearch(row, search)) continue;
+
+    const rowNumber = i + 1;
+    const landline = String(row[COL.LANDLINE - 1] || '');
+    const mobile = String(row[COL.MOBILE - 1] || '');
+    const archive = await getTicketArchive(landline, mobile, rowNumber);
+
+    tickets.push({
+      row: rowNumber,
+      date: row[COL.DATE - 1] ? formatDate(row[COL.DATE - 1]) : '',
+      landline,
+      mobile,
+      reason: String(row[COL.REASON - 1] || ''),
+      status,
+      lastUpdate: row[COL.LAST_UPDATE - 1] ? formatDate(row[COL.LAST_UPDATE - 1]) : '',
+      ratingFault: row[COL.RATING_FAULT - 1] || '',
+      ratingTech: row[COL.RATING_TECH - 1] || '',
+      comment: String(row[COL.COMMENT - 1] || ''),
+      archiveCount: archive.length,
+      archive
+    });
+  }
+
+  tickets.sort((a, b) => b.row - a.row);
+  return { tickets, total: tickets.length };
+}
+
 async function centralListTickets(payload) {
   verifyCentralAuth(payload.pin);
   await ensureHeaders();
@@ -760,7 +817,8 @@ async function centralListTickets(payload) {
     [STATUS_NEW]: 0,
     [STATUS_IN_PROGRESS]: 0,
     [STATUS_REOPENED]: 0,
-    resolved: 0
+    resolved: 0,
+    rated: countRatedTickets(data)
   };
 
   for (let i = 1; i < data.length; i++) {
@@ -957,6 +1015,7 @@ module.exports = {
   centralGetTicket,
   centralUpdateTicket,
   centralAddRepairedLandline,
+  centralListRatedTickets,
   hasCredentials,
   resolveSheetTitle
 };

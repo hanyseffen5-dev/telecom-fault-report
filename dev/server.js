@@ -75,7 +75,8 @@ const apiRoutes = [
   'centralListTickets',
   'centralGetTicket',
   'centralUpdateTicket',
-  'centralAddRepairedLandline'
+  'centralAddRepairedLandline',
+  'centralListRatedTickets'
 ];
 
 apiRoutes.forEach(function (route) {

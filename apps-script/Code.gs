@@ -153,6 +153,8 @@ function doPost(e) {
       result = centralUpdateTicket(payload);
     } else if (fn === 'centralAddRepairedLandline') {
       result = centralAddRepairedLandline(payload);
+    } else if (fn === 'centralListRatedTickets') {
+      result = centralListRatedTickets(payload);
     } else {
       throw new Error('دالة غير معروفة');
     }
@@ -670,6 +672,66 @@ function getTicketRow_(rowNumber) {
   return { sheet: sheet, rowNumber: rowNumber, row: row };
 }
 
+function isTicketRated_(row) {
+  return !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]);
+}
+
+function countRatedTickets_(data) {
+  let count = 0;
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
+    const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+    if (!isResolvedStatus_(status) || !isTicketRated_(row)) continue;
+    count++;
+  }
+  return count;
+}
+
+function centralListRatedTickets(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const search = String(payload.search || '').trim().toLowerCase();
+  const data = getSheet_().getDataRange().getValues();
+  const tickets = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
+
+    const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+    if (!isResolvedStatus_(status) || !isTicketRated_(row)) continue;
+    if (!ticketMatchesSearch_(row, search)) continue;
+
+    const rowNumber = i + 1;
+    const landline = String(row[COL.LANDLINE - 1] || '');
+    const mobile = String(row[COL.MOBILE - 1] || '');
+    const archive = getTicketArchive_(landline, mobile, rowNumber);
+
+    tickets.push({
+      row: rowNumber,
+      date: row[COL.DATE - 1] ? formatDate_(row[COL.DATE - 1]) : '',
+      landline: landline,
+      mobile: mobile,
+      reason: String(row[COL.REASON - 1] || ''),
+      status: status,
+      lastUpdate: row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '',
+      ratingFault: row[COL.RATING_FAULT - 1] || '',
+      ratingTech: row[COL.RATING_TECH - 1] || '',
+      comment: String(row[COL.COMMENT - 1] || ''),
+      archiveCount: archive.length,
+      archive: archive
+    });
+  }
+
+  tickets.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return { tickets: tickets, total: tickets.length };
+}
+
 function centralListTickets(payload) {
   verifyCentralAuth_(payload.pin);
   ensureHeaders_();
@@ -685,7 +747,8 @@ function centralListTickets(payload) {
     [STATUS_NEW]: 0,
     [STATUS_IN_PROGRESS]: 0,
     [STATUS_REOPENED]: 0,
-    resolved: 0
+    resolved: 0,
+    rated: countRatedTickets_(data)
   };
 
   for (let i = 1; i < data.length; i++) {

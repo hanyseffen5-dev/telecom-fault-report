@@ -112,6 +112,13 @@ async function centralAddRepairedLandline(payload) {
   return sheets.centralAddRepairedLandline(payload);
 }
 
+async function centralListRatedTickets(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralListRatedTickets', payload);
+  }
+  return sheets.centralListRatedTickets(payload);
+}
+
 function getBackendMode() {
   if (useAppsScriptProxy()) {
     return 'apps-script';
@@ -133,5 +140,6 @@ module.exports = {
   centralGetTicket,
   centralUpdateTicket,
   centralAddRepairedLandline,
+  centralListRatedTickets,
   getBackendMode
 };
