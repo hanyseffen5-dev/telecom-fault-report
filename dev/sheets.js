@@ -16,7 +16,10 @@ const COL = {
   LAST_UPDATE: 7,
   RATING_FAULT: 8,
   RATING_TECH: 9,
-  COMMENT: 10
+  COMMENT: 10,
+  DEVICE_FP: 11,
+  RATING_DEVICE_FP: 12,
+  RATING_FLAG: 13
 };
 
 const HEADERS = [
@@ -29,7 +32,10 @@ const HEADERS = [
   'تاريخ آخر تحديث',
   'تقييم إزالة العطل',
   'تقييم الفني',
-  'تعليق العميل'
+  'تعليق العميل',
+  'بصمة الجهاز',
+  'بصمة جهاز التقييم',
+  'تقييم متاح'
 ];
 
 const STATUS_NEW = 'جديد';
@@ -303,10 +309,15 @@ function parseDateInput(value, label) {
 }
 
 const CENTRAL_REPAIRED_REASON = 'عطل';
+const RATING_FLAG_YES = 'نعم';
+const RATING_FLAG_NO = 'لا';
 const RATING_ENABLED_MARKER = '[تقييم متاح]';
-const CENTRAL_REPAIRED_NOTIFICATION = RATING_ENABLED_MARKER + ' تم إصلاح العطل بنجاح';
+const CENTRAL_REPAIRED_NOTIFICATION = 'تم إصلاح العطل بنجاح';
 
 function isRatingEligibleRow(row) {
+  const flag = String(row[COL.RATING_FLAG - 1] || '').trim();
+  if (flag === RATING_FLAG_YES) return true;
+  if (flag === RATING_FLAG_NO) return false;
   const notification = String(row[COL.NOTIFICATION - 1] || '');
   return notification.includes(RATING_ENABLED_MARKER);
 }
@@ -375,7 +386,7 @@ async function getAllRows() {
   const sheets = getSheets();
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${title}'!A:J`
+    range: `'${title}'!A:M`
   });
   return response.data.values || [];
 }
@@ -388,7 +399,7 @@ async function ensureHeaders() {
   if (rows.length === 0) {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'${title}'!A1:J1`,
+      range: `'${title}'!A1:M1`,
       valueInputOption: 'RAW',
       requestBody: { values: [HEADERS] }
     });
@@ -400,9 +411,26 @@ async function ensureHeaders() {
   if (needsHeaders) {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'${title}'!A1:J1`,
+      range: `'${title}'!A1:M1`,
       valueInputOption: 'RAW',
       requestBody: { values: [HEADERS] }
+    });
+    return;
+  }
+
+  const updates = [];
+  for (let i = 0; i < HEADERS.length; i++) {
+    if (!firstRow[i] && HEADERS[i]) {
+      updates.push({
+        range: `'${title}'!${colLetter(i + 1)}1`,
+        values: [[HEADERS[i]]]
+      });
+    }
+  }
+  if (updates.length) {
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: SPREADSHEET_ID,
+      requestBody: { valueInputOption: 'RAW', data: updates }
     });
   }
 }
@@ -492,11 +520,11 @@ async function submitReport(payload) {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${title}'!A:J`,
+    range: `'${title}'!A:M`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
-      values: [[now, landline, reason, mobile, STATUS_NEW, '', now, '', '', '']]
+      values: [[now, landline, reason, mobile, STATUS_NEW, '', now, '', '', '', String(payload.deviceFp || ''), '', '']]
     }
   });
 
@@ -694,11 +722,11 @@ async function submitNewComplaint(payload) {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${title}'!A:J`,
+    range: `'${title}'!A:M`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
-      values: [[now, landline, reason, mobile, STATUS_NEW, '', now, '', '', '']]
+      values: [[now, landline, reason, mobile, STATUS_NEW, '', now, '', '', '', String(payload.deviceFp || ''), '', '']]
     }
   });
 
@@ -994,7 +1022,7 @@ async function centralAddRepairedLandline(payload) {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${title}'!A:J`,
+    range: `'${title}'!A:M`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
@@ -1008,7 +1036,10 @@ async function centralAddRepairedLandline(payload) {
         formatDate(lastUpdateDate),
         '',
         '',
-        ''
+        '',
+        '',
+        '',
+        RATING_FLAG_YES
       ]]
     }
   });

@@ -19,7 +19,8 @@ const COL = {
   RATING_TECH: 9,
   COMMENT: 10,
   DEVICE_FP: 11,
-  RATING_DEVICE_FP: 12
+  RATING_DEVICE_FP: 12,
+  RATING_FLAG: 13
 };
 
 const HEADERS = [
@@ -34,8 +35,12 @@ const HEADERS = [
   'تقييم الفني',
   'تعليق العميل',
   'بصمة الجهاز',
-  'بصمة جهاز التقييم'
+  'بصمة جهاز التقييم',
+  'تقييم متاح'
 ];
+
+const RATING_FLAG_YES = 'نعم';
+const RATING_FLAG_NO = 'لا';
 
 const STATUS_NEW = 'جديد';
 const STATUS_IN_PROGRESS = 'قيد المعالجة';
@@ -882,9 +887,13 @@ function parseDateInput_(value, label) {
 
 const CENTRAL_REPAIRED_REASON = 'عطل';
 const RATING_ENABLED_MARKER = '[تقييم متاح]';
-const CENTRAL_REPAIRED_NOTIFICATION = RATING_ENABLED_MARKER + ' تم إصلاح العطل بنجاح';
+const CENTRAL_REPAIRED_NOTIFICATION = 'تم إصلاح العطل بنجاح';
 
 function isRatingEligibleRow_(row) {
+  const flag = String(row[COL.RATING_FLAG - 1] || '').trim();
+  if (flag === RATING_FLAG_YES) return true;
+  if (flag === RATING_FLAG_NO) return false;
+  // توافق مع السجلات القديمة قبل عمود «تقييم متاح»
   const notification = String(row[COL.NOTIFICATION - 1] || '');
   return notification.indexOf(RATING_ENABLED_MARKER) !== -1;
 }
@@ -931,7 +940,8 @@ function centralAddRepairedLandline(payload) {
     '',
     '',
     '',
-    ''
+    '',
+    RATING_FLAG_YES
   ]);
 
   return {
@@ -990,6 +1000,7 @@ function submitReport(payload) {
     '',
     '',
     deviceFp,
+    '',
     ''
   ]);
 
@@ -1217,6 +1228,7 @@ function submitNewComplaint(payload) {
     '',
     '',
     deviceFp,
+    '',
     ''
   ]);
 
