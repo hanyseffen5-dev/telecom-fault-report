@@ -319,7 +319,9 @@ function isRatingEligibleRow(row) {
   if (flag === RATING_FLAG_YES) return true;
   if (flag === RATING_FLAG_NO) return false;
   const notification = String(row[COL.NOTIFICATION - 1] || '');
-  return notification.includes(RATING_ENABLED_MARKER);
+  if (notification.includes(RATING_ENABLED_MARKER)) return true;
+  if (String(row[COL.DEVICE_FP - 1] || '').trim()) return true;
+  return false;
 }
 
 const NOTIF_TIMESTAMP_RE = /^\[(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})\]\s*(.+)$/;
@@ -951,6 +953,12 @@ async function centralUpdateTicket(payload) {
       range: `'${title}'!${colLetter(COL.STATUS)}${rowNumber}`,
       values: [[status]]
     });
+    if (isResolvedStatus(status)) {
+      updates.push({
+        range: `'${title}'!${colLetter(COL.RATING_FLAG)}${rowNumber}`,
+        values: [[RATING_FLAG_YES]]
+      });
+    }
   }
 
   if (message) {

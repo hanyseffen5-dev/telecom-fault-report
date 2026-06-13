@@ -833,6 +833,9 @@ function centralUpdateTicket(payload) {
       throw new Error('حالة العطل غير صحيحة');
     }
     result.sheet.getRange(rowNumber, COL.STATUS).setValue(status);
+    if (isResolvedStatus_(status)) {
+      result.sheet.getRange(rowNumber, COL.RATING_FLAG).setValue(RATING_FLAG_YES);
+    }
   }
 
   if (message) {
@@ -895,7 +898,10 @@ function isRatingEligibleRow_(row) {
   if (flag === RATING_FLAG_NO) return false;
   // توافق مع السجلات القديمة قبل عمود «تقييم متاح»
   const notification = String(row[COL.NOTIFICATION - 1] || '');
-  return notification.indexOf(RATING_ENABLED_MARKER) !== -1;
+  if (notification.indexOf(RATING_ENABLED_MARKER) !== -1) return true;
+  // بلاغات أُرسلت من صفحة العميل (ليست إدخالاً أرشيفياً يدوياً في الشيت)
+  if (String(row[COL.DEVICE_FP - 1] || '').trim()) return true;
+  return false;
 }
 
 function centralAddRepairedLandline(payload) {
