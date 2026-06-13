@@ -615,9 +615,12 @@ function rowToObject_(row, rowNumber) {
     deviceFpMismatch: !!(getStoredDeviceFp_(row) && getRatingDeviceFp_(row) &&
       getStoredDeviceFp_(row) !== getRatingDeviceFp_(row)),
     isResolved: isResolvedStatus_(status),
+    ratingEligible: isRatingEligibleRow_(row),
     canRate: isResolvedStatus_(status) &&
+      isRatingEligibleRow_(row) &&
       !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
     canReopen: isResolvedStatus_(status) &&
+      isRatingEligibleRow_(row) &&
       !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
     alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
     canOpenNewComplaint: isResolvedStatus_(status) &&
@@ -683,6 +686,7 @@ function countRatedTickets_(data) {
     if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
     const status = String(row[COL.STATUS - 1] || STATUS_NEW);
     if (!isResolvedStatus_(status) || !isTicketRated_(row)) continue;
+    if (!isRatingEligibleRow_(row)) continue;
     count++;
   }
   return count;
@@ -702,6 +706,7 @@ function centralListRatedTickets(payload) {
 
     const status = String(row[COL.STATUS - 1] || STATUS_NEW);
     if (!isResolvedStatus_(status) || !isTicketRated_(row)) continue;
+    if (!isRatingEligibleRow_(row)) continue;
     if (!ticketMatchesSearch_(row, search)) continue;
 
     const rowNumber = i + 1;
@@ -876,7 +881,13 @@ function parseDateInput_(value, label) {
 }
 
 const CENTRAL_REPAIRED_REASON = 'عطل';
-const CENTRAL_REPAIRED_NOTIFICATION = 'تم إصلاح العطل بنجاح';
+const RATING_ENABLED_MARKER = '[تقييم متاح]';
+const CENTRAL_REPAIRED_NOTIFICATION = RATING_ENABLED_MARKER + ' تم إصلاح العطل بنجاح';
+
+function isRatingEligibleRow_(row) {
+  const notification = String(row[COL.NOTIFICATION - 1] || '');
+  return notification.indexOf(RATING_ENABLED_MARKER) !== -1;
+}
 
 function centralAddRepairedLandline(payload) {
   verifyCentralAuth_(payload.pin);
@@ -896,10 +907,12 @@ function centralAddRepairedLandline(payload) {
     if (!isResolvedStatus_(status)) {
       throw new Error('يوجد بلاغ مفتوح لهذا الخط. أغلقه أولاً أو حدّثه من القائمة.');
     }
-    const rated = latest.data[latest.index][COL.RATING_FAULT - 1] ||
-      latest.data[latest.index][COL.RATING_TECH - 1];
-    if (!rated) {
-      throw new Error('يوجد بلاغ سابق بانتظار تقييم العميل لهذا الخط.');
+    if (isRatingEligibleRow_(latest.data[latest.index])) {
+      const rated = latest.data[latest.index][COL.RATING_FAULT - 1] ||
+        latest.data[latest.index][COL.RATING_TECH - 1];
+      if (!rated) {
+        throw new Error('يوجد بلاغ سابق بانتظار تقييم العميل لهذا الخط.');
+      }
     }
   }
 
@@ -1093,6 +1106,10 @@ function submitRating(payload) {
     throw new Error('التقييم متاح فقط بعد إغلاق العطل من السنترال (تم الحل)');
   }
 
+  if (!isRatingEligibleRow_(result.data[result.index])) {
+    throw new Error('التقييم غير متاح لهذا البلاغ');
+  }
+
   if (result.data[result.index][COL.RATING_FAULT - 1] || result.data[result.index][COL.RATING_TECH - 1]) {
     throw new Error('تم إرسال التقييم مسبقاً لهذا البلاغ');
   }
@@ -1124,6 +1141,10 @@ function reopenTicket(payload) {
   const status = String(result.data[result.index][COL.STATUS - 1]);
   if (!isResolvedStatus_(status)) {
     throw new Error('إعادة الفتح متاحة فقط بعد تسجيل السنترال لـ «تم الحل»');
+  }
+
+  if (!isRatingEligibleRow_(result.data[result.index])) {
+    throw new Error('إعادة الفتح غير متاحة لهذا البلاغ');
   }
 
   if (result.data[result.index][COL.RATING_FAULT - 1] || result.data[result.index][COL.RATING_TECH - 1]) {
@@ -1177,7 +1198,7 @@ function submitNewComplaint(payload) {
     throw new Error('يمكن فتح شكوى جديدة فقط بعد إغلاق البلاغ السابق (تم الحل)');
   }
 
-  if (!row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1]) {
+  if (isRatingEligibleRow_(row) && !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1]) {
     throw new Error('يرجى تقييم البلاغ السابق قبل فتح شكوى جديدة');
   }
 

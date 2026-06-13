@@ -303,7 +303,13 @@ function parseDateInput(value, label) {
 }
 
 const CENTRAL_REPAIRED_REASON = 'عطل';
-const CENTRAL_REPAIRED_NOTIFICATION = 'تم إصلاح العطل بنجاح';
+const RATING_ENABLED_MARKER = '[تقييم متاح]';
+const CENTRAL_REPAIRED_NOTIFICATION = RATING_ENABLED_MARKER + ' تم إصلاح العطل بنجاح';
+
+function isRatingEligibleRow(row) {
+  const notification = String(row[COL.NOTIFICATION - 1] || '');
+  return notification.includes(RATING_ENABLED_MARKER);
+}
 
 const NOTIF_TIMESTAMP_RE = /^\[(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})\]\s*(.+)$/;
 
@@ -347,9 +353,12 @@ function rowToObject(row) {
     ratingTech: row[COL.RATING_TECH - 1] || '',
     comment: String(row[COL.COMMENT - 1] || ''),
     isResolved: isResolvedStatus(row[COL.STATUS - 1]),
+    ratingEligible: isRatingEligibleRow(row),
     canRate: isResolvedStatus(row[COL.STATUS - 1]) &&
+      isRatingEligibleRow(row) &&
       !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
     canReopen: isResolvedStatus(row[COL.STATUS - 1]) &&
+      isRatingEligibleRow(row) &&
       !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
     alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
     canOpenNewComplaint: isResolvedStatus(row[COL.STATUS - 1]) &&
@@ -564,6 +573,9 @@ async function submitRating(payload) {
   if (!isResolvedStatus(status)) {
     throw new Error('التقييم متاح فقط بعد إغلاق العطل من السنترال (تم الحل)');
   }
+  if (!isRatingEligibleRow(result.row)) {
+    throw new Error('التقييم غير متاح لهذا البلاغ');
+  }
   if (result.row[COL.RATING_FAULT - 1] || result.row[COL.RATING_TECH - 1]) {
     throw new Error('تم إرسال التقييم مسبقاً لهذا البلاغ');
   }
@@ -608,6 +620,9 @@ async function reopenTicket(payload) {
   const status = String(result.row[COL.STATUS - 1]);
   if (!isResolvedStatus(status)) {
     throw new Error('إعادة الفتح متاحة فقط بعد تسجيل السنترال لـ «تم الحل»');
+  }
+  if (!isRatingEligibleRow(result.row)) {
+    throw new Error('إعادة الفتح غير متاحة لهذا البلاغ');
   }
   if (result.row[COL.RATING_FAULT - 1] || result.row[COL.RATING_TECH - 1]) {
     throw new Error('لا يمكن إعادة فتح بلاغ تم تقييمه');
@@ -669,7 +684,7 @@ async function submitNewComplaint(payload) {
   if (!isResolvedStatus(status)) {
     throw new Error('يمكن فتح شكوى جديدة فقط بعد إغلاق البلاغ السابق (تم الحل)');
   }
-  if (!result.row[COL.RATING_FAULT - 1] && !result.row[COL.RATING_TECH - 1]) {
+  if (isRatingEligibleRow(result.row) && !result.row[COL.RATING_FAULT - 1] && !result.row[COL.RATING_TECH - 1]) {
     throw new Error('يرجى تقييم البلاغ السابق قبل فتح شكوى جديدة');
   }
 
@@ -756,6 +771,7 @@ function countRatedTickets(data) {
     if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
     const status = String(row[COL.STATUS - 1] || STATUS_NEW);
     if (!isResolvedStatus(status) || !isTicketRated(row)) continue;
+    if (!isRatingEligibleRow(row)) continue;
     count++;
   }
   return count;
@@ -775,6 +791,7 @@ async function centralListRatedTickets(payload) {
 
     const status = String(row[COL.STATUS - 1] || STATUS_NEW);
     if (!isResolvedStatus(status) || !isTicketRated(row)) continue;
+    if (!isRatingEligibleRow(row)) continue;
     if (!ticketMatchesSearch(row, search)) continue;
 
     const rowNumber = i + 1;
@@ -963,9 +980,11 @@ async function centralAddRepairedLandline(payload) {
     if (!isResolvedStatus(status)) {
       throw new Error('يوجد بلاغ مفتوح لهذا الخط. أغلقه أولاً أو حدّثه من القائمة.');
     }
-    const rated = latest.row[COL.RATING_FAULT - 1] || latest.row[COL.RATING_TECH - 1];
-    if (!rated) {
-      throw new Error('يوجد بلاغ سابق بانتظار تقييم العميل لهذا الخط.');
+    if (isRatingEligibleRow(latest.row)) {
+      const rated = latest.row[COL.RATING_FAULT - 1] || latest.row[COL.RATING_TECH - 1];
+      if (!rated) {
+        throw new Error('يوجد بلاغ سابق بانتظار تقييم العميل لهذا الخط.');
+      }
     }
   }
 

@@ -1216,6 +1216,12 @@
           document.getElementById('rating-done').style.display = 'none';
           deviceWarningEl.textContent = '🔒 التقييم وإعادة الفتح متاحان فقط من الجهاز الذي سجّل رقم الموبايل أول مرة. استخدم نفس الجهاز (حتى لو من متصفح آخر) أو غيّر رقم الموبايل من القسم المخصص.';
           deviceWarningEl.style.display = 'block';
+        } else if (!data.ratingEligible) {
+          document.getElementById('rating-form-area').style.display = 'none';
+          document.getElementById('rating-done').style.display = 'none';
+          deviceWarningEl.style.display = 'none';
+          ratingPending.textContent = 'ℹ️ هذا البلاغ مسجّل أرشيفياً — التقييم غير متاح له.';
+          ratingPending.classList.add('show');
         }
       } else {
         deviceWarningEl.style.display = 'none';
