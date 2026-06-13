@@ -810,7 +810,7 @@
 
           <!-- التقييم -->
           <div id="rating-section" class="rating-section">
-            <div class="card-title" style="justify-content:center">⭐ تقييم الخدمة</div>
+            <div class="card-title" id="rating-section-title" style="justify-content:center">⭐ تقييم الخدمة</div>
             <div id="device-warning" class="device-warning" style="display:none"></div>
             <div id="rating-alert" class="alert"></div>
 
@@ -819,6 +819,7 @@
                 <button type="button" class="btn btn-warning" id="reopen-open-btn">⚠️ الخط مازال به مشكلة؟ — إعادة فتح البلاغ</button>
               </div>
 
+              <div id="rating-eval-block">
               <div class="reopen-section" style="margin-top:16px;padding-top:16px;border-top:1.5px dashed var(--border)">
                 <div class="rating-label" style="color:var(--primary-dark)">✅ إذا تم الإصلاح — قيّم الخدمة</div>
               </div>
@@ -847,6 +848,7 @@
               </div>
 
               <button type="button" class="btn btn-primary" id="rating-submit">إرسال التقييم</button>
+              </div>
             </div>
 
             <div id="rating-done" style="display:none; text-align:center; color:var(--success); font-weight:600; padding:16px;">
@@ -1181,10 +1183,12 @@
 
       var ratingSection = document.getElementById('rating-section');
       var ratingPending = document.getElementById('rating-pending');
+      var ratingSectionTitle = document.getElementById('rating-section-title');
       var resolved = data.isResolved || isResolvedStatus(data.status);
 
       document.getElementById('reopen-done').classList.remove('show');
       document.getElementById('reopen-trigger-wrap').style.display = 'none';
+      document.getElementById('rating-eval-block').style.display = '';
       closeReopenModal();
 
       var newComplaintSection = document.getElementById('new-complaint-section');
@@ -1200,14 +1204,22 @@
       if (resolved) {
         ratingPending.classList.remove('show');
         ratingSection.classList.add('show');
+        ratingSectionTitle.textContent = data.canReopenOnly ? '⚠️ متابعة البلاغ الأرشيفي' : '⭐ تقييم الخدمة';
         if (data.alreadyRated) {
           document.getElementById('rating-form-area').style.display = 'none';
           document.getElementById('rating-done').style.display = 'block';
           deviceWarningEl.style.display = 'none';
+        } else if (data.canReopenOnly && !deviceBlocked) {
+          document.getElementById('rating-form-area').style.display = 'block';
+          document.getElementById('rating-done').style.display = 'none';
+          deviceWarningEl.style.display = 'none';
+          document.getElementById('reopen-trigger-wrap').style.display = 'block';
+          document.getElementById('rating-eval-block').style.display = 'none';
         } else if ((data.canRate || data.canReopen) && !deviceBlocked) {
           document.getElementById('rating-form-area').style.display = 'block';
           document.getElementById('rating-done').style.display = 'none';
           deviceWarningEl.style.display = 'none';
+          document.getElementById('rating-eval-block').style.display = '';
           if (data.canReopen) {
             document.getElementById('reopen-trigger-wrap').style.display = 'block';
           }
@@ -1216,7 +1228,7 @@
           document.getElementById('rating-done').style.display = 'none';
           deviceWarningEl.textContent = '🔒 التقييم وإعادة الفتح متاحان فقط من الجهاز الذي سجّل رقم الموبايل أول مرة. استخدم نفس الجهاز (حتى لو من متصفح آخر) أو غيّر رقم الموبايل من القسم المخصص.';
           deviceWarningEl.style.display = 'block';
-        } else if (!data.ratingEligible) {
+        } else if (!data.ratingEligible && !data.canReopen) {
           document.getElementById('rating-form-area').style.display = 'none';
           document.getElementById('rating-done').style.display = 'none';
           deviceWarningEl.style.display = 'none';

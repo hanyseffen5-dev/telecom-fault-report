@@ -319,9 +319,14 @@ function isRatingEligibleRow(row) {
   if (flag === RATING_FLAG_YES) return true;
   if (flag === RATING_FLAG_NO) return false;
   const notification = String(row[COL.NOTIFICATION - 1] || '');
-  if (notification.includes(RATING_ENABLED_MARKER)) return true;
-  if (String(row[COL.DEVICE_FP - 1] || '').trim()) return true;
-  return false;
+  return notification.includes(RATING_ENABLED_MARKER);
+}
+
+function canReopenRow(row) {
+  const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+  if (!isResolvedStatus(status)) return false;
+  if (row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) return false;
+  return true;
 }
 
 const NOTIF_TIMESTAMP_RE = /^\[(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})\]\s*(.+)$/;
@@ -370,9 +375,8 @@ function rowToObject(row) {
     canRate: isResolvedStatus(row[COL.STATUS - 1]) &&
       isRatingEligibleRow(row) &&
       !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
-    canReopen: isResolvedStatus(row[COL.STATUS - 1]) &&
-      isRatingEligibleRow(row) &&
-      !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
+    canReopen: canReopenRow(row),
+    canReopenOnly: canReopenRow(row) && !isRatingEligibleRow(row),
     alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
     canOpenNewComplaint: isResolvedStatus(row[COL.STATUS - 1]) &&
       !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
@@ -651,7 +655,7 @@ async function reopenTicket(payload) {
   if (!isResolvedStatus(status)) {
     throw new Error('إعادة الفتح متاحة فقط بعد تسجيل السنترال لـ «تم الحل»');
   }
-  if (!isRatingEligibleRow(result.row)) {
+  if (!canReopenRow(result.row)) {
     throw new Error('إعادة الفتح غير متاحة لهذا البلاغ');
   }
   if (result.row[COL.RATING_FAULT - 1] || result.row[COL.RATING_TECH - 1]) {

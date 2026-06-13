@@ -624,9 +624,8 @@ function rowToObject_(row, rowNumber) {
     canRate: isResolvedStatus_(status) &&
       isRatingEligibleRow_(row) &&
       !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
-    canReopen: isResolvedStatus_(status) &&
-      isRatingEligibleRow_(row) &&
-      !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
+    canReopen: canReopenRow_(row),
+    canReopenOnly: canReopenRow_(row) && !isRatingEligibleRow_(row),
     alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
     canOpenNewComplaint: isResolvedStatus_(status) &&
       !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
@@ -898,10 +897,14 @@ function isRatingEligibleRow_(row) {
   if (flag === RATING_FLAG_NO) return false;
   // توافق مع السجلات القديمة قبل عمود «تقييم متاح»
   const notification = String(row[COL.NOTIFICATION - 1] || '');
-  if (notification.indexOf(RATING_ENABLED_MARKER) !== -1) return true;
-  // بلاغات أُرسلت من صفحة العميل (ليست إدخالاً أرشيفياً يدوياً في الشيت)
-  if (String(row[COL.DEVICE_FP - 1] || '').trim()) return true;
-  return false;
+  return notification.indexOf(RATING_ENABLED_MARKER) !== -1;
+}
+
+function canReopenRow_(row) {
+  const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+  if (!isResolvedStatus_(status)) return false;
+  if (row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) return false;
+  return true;
 }
 
 function centralAddRepairedLandline(payload) {
@@ -1160,7 +1163,7 @@ function reopenTicket(payload) {
     throw new Error('إعادة الفتح متاحة فقط بعد تسجيل السنترال لـ «تم الحل»');
   }
 
-  if (!isRatingEligibleRow_(result.data[result.index])) {
+  if (!canReopenRow_(result.data[result.index])) {
     throw new Error('إعادة الفتح غير متاحة لهذا البلاغ');
   }
 
