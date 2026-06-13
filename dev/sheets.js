@@ -326,7 +326,11 @@ function canReopenRow(row) {
   const status = String(row[COL.STATUS - 1] || STATUS_NEW);
   if (!isResolvedStatus(status)) return false;
   if (row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) return false;
-  return true;
+  return isRatingEligibleRow(row);
+}
+
+function isArchiveComplaintRow(row) {
+  return isResolvedStatus(String(row[COL.STATUS - 1] || '')) && !isRatingEligibleRow(row);
 }
 
 const NOTIF_TIMESTAMP_RE = /^\[(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})\]\s*(.+)$/;
@@ -376,10 +380,12 @@ function rowToObject(row) {
       isRatingEligibleRow(row) &&
       !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
     canReopen: canReopenRow(row),
-    canReopenOnly: canReopenRow(row) && !isRatingEligibleRow(row),
+    isArchiveComplaint: isArchiveComplaintRow(row),
     alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
-    canOpenNewComplaint: isResolvedStatus(row[COL.STATUS - 1]) &&
-      !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
+    canOpenNewComplaint: isResolvedStatus(row[COL.STATUS - 1]) && (
+      !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) ||
+      isArchiveComplaintRow(row)
+    ),
     canSendNotification: canCentralSendNotification(
       row[COL.STATUS - 1],
       parseNotifications(row[COL.NOTIFICATION - 1], lastUpdate)

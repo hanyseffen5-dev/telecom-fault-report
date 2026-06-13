@@ -863,7 +863,7 @@
           <div id="new-complaint-section" class="new-complaint-section">
             <div class="card-title" style="justify-content:center">📋 شكوى جديدة على نفس الخط</div>
             <div id="new-complaint-alert" class="alert"></div>
-            <p class="new-complaint-hint">بعد تقييم البلاغ السابق، يمكنك فتح شكوى جديدة إذا ظهر عطل مرة أخرى على نفس الخط</p>
+            <p class="new-complaint-hint" id="new-complaint-hint">بعد تقييم البلاغ السابق، يمكنك فتح شكوى جديدة إذا ظهر عطل مرة أخرى على نفس الخط</p>
             <div class="form-group">
               <label for="new-complaint-reason">سبب الشكوى الجديدة</label>
               <select id="new-complaint-reason">
@@ -1192,8 +1192,14 @@
       closeReopenModal();
 
       var newComplaintSection = document.getElementById('new-complaint-section');
+      var newComplaintHint = document.getElementById('new-complaint-hint');
       if (data.canOpenNewComplaint) {
         newComplaintSection.classList.add('show');
+        if (data.isArchiveComplaint) {
+          newComplaintHint.textContent = 'هذا بلاغ أرشيفي. إذا ظهر عطل جديد على نفس الخط، يمكنك فتح شكوى جديدة.';
+        } else {
+          newComplaintHint.textContent = 'بعد تقييم البلاغ السابق، يمكنك فتح شكوى جديدة إذا ظهر عطل مرة أخرى على نفس الخط';
+        }
       } else {
         newComplaintSection.classList.remove('show');
       }
@@ -1202,38 +1208,39 @@
       var deviceBlocked = data.hasDeviceFp && data.deviceTrusted === false;
 
       if (resolved) {
-        ratingPending.classList.remove('show');
-        ratingSection.classList.add('show');
-        ratingSectionTitle.textContent = data.canReopenOnly ? '⚠️ متابعة البلاغ الأرشيفي' : '⭐ تقييم الخدمة';
-        if (data.alreadyRated) {
-          document.getElementById('rating-form-area').style.display = 'none';
-          document.getElementById('rating-done').style.display = 'block';
-          deviceWarningEl.style.display = 'none';
-        } else if (data.canReopenOnly && !deviceBlocked) {
-          document.getElementById('rating-form-area').style.display = 'block';
-          document.getElementById('rating-done').style.display = 'none';
-          deviceWarningEl.style.display = 'none';
-          document.getElementById('reopen-trigger-wrap').style.display = 'block';
-          document.getElementById('rating-eval-block').style.display = 'none';
-        } else if ((data.canRate || data.canReopen) && !deviceBlocked) {
-          document.getElementById('rating-form-area').style.display = 'block';
-          document.getElementById('rating-done').style.display = 'none';
-          deviceWarningEl.style.display = 'none';
-          document.getElementById('rating-eval-block').style.display = '';
-          if (data.canReopen) {
-            document.getElementById('reopen-trigger-wrap').style.display = 'block';
-          }
-        } else if (deviceBlocked) {
-          document.getElementById('rating-form-area').style.display = 'none';
-          document.getElementById('rating-done').style.display = 'none';
-          deviceWarningEl.textContent = '🔒 التقييم وإعادة الفتح متاحان فقط من الجهاز الذي سجّل رقم الموبايل أول مرة. استخدم نفس الجهاز (حتى لو من متصفح آخر) أو غيّر رقم الموبايل من القسم المخصص.';
-          deviceWarningEl.style.display = 'block';
-        } else if (!data.ratingEligible && !data.canReopen) {
-          document.getElementById('rating-form-area').style.display = 'none';
-          document.getElementById('rating-done').style.display = 'none';
-          deviceWarningEl.style.display = 'none';
-          ratingPending.textContent = 'ℹ️ هذا البلاغ مسجّل أرشيفياً — التقييم غير متاح له.';
+        if (data.isArchiveComplaint && data.canOpenNewComplaint) {
+          ratingPending.textContent = 'ℹ️ هذا بلاغ أرشيفي — التقييم غير متاح. يمكنك فتح شكوى جديدة إذا ظهر عطل على الخط.';
           ratingPending.classList.add('show');
+          ratingSection.classList.remove('show');
+        } else {
+          ratingPending.classList.remove('show');
+          ratingSection.classList.add('show');
+          ratingSectionTitle.textContent = '⭐ تقييم الخدمة';
+          if (data.alreadyRated) {
+            document.getElementById('rating-form-area').style.display = 'none';
+            document.getElementById('rating-done').style.display = 'block';
+            deviceWarningEl.style.display = 'none';
+          } else if ((data.canRate || data.canReopen) && !deviceBlocked) {
+            document.getElementById('rating-form-area').style.display = 'block';
+            document.getElementById('rating-done').style.display = 'none';
+            deviceWarningEl.style.display = 'none';
+            document.getElementById('rating-eval-block').style.display = '';
+            if (data.canReopen) {
+              document.getElementById('reopen-trigger-wrap').style.display = 'block';
+            }
+          } else if (deviceBlocked) {
+            document.getElementById('rating-form-area').style.display = 'none';
+            document.getElementById('rating-done').style.display = 'none';
+            deviceWarningEl.textContent = '🔒 التقييم وإعادة الفتح متاحان فقط من الجهاز الذي سجّل رقم الموبايل أول مرة. استخدم نفس الجهاز (حتى لو من متصفح آخر) أو غيّر رقم الموبايل من القسم المخصص.';
+            deviceWarningEl.style.display = 'block';
+          } else if (!data.ratingEligible && !data.canReopen) {
+            document.getElementById('rating-form-area').style.display = 'none';
+            document.getElementById('rating-done').style.display = 'none';
+            deviceWarningEl.style.display = 'none';
+            ratingPending.textContent = 'ℹ️ هذا البلاغ مسجّل أرشيفياً — التقييم غير متاح له.';
+            ratingPending.classList.add('show');
+            ratingSection.classList.remove('show');
+          }
         }
       } else {
         deviceWarningEl.style.display = 'none';

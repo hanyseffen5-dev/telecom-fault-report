@@ -625,10 +625,12 @@ function rowToObject_(row, rowNumber) {
       isRatingEligibleRow_(row) &&
       !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
     canReopen: canReopenRow_(row),
-    canReopenOnly: canReopenRow_(row) && !isRatingEligibleRow_(row),
+    isArchiveComplaint: isArchiveComplaintRow_(row),
     alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
-    canOpenNewComplaint: isResolvedStatus_(status) &&
-      !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
+    canOpenNewComplaint: isResolvedStatus_(status) && (
+      !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) ||
+      isArchiveComplaintRow_(row)
+    ),
     canSendNotification: canCentralSendNotification_(status, notifications),
     mobileRegistered: !isEmptyMobile_(row[COL.MOBILE - 1])
   };
@@ -904,7 +906,11 @@ function canReopenRow_(row) {
   const status = String(row[COL.STATUS - 1] || STATUS_NEW);
   if (!isResolvedStatus_(status)) return false;
   if (row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) return false;
-  return true;
+  return isRatingEligibleRow_(row);
+}
+
+function isArchiveComplaintRow_(row) {
+  return isResolvedStatus_(String(row[COL.STATUS - 1] || '')) && !isRatingEligibleRow_(row);
 }
 
 function centralAddRepairedLandline(payload) {
