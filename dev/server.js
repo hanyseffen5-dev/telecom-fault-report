@@ -4,6 +4,11 @@ const path = require('path');
 
 function loadEnv() {
   const envPath = path.join(__dirname, '..', '.env');
+  try {
+    require('dotenv').config({ path: envPath });
+  } catch (e) {
+    // dotenv غير مثبّت — نكمل بالقارئ اليدوي أدناه
+  }
   if (!fs.existsSync(envPath)) return;
   fs.readFileSync(envPath, 'utf8').split('\n').forEach(function (line) {
     const trimmed = line.trim();
@@ -32,11 +37,11 @@ app.use(express.json());
 app.get('/config.js', function (_req, res) {
   res.set('Cache-Control', 'no-store');
   res.type('application/javascript').send(
-    "window.APP_CONFIG = { appsScriptUrl: '' };\n"
+    "window.APP_CONFIG = { appsScriptUrl: 'https://script.google.com/macros/s/AKfycby4RwyaQVZyHw6zbdL4Wt7AF6KhU81-c2ZfLb1GV-6_jT2t0s36PblwileU4VTINsLNuQ/exec' };\n"
   );
 });
 
-app.use(express.static(publicDir));
+app.use(express.static('/root/telecom-fault-report/public'));
 
 function serveHtml(filePath, res) {
   res.type('html').send(fs.readFileSync(filePath, 'utf8'));
