@@ -41,7 +41,7 @@ app.get('/config.js', function (_req, res) {
   );
 });
 
-app.use(express.static('/root/telecom-fault-report/public'));
+app.use(express.static(publicDir, { index: false }));
 
 function serveHtml(filePath, res) {
   res.type('html').send(fs.readFileSync(filePath, 'utf8'));
