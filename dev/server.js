@@ -68,6 +68,9 @@ async function handleApi(fnName, req, res) {
 const apiRoutes = [
   'submitReport',
   'getStatus',
+  'startChat',
+  'getConversation',
+  'sendCustomerMessage',
   'submitRating',
   'reopenTicket',
   'submitNewComplaint',
@@ -87,7 +90,7 @@ apiRoutes.forEach(function (route) {
 
 app.listen(PORT, async function () {
   const mode = api.getBackendMode();
-  console.log('تطبيق العميل:  http://localhost:' + PORT);
+  console.log('محادثة العميل: http://localhost:' + PORT);
   console.log('لوحة السنترال: http://localhost:' + PORT + '/central');
 
   if (mode === 'apps-script') {

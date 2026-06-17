@@ -3,105 +3,242 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>متابعة بلاغات الأعطال الأرضية</title>
+  <title>التواصل مع مسؤولي سنترال فرشوط</title>
   <style>
     :root {
       --primary: #1565c0;
       --primary-dark: #0d47a1;
       --primary-light: #e3f2fd;
+      --teal: #0f9d8f;
+      --teal-dark: #0a7d72;
       --success: #2e7d32;
       --success-bg: #e8f5e9;
       --warning: #f57c00;
       --warning-bg: #fff3e0;
       --danger: #c62828;
       --danger-bg: #ffebee;
-      --bg: #f0f4f8;
+      --bg: #eef3f9;
       --card: #ffffff;
       --text: #1a2332;
       --muted: #64748b;
       --border: #e2e8f0;
-      --radius: 14px;
-      --shadow: 0 4px 20px rgba(21, 101, 192, 0.08);
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-      background: linear-gradient(160deg, #e3f2fd 0%, var(--bg) 50%, #f8fafc 100%);
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       line-height: 1.6;
+      overflow-x: hidden;
     }
 
-    .app {
-      max-width: 520px;
-      margin: 0 auto;
-      padding: 20px 16px 40px;
+    .screen { display: none; }
+    .screen.active { display: block; animation: screenIn 0.4s ease; }
+
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .header {
+    /* ===================== HERO / LANDING ===================== */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      margin-bottom: 24px;
+      padding: 40px 20px calc(40px + env(safe-area-inset-bottom));
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(15, 157, 143, 0.18), transparent 60%),
+        radial-gradient(1000px 500px at 10% 110%, rgba(21, 101, 192, 0.22), transparent 60%),
+        linear-gradient(160deg, #0d47a1 0%, #11519e 45%, #0f7a8f 100%);
+      color: #fff;
+      overflow: hidden;
     }
 
-    .header-icon {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, var(--primary), #42a5f5);
-      border-radius: 18px;
+    .hero-bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      animation: float 9s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .hero-bubble.b1 { width: 180px; height: 180px; top: 8%; right: -40px; animation-delay: 0s; }
+    .hero-bubble.b2 { width: 120px; height: 120px; bottom: 12%; left: -30px; animation-delay: 1.5s; }
+    .hero-bubble.b3 { width: 70px; height: 70px; top: 22%; left: 12%; animation-delay: 3s; }
+    .hero-bubble.b4 { width: 50px; height: 50px; bottom: 26%; right: 16%; animation-delay: 2s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
+      50% { transform: translateY(-26px) scale(1.06); opacity: 1; }
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 560px;
+      width: 100%;
+    }
+
+    .hero-illustration {
+      width: 230px;
+      height: 230px;
+      margin: 0 auto 22px;
+      filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.3));
+      animation: rise 0.8s cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(28px) scale(0.92); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .ring-pulse { transform-origin: center; animation: ringPulse 2.6s ease-out infinite; }
+    @keyframes ringPulse {
+      0% { transform: scale(0.6); opacity: 0.9; }
+      70% { transform: scale(1.5); opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    .chat-pop { transform-origin: center; animation: chatPop 3s ease-in-out infinite; }
+    .chat-pop.delay { animation-delay: 1.4s; }
+    @keyframes chatPop {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-7px); }
+    }
+
+    .dot-blink { animation: dotBlink 1.4s infinite; }
+    .dot-blink.d2 { animation-delay: 0.2s; }
+    .dot-blink.d3 { animation-delay: 0.4s; }
+    @keyframes dotBlink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+
+    .hero h1 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      animation: rise 0.8s 0.1s both;
+    }
+
+    .hero .brand-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 18px;
+      animation: rise 0.8s both;
+    }
+
+    .hero p.lead {
+      font-size: 1.02rem;
+      color: rgba(255, 255, 255, 0.92);
+      margin-top: 12px;
+      animation: rise 0.8s 0.2s both;
+    }
+
+    .hint-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 26px 0 28px;
+      animation: rise 0.8s 0.3s both;
+    }
+
+    .hint-card {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      padding: 16px 10px;
+      backdrop-filter: blur(6px);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .hint-card:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.16); }
+    .hint-card .ic { font-size: 1.5rem; display: block; margin-bottom: 8px; }
+    .hint-card .strike { text-decoration: line-through; opacity: 0.7; font-size: 0.8rem; }
+    .hint-card .lbl { font-size: 0.82rem; font-weight: 700; }
+
+    .hero-note {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.95);
+      background: rgba(15, 157, 143, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 26px;
+      line-height: 1.8;
+      animation: rise 0.8s 0.35s both;
+    }
+    .hero-note strong { color: #fff; }
+
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 360px;
+      padding: 17px 24px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.08rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      color: #0d47a1;
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: rise 0.8s 0.4s both;
+    }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34); }
+    .cta-btn:active { transform: translateY(0); }
+
+    .hero-sub {
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.8);
+      animation: rise 0.8s 0.45s both;
+    }
+
+    /* ===================== SHARED APP SHELL ===================== */
+    .app {
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 18px 16px calc(28px + env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .topbar .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--primary), var(--teal));
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 14px;
-      font-size: 30px;
-      box-shadow: 0 8px 24px rgba(21, 101, 192, 0.25);
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: 0 6px 16px rgba(21, 101, 192, 0.3);
     }
-
-    .header h1 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--primary-dark);
-    }
-
-    .header p {
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    .tabs {
-      display: flex;
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 4px;
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
-      gap: 4px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 12px 8px;
-      border-radius: 10px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-
-    .tab-btn.active {
-      background: var(--primary);
-      color: #fff;
-      box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
-    }
-
-    .panel { display: none; }
-    .panel.active { display: block; }
+    .topbar .titles h2 { font-size: 1.05rem; color: var(--primary-dark); }
+    .topbar .titles p { font-size: 0.78rem; color: var(--muted); }
 
     .card {
       background: var(--card);
@@ -113,333 +250,303 @@
 
     .card-title {
       font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 16px;
+      font-weight: 800;
+      margin-bottom: 6px;
       color: var(--primary-dark);
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .form-group {
-      margin-bottom: 16px;
+    .card-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.7;
     }
+
+    .form-group { margin-bottom: 16px; }
 
     label {
       display: block;
       font-size: 0.85rem;
-      font-weight: 600;
+      font-weight: 700;
       margin-bottom: 6px;
       color: var(--text);
     }
 
-    .hint {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    input, select, textarea {
+    input, textarea {
       width: 100%;
-      padding: 12px 14px;
+      padding: 13px 14px;
       border: 1.5px solid var(--border);
-      border-radius: 10px;
+      border-radius: 11px;
       font-size: 1rem;
       font-family: inherit;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
       background: #fafbfc;
-      direction: ltr;
-      text-align: right;
     }
-
-    input:focus, select:focus, textarea:focus {
+    input { direction: ltr; text-align: right; }
+    input:focus, textarea:focus {
       outline: none;
       border-color: var(--primary);
       background: #fff;
+      box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
     }
+    textarea { resize: none; direction: rtl; text-align: right; }
 
-    select { direction: rtl; text-align: right; }
-
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-      direction: rtl;
-      text-align: right;
+    .field-hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.55;
     }
 
     .btn {
       width: 100%;
       padding: 14px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 1rem;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
       font-family: inherit;
-      transition: all 0.2s;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
     }
-
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary), #1976d2);
+      background: linear-gradient(135deg, var(--primary), var(--teal));
       color: #fff;
-      box-shadow: 0 4px 14px rgba(21, 101, 192, 0.3);
+      box-shadow: 0 8px 20px rgba(21, 101, 192, 0.28);
     }
-
     .btn-primary:hover { transform: translateY(-1px); }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-    .btn-outline {
+    .btn-ghost {
       background: transparent;
       color: var(--primary);
-      border: 1.5px solid var(--primary);
+      border: 1.5px solid var(--border);
       margin-top: 10px;
+    }
+    .btn-link {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 6px;
     }
 
     .alert {
       padding: 12px 14px;
-      border-radius: 10px;
+      border-radius: 11px;
       font-size: 0.88rem;
       margin-bottom: 16px;
       display: none;
+      line-height: 1.6;
     }
-
     .alert.show { display: block; }
     .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #a5d6a7; }
     .alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid #ef9a9a; }
     .alert-info { background: var(--primary-light); color: var(--primary-dark); border: 1px solid #90caf9; }
 
-    .status-box {
-      display: none;
-      border-radius: 12px;
-      padding: 18px;
-      margin-top: 16px;
-      border: 1.5px solid var(--border);
-      background: #fafbfc;
+    /* ===================== CHAT ===================== */
+    .chat-wrap {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 130px);
+      min-height: 440px;
     }
 
-    .status-box.show { display: block; }
-
-    .status-row {
+    .chat-head {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--primary-dark), var(--teal-dark));
+      color: #fff;
+    }
+    .chat-head .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .chat-head .info { flex: 1; min-width: 0; }
+    .chat-head .info .name { font-weight: 800; font-size: 0.98rem; }
+    .chat-head .info .state {
+      font-size: 0.76rem;
+      opacity: 0.9;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chat-head .info .state .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #69f0ae; animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .chat-head .line-num { font-size: 0.74rem; opacity: 0.85; direction: ltr; }
+
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 14px;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(15, 157, 143, 0.05), transparent 30%),
+        linear-gradient(180deg, #f4f8fc 0%, #eef3f9 100%);
+      display: flex;
+      flex-direction: column;
       gap: 12px;
     }
 
-    .status-row:last-child { border-bottom: none; }
+    .day-sep {
+      align-self: center;
+      background: rgba(13, 71, 161, 0.08);
+      color: var(--primary-dark);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
 
-    .status-label {
+    .bubble {
+      max-width: 82%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.94rem;
+      line-height: 1.6;
+      position: relative;
+      animation: bubbleIn 0.25s ease;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .bubble .meta {
+      display: block;
+      font-size: 0.66rem;
+      margin-top: 5px;
+      opacity: 0.7;
+      direction: ltr;
+      text-align: left;
+    }
+    .row { display: flex; }
+    /* العميل (أنت) — جهة اليمين في RTL */
+    .row.me { justify-content: flex-start; }
+    .row.me .bubble {
+      background: linear-gradient(135deg, var(--primary), var(--teal));
+      color: #fff;
+      border-bottom-right-radius: 5px;
+    }
+    /* السنترال — جهة اليسار */
+    .row.them { justify-content: flex-end; }
+    .row.them .bubble {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 5px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+    }
+    .row.system { justify-content: center; }
+    .row.system .bubble {
+      background: var(--warning-bg);
+      color: #b45309;
+      border: 1px solid #fcd9a3;
       font-size: 0.82rem;
+      text-align: center;
+      max-width: 90%;
+    }
+    .sender-tag { font-size: 0.68rem; font-weight: 800; opacity: 0.85; display: block; margin-bottom: 2px; }
+    .row.them .sender-tag { color: var(--teal-dark); }
+
+    .chat-empty {
+      margin: auto;
+      text-align: center;
       color: var(--muted);
+      padding: 30px 20px;
+    }
+    .chat-empty .big { font-size: 2.4rem; margin-bottom: 10px; }
+
+    .chat-foot {
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+      background: #fff;
+    }
+    .rating-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--success-bg);
+      border: 1px solid #a5d6a7;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+      color: var(--success);
+    }
+    .rating-banner.show { display: flex; }
+    .rating-banner .btn-rate {
+      width: auto;
+      margin: 0 0 0 auto;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      border-radius: 9px;
+      background: var(--success);
+      color: #fff;
+      border: none;
+      font-weight: 800;
+      cursor: pointer;
       white-space: nowrap;
     }
-
-    .status-value {
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-align: left;
-      direction: ltr;
-    }
-
-    .status-value.rtl {
-      direction: rtl;
-      text-align: right;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 700;
-    }
-
-    .badge-new { background: #e3f2fd; color: #1565c0; }
-    .badge-progress { background: var(--warning-bg); color: var(--warning); }
-    .badge-resolved { background: var(--success-bg); color: var(--success); }
-
-    .notifications-section {
-      margin-top: 12px;
-    }
-
-    .notifications-section .notif-section-title {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--primary-dark);
-      margin-bottom: 10px;
-    }
-
-    .notifications-list {
+    .composer {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .notif-item {
-      background: var(--primary-light);
-      border-radius: 10px;
-      padding: 12px 14px;
-      border-right: 4px solid var(--primary);
-    }
-
-    .notif-item .notif-date {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-bottom: 4px;
-      direction: ltr;
-      text-align: right;
-    }
-
-    .notif-item .notif-text {
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: var(--primary-dark);
-      line-height: 1.7;
-    }
-
-    .notif-empty {
-      background: #f1f5f9;
-      border-radius: 10px;
-      padding: 14px;
-      font-size: 0.88rem;
-      color: var(--muted);
-      font-style: italic;
-      text-align: center;
-      border: 1px dashed var(--border);
-    }
-
-    .stars {
-      display: flex;
+      align-items: flex-end;
       gap: 8px;
-      flex-direction: row-reverse;
-      justify-content: center;
-      margin: 8px 0 16px;
     }
-
-    .star {
-      font-size: 2rem;
+    .composer textarea {
+      flex: 1;
+      max-height: 120px;
+      min-height: 46px;
+      padding: 12px 14px;
+      border-radius: 24px;
+    }
+    .composer .send {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--primary), var(--teal));
+      color: #fff;
+      font-size: 20px;
       cursor: pointer;
-      color: #cbd5e1;
-      transition: color 0.15s, transform 0.15s;
-      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s, opacity 0.2s;
     }
+    .composer .send:hover { transform: scale(1.06); }
+    .composer .send:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .star:hover, .star.active { color: #f59e0b; transform: scale(1.1); }
-
-    .rating-section {
-      display: none;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1.5px dashed var(--border);
-    }
-
-    .rating-section.show { display: block; }
-
-    .rating-pending {
-      display: none;
-      margin-top: 16px;
-      padding: 14px;
-      border-radius: 10px;
-      background: #fff8e1;
-      border: 1px solid #ffe082;
-      font-size: 0.88rem;
-      color: #e65100;
+    .chat-closed-note {
       text-align: center;
-      line-height: 1.7;
-    }
-
-    .rating-pending.show { display: block; }
-
-    .reopen-trigger-wrap {
-      margin-bottom: 16px;
-    }
-
-    .reopen-trigger-wrap .btn {
-      margin-top: 0;
-    }
-
-    .reopen-section {
-      margin-top: 20px;
-      padding-top: 18px;
-      border-top: 1.5px dashed var(--border);
-    }
-
-    .reopen-modal-box {
-      text-align: right;
-      max-width: 440px;
-    }
-
-    .reopen-modal-box .modal-icon {
-      background: var(--warning-bg);
-    }
-
-    .reopen-modal-box h3 {
-      color: var(--warning);
-    }
-
-    .reopen-modal-box .modal-detail {
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .reopen-modal-box .modal-actions {
-      margin-top: 8px;
-    }
-
-    .no-report-modal-box .modal-icon {
-      background: var(--primary-light);
-    }
-
-    .no-report-modal-box h3 {
-      color: var(--primary);
-    }
-
-    .btn-warning {
-      background: transparent;
-      color: var(--warning);
-      border: 1.5px solid var(--warning);
-      margin-top: 10px;
-    }
-
-    .btn-warning:hover {
-      background: var(--warning-bg);
-    }
-
-    .reopen-done {
-      display: none;
-      text-align: center;
-      color: var(--warning);
-      font-weight: 600;
-      padding: 16px;
-      background: var(--warning-bg);
-      border-radius: 10px;
-      margin-top: 16px;
-      line-height: 1.7;
-    }
-
-    .reopen-done.show { display: block; }
-
-    .badge-reopened { background: #fce4ec; color: #c2185b; }
-
-    .new-complaint-section {
-      display: none;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1.5px dashed var(--border);
-    }
-
-    .new-complaint-section.show { display: block; }
-
-    .new-complaint-hint {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--muted);
-      margin-bottom: 14px;
-      line-height: 1.7;
-      text-align: center;
+      padding: 4px 0 8px;
     }
 
+    /* ===================== MODALS ===================== */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -450,509 +557,328 @@
       align-items: center;
       justify-content: center;
       padding: 20px 16px;
-      animation: modalFadeIn 0.2s ease;
+      animation: fadeIn 0.2s ease;
     }
-
     .modal-overlay.hidden { display: none; }
-
-    @keyframes modalFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes modalSlideIn {
-      from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.96); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
-
     .modal-box {
       background: var(--card);
       border-radius: 18px;
-      padding: 28px 24px 22px;
-      max-width: 400px;
+      padding: 26px 22px 22px;
+      max-width: 420px;
       width: 100%;
-      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
-      text-align: center;
-      animation: modalSlideIn 0.25s ease;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
+      animation: popIn 0.25s ease;
+      max-height: 90vh;
+      overflow-y: auto;
     }
-
-    .modal-icon {
-      width: 56px;
-      height: 56px;
-      margin: 0 auto 16px;
-      background: var(--primary-light);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-    }
-
     .modal-box h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
+      font-size: 1.15rem;
+      font-weight: 800;
       color: var(--primary-dark);
-      margin-bottom: 10px;
-    }
-
-    .modal-box .modal-message {
-      font-size: 0.95rem;
-      color: var(--text);
-      line-height: 1.7;
-      margin-bottom: 8px;
-    }
-
-    .modal-detail {
-      font-size: 0.82rem;
-      color: var(--muted);
-      line-height: 1.65;
-      background: #f8fafc;
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-bottom: 20px;
-      text-align: right;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      flex-direction: row-reverse;
-    }
-
-    .modal-actions .btn {
-      flex: 1;
-      margin: 0;
-      min-height: 46px;
-    }
-
-    .modal-actions .btn-outline {
-      background: #f1f5f9;
-      border-color: var(--border);
-      color: var(--muted);
-    }
-
-    .rating-label {
       text-align: center;
-      font-size: 0.88rem;
-      font-weight: 600;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
-
-    .auto-refresh {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 0.78rem;
+    .modal-box .modal-sub {
+      font-size: 0.86rem;
       color: var(--muted);
-      margin-top: 12px;
-    }
-
-    .field-hint {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-top: 6px;
-      line-height: 1.55;
-    }
-
-    .access-tabs {
-      display: flex;
-      gap: 8px;
+      text-align: center;
       margin-bottom: 18px;
-      background: #f1f5f9;
-      padding: 4px;
-      border-radius: 12px;
+      line-height: 1.7;
+    }
+    .modal-icon {
+      width: 60px; height: 60px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: var(--success-bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px;
     }
 
-    .access-tab {
-      flex: 1;
-      padding: 10px 8px;
-      border: none;
-      border-radius: 9px;
-      background: transparent;
-      color: var(--muted);
-      font-family: inherit;
-      font-size: 0.82rem;
-      font-weight: 700;
+    .rating-label { font-size: 0.88rem; font-weight: 700; text-align: center; margin: 14px 0 2px; }
+    .stars {
+      display: flex;
+      gap: 8px;
+      flex-direction: row-reverse;
+      justify-content: center;
+      margin: 4px 0 6px;
+    }
+    .star {
+      font-size: 2.1rem;
       cursor: pointer;
-      transition: all 0.2s;
+      color: #cbd5e1;
+      transition: color 0.15s, transform 0.15s;
+      user-select: none;
     }
+    .star:hover, .star.active { color: #f59e0b; transform: scale(1.12); }
 
-    .access-tab.active {
-      background: var(--card);
-      color: var(--primary-dark);
-      box-shadow: 0 2px 8px rgba(13, 71, 161, 0.12);
-    }
+    .modal-actions { display: flex; gap: 10px; flex-direction: row-reverse; margin-top: 16px; }
+    .modal-actions .btn { flex: 1; margin: 0; min-height: 48px; }
 
-    .access-panel.hidden { display: none; }
-
-    .change-mobile-intro {
-      font-size: 0.85rem;
-      color: var(--muted);
-      line-height: 1.65;
-      margin-bottom: 16px;
-      padding: 12px 14px;
-      background: var(--primary-light);
-      border-radius: 10px;
-      border: 1px solid #bbdefb;
-    }
-
-    .dot-pulse {
-      width: 8px;
-      height: 8px;
-      background: var(--success);
-      border-radius: 50%;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    .loader {
-      display: none;
-      text-align: center;
-      padding: 20px;
-      color: var(--muted);
-    }
-
-    .loader.show { display: block; }
-
-    .spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid var(--border);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 10px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .footer {
-      text-align: center;
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 24px;
-    }
+    .footer { text-align: center; font-size: 0.74rem; color: var(--muted); margin-top: 18px; }
 
     @media (max-width: 768px) {
-      .app {
-        max-width: 100%;
-        padding: 12px 12px calc(28px + env(safe-area-inset-bottom));
-      }
-
-      .header { margin-bottom: 16px; }
-      .header-icon { width: 52px; height: 52px; font-size: 24px; border-radius: 14px; }
-      .header h1 { font-size: 1.15rem; }
-      .header p { font-size: 0.82rem; }
-
-      .tabs { padding: 3px; gap: 3px; }
-      .tab-btn { padding: 11px 6px; font-size: 0.82rem; }
-
-      .card { padding: 16px 14px; border-radius: 12px; }
-
-      input, select, textarea {
-        font-size: 16px;
-        padding: 14px 12px;
-      }
-
-      .btn {
-        min-height: 48px;
-        padding: 14px 12px;
-        font-size: 0.95rem;
-      }
-
-      .status-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-        padding: 10px 0;
-      }
-
-      .status-value {
-        text-align: right;
-        width: 100%;
-      }
-
-      .status-value.rtl { text-align: right; }
-
-      .star { font-size: 1.75rem; }
-
-      .notif-item { padding: 10px 12px; }
-
-      .reopen-section { margin-top: 12px; padding-top: 12px; }
-
-      .rating-pending {
-        font-size: 0.82rem;
-        padding: 12px;
-      }
-    }
-
-    .device-warning {
-      background: var(--danger-bg);
-      border: 1.5px solid #ef9a9a;
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 0.85rem;
-      color: var(--danger);
-      margin-bottom: 12px;
-      line-height: 1.5;
+      .hero h1 { font-size: 1.5rem; }
+      .hero-illustration { width: 190px; height: 190px; }
+      .hint-grid { gap: 8px; }
+      .hint-card { padding: 12px 6px; }
+      .hint-card .ic { font-size: 1.3rem; }
+      .hint-card .lbl { font-size: 0.74rem; }
+      .chat-wrap { height: calc(100vh - 110px); border-radius: 12px; }
+      input, textarea { font-size: 16px; }
     }
   </style>
-  <script src="config.js?v=4"></script>
-  <script src="api-bridge.js?v=4"></script>
+  <script src="config.js?v=5"></script>
+  <script src="api-bridge.js?v=5"></script>
 </head>
 <body>
-  <div class="app">
-    <header class="header">
-      <div class="header-icon">📞</div>
-      <h1>متابعة بلاغات الأعطال الأرضية</h1>
-      <p>تابع بلاغك وإشعارات السنترال على خطك الأرضي</p>
-    </header>
 
-    <section id="panel-follow">
+  <!-- ============ شاشة الترحيب ============ -->
+  <section id="screen-hero" class="screen active">
+    <div class="hero">
+      <span class="hero-bubble b1"></span>
+      <span class="hero-bubble b2"></span>
+      <span class="hero-bubble b3"></span>
+      <span class="hero-bubble b4"></span>
+
+      <div class="hero-inner">
+        <svg class="hero-illustration" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="ring-pulse" cx="120" cy="120" r="62" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+          <!-- مبنى السنترال -->
+          <rect x="74" y="92" width="92" height="96" rx="10" fill="#ffffff"/>
+          <rect x="86" y="106" width="20" height="20" rx="4" fill="#bbdefb"/>
+          <rect x="110" y="106" width="20" height="20" rx="4" fill="#bbdefb"/>
+          <rect x="134" y="106" width="20" height="20" rx="4" fill="#bbdefb"/>
+          <rect x="86" y="134" width="20" height="20" rx="4" fill="#b2dfdb"/>
+          <rect x="134" y="134" width="20" height="20" rx="4" fill="#b2dfdb"/>
+          <rect x="108" y="156" width="24" height="32" rx="4" fill="#90caf9"/>
+          <!-- برج الإرسال -->
+          <rect x="116" y="50" width="8" height="44" rx="3" fill="#0f9d8f"/>
+          <circle cx="120" cy="48" r="7" fill="#69f0ae"/>
+          <path d="M104 60 A22 22 0 0 1 136 60" stroke="#69f0ae" stroke-width="3" fill="none" opacity="0.8"/>
+          <path d="M96 52 A34 34 0 0 1 144 52" stroke="#69f0ae" stroke-width="3" fill="none" opacity="0.5"/>
+          <!-- فقاعة محادثة من العميل -->
+          <g class="chat-pop">
+            <rect x="28" y="120" width="58" height="38" rx="12" fill="#0f9d8f"/>
+            <path d="M40 158 l0 14 l16 -14 z" fill="#0f9d8f"/>
+            <circle class="dot-blink" cx="46" cy="139" r="4" fill="#fff"/>
+            <circle class="dot-blink d2" cx="57" cy="139" r="4" fill="#fff"/>
+            <circle class="dot-blink d3" cx="68" cy="139" r="4" fill="#fff"/>
+          </g>
+          <!-- فقاعة رد من السنترال -->
+          <g class="chat-pop delay">
+            <rect x="156" y="150" width="60" height="38" rx="12" fill="#ffffff"/>
+            <path d="M204 188 l0 14 l-16 -14 z" fill="#ffffff"/>
+            <rect x="166" y="162" width="40" height="5" rx="2.5" fill="#90caf9"/>
+            <rect x="166" y="172" width="28" height="5" rx="2.5" fill="#b2dfdb"/>
+          </g>
+        </svg>
+
+        <span class="brand-chip">🏢 سنترال فرشوط · المصرية للاتصالات</span>
+        <h1>التواصل مع مسؤولي سنترال فرشوط</h1>
+        <p class="lead">قناة رسمية للتواصل المباشر مع إدارة السنترال — راسلنا في أي وقت وسيرد عليك المسؤولون من هنا.</p>
+
+        <div class="hint-grid">
+          <div class="hint-card">
+            <span class="ic">📞</span>
+            <span class="strike">اتصال تليفوني</span>
+            <span class="lbl">بدون انتظار على الخط</span>
+          </div>
+          <div class="hint-card">
+            <span class="ic">💬</span>
+            <span class="strike">واتساب</span>
+            <span class="lbl">قناة رسمية موثّقة</span>
+          </div>
+          <div class="hint-card">
+            <span class="ic">🚶</span>
+            <span class="strike">الحضور للسنترال</span>
+            <span class="lbl">من مكانك مباشرة</span>
+          </div>
+        </div>
+
+        <div class="hero-note">
+          بدلاً من <strong>عناء الاتصال</strong> أو <strong>رسائل الواتساب</strong> أو <strong>الحضور إلى السنترال</strong> لمقابلة المسؤولين —
+          تواصل معنا عبر محادثة مباشرة، ونحن نرد عليك في أقرب وقت.
+        </div>
+
+        <button type="button" class="cta-btn" id="hero-cta">
+          <span>ابدأ المحادثة الآن</span>
+          <span style="font-size:1.2rem">←</span>
+        </button>
+        <p class="hero-sub">يكفي رقم تليفونك الأرضي ورقم الموبايل لبدء التواصل</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ شاشة الدخول للمحادثة ============ -->
+  <section id="screen-start" class="screen">
+    <div class="app">
+      <div class="topbar">
+        <div class="logo">💬</div>
+        <div class="titles">
+          <h2>التواصل مع سنترال فرشوط</h2>
+          <p>ابدأ محادثتك مع مسؤولي السنترال</p>
+        </div>
+      </div>
+
       <div class="card">
-        <div class="card-title">🔍 متابعة بلاغك</div>
-        <div id="follow-alert" class="alert"></div>
-
-        <div class="access-tabs">
-          <button type="button" class="access-tab active" id="tab-follow" data-panel="follow">🔍 متابعة البلاغ</button>
-          <button type="button" class="access-tab" id="tab-change-mobile" data-panel="change-mobile">📱 تغيير رقم الموبايل</button>
-        </div>
-
-        <div id="panel-follow-access" class="access-panel">
-        <form id="follow-form">
+        <div class="card-title">🔑 الدخول للمحادثة</div>
+        <p class="card-sub">أدخل رقم تليفونك الأرضي ورقم الموبايل للوصول إلى محادثتك مع السنترال أو بدء محادثة جديدة.</p>
+        <div id="start-alert" class="alert"></div>
+        <form id="start-form">
           <div class="form-group">
-            <label for="follow-landline">رقم التليفون الأرضي</label>
-            <input type="tel" id="follow-landline" placeholder="09624******" required />
+            <label for="start-landline">رقم التليفون الأرضي</label>
+            <input type="tel" id="start-landline" placeholder="09624******" required />
           </div>
-
           <div class="form-group">
-            <label for="follow-mobile">رقم الموبايل</label>
-            <input type="tel" id="follow-mobile" placeholder="01*********" required />
-            <p class="field-hint">يُستخدم للتحقق من هويتك وربط بصمة جهازك. التقييم يعمل فقط من نفس الجهاز الذي سجّل الموبايل (حتى من متصفح آخر على نفس الجهاز).</p>
+            <label for="start-mobile">رقم الموبايل</label>
+            <input type="tel" id="start-mobile" placeholder="01*********" required />
+            <p class="field-hint">يُستخدم للتعرف عليك وحفظ محادثتك. يُربط جهازك بالمحادثة لحماية بياناتك.</p>
           </div>
-
-          <button type="submit" class="btn btn-primary" id="follow-submit">عرض التحديثات</button>
-          <button type="button" class="btn btn-outline" id="refresh-btn" style="display:none">تحديث الآن</button>
+          <button type="submit" class="btn btn-primary" id="start-submit">فتح المحادثة 💬</button>
+          <button type="button" class="btn btn-ghost" id="to-hero-btn">رجوع للصفحة الرئيسية</button>
         </form>
+        <div style="text-align:center;margin-top:12px">
+          <button type="button" class="btn-link" id="open-change-mobile">📱 غيّرت رقم موبايلك؟ اضغط هنا</button>
+        </div>
+      </div>
+
+      <footer class="footer">سنترال فرشوط · المصرية للاتصالات</footer>
+    </div>
+  </section>
+
+  <!-- ============ شاشة المحادثة ============ -->
+  <section id="screen-chat" class="screen">
+    <div class="app">
+      <div class="topbar">
+        <button type="button" class="btn-link" id="chat-back" style="font-size:1.4rem">→</button>
+        <div class="titles" style="flex:1">
+          <h2>محادثة السنترال</h2>
+          <p id="chat-line-sub">—</p>
+        </div>
+      </div>
+
+      <div class="chat-wrap">
+        <div class="chat-head">
+          <div class="avatar">🏢</div>
+          <div class="info">
+            <div class="name">مسؤولو سنترال فرشوط</div>
+            <div class="state"><span class="live-dot"></span><span id="chat-state-text">متصل — نرد في أقرب وقت</span></div>
+          </div>
+          <div class="line-num" id="chat-line-num"></div>
         </div>
 
-        <div id="panel-change-mobile-access" class="access-panel hidden">
-          <p class="change-mobile-intro">إذا غيّرت رقم موبايلك، أدخل الرقم القديم المسجّل والرقم الجديد. بعد التحديث استخدم الرقم الجديد في المتابعة.</p>
-          <div id="change-mobile-alert" class="alert"></div>
-          <form id="change-mobile-form">
-            <div class="form-group">
-              <label for="change-landline">رقم التليفون الأرضي</label>
-              <input type="tel" id="change-landline" placeholder="09624******" required />
-            </div>
-            <div class="form-group">
-              <label for="change-old-mobile">رقم الموبايل القديم</label>
-              <input type="tel" id="change-old-mobile" placeholder="01*********" required />
-            </div>
-            <div class="form-group">
-              <label for="change-new-mobile">رقم الموبايل الجديد</label>
-              <input type="tel" id="change-new-mobile" placeholder="01*********" required />
-            </div>
-            <button type="submit" class="btn btn-primary" id="change-mobile-submit">تحديث رقم الموبايل</button>
-          </form>
+        <div class="chat-body" id="chat-body">
+          <div class="chat-empty" id="chat-empty">
+            <div class="big">👋</div>
+            <div>أهلاً بك! اكتب رسالتك للسنترال وسيتم الرد عليك من هنا.</div>
+          </div>
         </div>
 
-        <div id="loader" class="loader">
-          <div class="spinner"></div>
-          جاري التحميل...
-        </div>
-
-        <div id="status-box" class="status-box">
-          <div class="status-row">
-            <span class="status-label">رقم الموبايل المسجّل</span>
-            <span class="status-value ltr" id="s-mobile">—</span>
+        <div class="chat-foot">
+          <div class="rating-banner" id="rating-banner">
+            <span>⭐ تم إنهاء المحادثة — يسعدنا تقييمك للخدمة</span>
+            <button type="button" class="btn-rate" id="open-rating-btn">قيّم الآن</button>
           </div>
-          <div class="status-row">
-            <span class="status-label">رقم الخط</span>
-            <span class="status-value" id="s-landline">—</span>
-          </div>
-          <div class="status-row">
-            <span class="status-label">سبب الإبلاغ</span>
-            <span class="status-value rtl" id="s-reason">—</span>
-          </div>
-          <div class="status-row">
-            <span class="status-label">الحالة</span>
-            <span id="s-status">—</span>
-          </div>
-          <div class="status-row">
-            <span class="status-label">تاريخ الإبلاغ</span>
-            <span class="status-value" id="s-date">—</span>
-          </div>
-          <div class="status-row">
-            <span class="status-label">آخر تحديث</span>
-            <span class="status-value" id="s-update">—</span>
-          </div>
-
-          <div class="notifications-section" id="notif-section">
-            <div class="notif-section-title">📢 إشعارات السنترال</div>
-            <div id="notifications-list" class="notifications-list">
-              <div class="notif-empty">لا يوجد إشعار من السنترال حتى الآن</div>
-            </div>
-          </div>
-
-          <div class="auto-refresh" id="auto-refresh-info" style="display:none">
-            <span class="dot-pulse"></span>
-            تحديث تلقائي كل 45 ثانية
-          </div>
-
-          <div id="rating-pending" class="rating-pending">
-            ⏳ التقييم سيظهر هنا بعد أن يغيّر السنترال حالة العطل إلى <strong>تم الحل</strong>
-          </div>
-
-          <!-- التقييم -->
-          <div id="rating-section" class="rating-section">
-            <div class="card-title" id="rating-section-title" style="justify-content:center">⭐ تقييم الخدمة</div>
-            <div id="device-warning" class="device-warning" style="display:none"></div>
-            <div id="rating-alert" class="alert"></div>
-
-            <div id="rating-form-area">
-              <div id="reopen-trigger-wrap" class="reopen-trigger-wrap" style="display:none">
-                <button type="button" class="btn btn-warning" id="reopen-open-btn">⚠️ الخط مازال به مشكلة؟ — إعادة فتح البلاغ</button>
-              </div>
-
-              <div id="rating-eval-block">
-              <div class="reopen-section" style="margin-top:16px;padding-top:16px;border-top:1.5px dashed var(--border)">
-                <div class="rating-label" style="color:var(--primary-dark)">✅ إذا تم الإصلاح — قيّم الخدمة</div>
-              </div>
-
-              <div class="rating-label">تقييم إزالة العطل</div>
-              <div class="stars" id="stars-fault" data-rating="0">
-                <span class="star" data-val="1">★</span>
-                <span class="star" data-val="2">★</span>
-                <span class="star" data-val="3">★</span>
-                <span class="star" data-val="4">★</span>
-                <span class="star" data-val="5">★</span>
-              </div>
-
-              <div class="rating-label">تقييم الفني</div>
-              <div class="stars" id="stars-tech" data-rating="0">
-                <span class="star" data-val="1">★</span>
-                <span class="star" data-val="2">★</span>
-                <span class="star" data-val="3">★</span>
-                <span class="star" data-val="4">★</span>
-                <span class="star" data-val="5">★</span>
-              </div>
-
-              <div class="form-group">
-                <label for="rating-comment">تعليق (اختياري)</label>
-                <textarea id="rating-comment" placeholder="اكتب تعليقك هنا..."></textarea>
-              </div>
-
-              <button type="button" class="btn btn-primary" id="rating-submit">إرسال التقييم</button>
-              </div>
-            </div>
-
-            <div id="rating-done" style="display:none; text-align:center; color:var(--success); font-weight:600; padding:16px;">
-              ✅ شكراً! تم حفظ تقييمك بنجاح
-            </div>
-
-            <div id="reopen-done" class="reopen-done">
-              🔄 تم إعادة فتح البلاغ وإبلاغ السنترال. سيتم متابعة المشكلة مرة أخرى.
-            </div>
-          </div>
-
-          <div id="new-complaint-section" class="new-complaint-section">
-            <div class="card-title" style="justify-content:center">📋 شكوى جديدة على نفس الخط</div>
-            <div id="new-complaint-alert" class="alert"></div>
-            <p class="new-complaint-hint" id="new-complaint-hint">بعد تقييم البلاغ السابق، يمكنك فتح شكوى جديدة إذا ظهر عطل مرة أخرى على نفس الخط</p>
-            <div class="form-group">
-              <label for="new-complaint-reason">سبب الشكوى الجديدة</label>
-              <select id="new-complaint-reason">
-                <option value="">— اختر السبب —</option>
-                <option value="انقطاع الخدمة">انقطاع الخدمة</option>
-                <option value="ضعف كفاءة الخط">ضعف كفاءة الخط</option>
-                <option value="طلب صيانة للخط">طلب صيانة للخط</option>
-              </select>
-            </div>
-            <button type="button" class="btn btn-primary" id="new-complaint-submit">فتح شكوى جديدة</button>
+          <div id="chat-alert" class="alert"></div>
+          <div class="composer">
+            <textarea id="msg-input" rows="1" placeholder="اكتب رسالتك هنا..." maxlength="1000"></textarea>
+            <button type="button" class="send" id="send-btn" title="إرسال">➤</button>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <footer class="footer">متابعة بلاغات الأعطال الأرضية · الإصدار 3.2</footer>
-  </div>
-
-  <div id="confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <!-- ============ نافذة التقييم ============ -->
+  <div id="rating-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
-      <div class="modal-icon" id="confirm-modal-icon">📋</div>
-      <h3 id="confirm-modal-title">تأكيد</h3>
-      <p class="modal-message" id="confirm-modal-message"></p>
-      <p class="modal-detail" id="confirm-modal-detail"></p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-primary btn-sm" id="confirm-modal-ok">تأكيد</button>
-        <button type="button" class="btn btn-outline btn-sm" id="confirm-modal-cancel">إلغاء</button>
+      <div class="modal-icon">⭐</div>
+      <h3>قيّم تواصلك مع السنترال</h3>
+      <p class="modal-sub">رأيك يساعدنا على تحسين خدمة سنترال فرشوط</p>
+      <div id="rating-modal-alert" class="alert"></div>
+
+      <div id="rating-form-area">
+        <div class="rating-label">سرعة الاستجابة والرد</div>
+        <div class="stars" id="stars-fault" data-rating="0">
+          <span class="star" data-val="1">★</span>
+          <span class="star" data-val="2">★</span>
+          <span class="star" data-val="3">★</span>
+          <span class="star" data-val="4">★</span>
+          <span class="star" data-val="5">★</span>
+        </div>
+
+        <div class="rating-label">تعامل وحُسن معاملة الموظف</div>
+        <div class="stars" id="stars-tech" data-rating="0">
+          <span class="star" data-val="1">★</span>
+          <span class="star" data-val="2">★</span>
+          <span class="star" data-val="3">★</span>
+          <span class="star" data-val="4">★</span>
+          <span class="star" data-val="5">★</span>
+        </div>
+
+        <div class="form-group" style="margin-top:14px">
+          <label for="rating-comment">ملاحظاتك (اختياري)</label>
+          <textarea id="rating-comment" rows="3" placeholder="اكتب ملاحظاتك هنا..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="rating-submit">إرسال التقييم</button>
+          <button type="button" class="btn btn-ghost" id="rating-cancel" style="margin-top:0">لاحقاً</button>
+        </div>
+      </div>
+
+      <div id="rating-done-area" style="display:none;text-align:center">
+        <div style="font-size:2.6rem;margin:10px 0">🙏</div>
+        <p style="color:var(--success);font-weight:700;margin-bottom:16px">شكراً لك! تم حفظ تقييمك بنجاح.</p>
+        <button type="button" class="btn btn-primary" id="rating-close-done">إغلاق</button>
       </div>
     </div>
   </div>
 
-  <div id="reopen-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="reopen-modal-title">
-    <div class="modal-box reopen-modal-box">
-      <div class="modal-icon">⚠️</div>
-      <h3 id="reopen-modal-title">الخط مازال به مشكلة؟</h3>
-      <p class="modal-detail">إذا لم تُحل المشكلة بعد، أعد فتح البلاغ ليتابعه السنترال مرة أخرى</p>
-      <div id="reopen-modal-alert" class="alert"></div>
-      <div class="form-group" style="margin-bottom:12px">
-        <label for="reopen-note">وصف المشكلة (اختياري)</label>
-        <textarea id="reopen-note" placeholder="مثال: الخط مازال منقطع أو الصوت ضعيف..."></textarea>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-warning btn-sm" id="reopen-submit">المشكلة مازالت موجودة — إعادة فتح البلاغ</button>
-        <button type="button" class="btn btn-outline btn-sm" id="reopen-cancel-btn">إلغاء</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="no-report-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="no-report-modal-title">
-    <div class="modal-box reopen-modal-box no-report-modal-box">
-      <div id="no-report-step-info">
-        <div class="modal-icon">ℹ️</div>
-        <h3 id="no-report-modal-title">لا يوجد بلاغ على هذا الرقم</h3>
-        <p class="modal-detail">لا يوجد بلاغ مسجّل على رقم التليفون الأرضي المدخل.<br>للتواصل مع السنترال وتسجيل بلاغ جديد، اضغط <strong>استمرار</strong>.</p>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-primary btn-sm" id="no-report-continue-btn">استمرار</button>
-          <button type="button" class="btn btn-outline btn-sm" id="no-report-cancel-btn">إلغاء</button>
+  <!-- ============ نافذة تغيير رقم الموبايل ============ -->
+  <div id="change-mobile-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-icon" style="background:var(--primary-light)">📱</div>
+      <h3>تغيير رقم الموبايل</h3>
+      <p class="modal-sub">إذا غيّرت رقم موبايلك، أدخل الرقم القديم والجديد لتحديث محادثتك.</p>
+      <div id="change-mobile-alert" class="alert"></div>
+      <form id="change-mobile-form">
+        <div class="form-group">
+          <label for="cm-landline">رقم التليفون الأرضي</label>
+          <input type="tel" id="cm-landline" placeholder="09624******" required />
         </div>
-      </div>
-      <div id="no-report-step-form" class="hidden">
-        <div class="modal-icon">📋</div>
-        <h3>تسجيل بلاغ جديد</h3>
-        <p class="modal-detail">اختر سبب الإبلاغ وسيصل البلاغ إلى السنترال في شيت «ابلاغ عميل»</p>
-        <div id="no-report-modal-alert" class="alert"></div>
-        <div class="form-group" style="margin-bottom:12px">
-          <label for="no-report-reason">سبب الإبلاغ</label>
-          <select id="no-report-reason">
-            <option value="">— اختر السبب —</option>
-            <option value="انقطاع الخدمة">انقطاع الخدمة</option>
-            <option value="ضعف كفاءة الخط">ضعف كفاءة الخط</option>
-            <option value="طلب صيانة للخط">طلب صيانة للخط</option>
-          </select>
+        <div class="form-group">
+          <label for="cm-old">رقم الموبايل القديم</label>
+          <input type="tel" id="cm-old" placeholder="01*********" required />
+        </div>
+        <div class="form-group">
+          <label for="cm-new">رقم الموبايل الجديد</label>
+          <input type="tel" id="cm-new" placeholder="01*********" required />
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn btn-primary btn-sm" id="no-report-submit-btn">إرسال البلاغ للسنترال</button>
-          <button type="button" class="btn btn-outline btn-sm" id="no-report-back-btn">رجوع</button>
+          <button type="submit" class="btn btn-primary" id="cm-submit">تحديث الرقم</button>
+          <button type="button" class="btn btn-ghost" id="cm-cancel" style="margin-top:0">إلغاء</button>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 
   <script>
-    let refreshTimer = null;
-    let currentFollow = { landline: '', mobile: '' };
-    let ratings = { fault: 0, tech: 0 };
-    let confirmModalResolver = null;
-    let pendingNewReport = { landline: '', mobile: '' };
-    const DEVICE_FP_KEY = 'tfr_device_fp_v1';
+    /* ===================== الحالة ===================== */
+    var session = { landline: '', mobile: '' };
+    var ratings = { fault: 0, tech: 0 };
+    var pollTimer = null;
+    var lastSignature = '';
+    var ratingPromptShown = false;
+    var lastTicket = null;
+    var DEVICE_FP_KEY = 'tfr_device_fp_v1';
 
+    /* ===================== بصمة الجهاز ===================== */
     function hashString(str) {
       var h = 2166136261;
       for (var i = 0; i < str.length; i++) {
@@ -961,14 +887,10 @@
       }
       return (h >>> 0).toString(16).padStart(8, '0');
     }
-
     function getPlatform() {
-      if (navigator.userAgentData && navigator.userAgentData.platform) {
-        return navigator.userAgentData.platform;
-      }
+      if (navigator.userAgentData && navigator.userAgentData.platform) return navigator.userAgentData.platform;
       return navigator.platform || '';
     }
-
     function getWebGlRenderer() {
       try {
         var canvas = document.createElement('canvas');
@@ -977,11 +899,8 @@
         var ext = gl.getExtension('WEBGL_debug_renderer_info');
         if (!ext) return '';
         return String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '');
-      } catch (e) {
-        return '';
-      }
+      } catch (e) { return ''; }
     }
-
     function buildDeviceFingerprint() {
       var parts = [
         screen.width + 'x' + screen.height,
@@ -998,387 +917,211 @@
       ];
       return hashString(parts.join('|'));
     }
-
     function getDeviceFingerprint() {
       var cached = '';
-      try {
-        cached = localStorage.getItem(DEVICE_FP_KEY) || '';
-      } catch (e) {}
+      try { cached = localStorage.getItem(DEVICE_FP_KEY) || ''; } catch (e) {}
       if (cached) return cached;
-
       var fp = buildDeviceFingerprint();
-      try {
-        localStorage.setItem(DEVICE_FP_KEY, fp);
-      } catch (e) {}
+      try { localStorage.setItem(DEVICE_FP_KEY, fp); } catch (e) {}
       return fp;
     }
+    var deviceFingerprint = getDeviceFingerprint();
 
-    const deviceFingerprint = getDeviceFingerprint();
-
-    function updateBodyScrollLock() {
-      var locked = !document.getElementById('confirm-modal').classList.contains('hidden') ||
-        !document.getElementById('reopen-modal').classList.contains('hidden') ||
-        !document.getElementById('no-report-modal').classList.contains('hidden');
-      document.body.style.overflow = locked ? 'hidden' : '';
-    }
-
-    function isLandlineNotFoundError(message) {
-      return String(message || '').indexOf('لم يتم العثور على بلاغ بهذا الرقم الأرضي') !== -1;
-    }
-
-    function openNoReportModal(landline, mobile) {
-      pendingNewReport = { landline: landline, mobile: mobile };
-      hideAlert('no-report-modal-alert');
-      document.getElementById('no-report-reason').value = '';
-      document.getElementById('no-report-step-info').classList.remove('hidden');
-      document.getElementById('no-report-step-form').classList.add('hidden');
-      document.getElementById('no-report-modal').classList.remove('hidden');
-      updateBodyScrollLock();
-    }
-
-    function closeNoReportModal() {
-      document.getElementById('no-report-modal').classList.add('hidden');
-      updateBodyScrollLock();
-    }
-
-    function showNoReportFormStep() {
-      document.getElementById('no-report-step-info').classList.add('hidden');
-      document.getElementById('no-report-step-form').classList.remove('hidden');
-    }
-
-    function showConfirmModal(options) {
-      return new Promise(function (resolve) {
-        var modal = document.getElementById('confirm-modal');
-        document.getElementById('confirm-modal-icon').textContent = options.icon || '📋';
-        document.getElementById('confirm-modal-title').textContent = options.title || 'تأكيد الإجراء';
-        document.getElementById('confirm-modal-message').textContent = options.message || '';
-        var detailEl = document.getElementById('confirm-modal-detail');
-        if (options.detail) {
-          detailEl.textContent = options.detail;
-          detailEl.style.display = 'block';
-        } else {
-          detailEl.style.display = 'none';
-        }
-        document.getElementById('confirm-modal-ok').textContent = options.confirmText || 'تأكيد';
-        document.getElementById('confirm-modal-cancel').textContent = options.cancelText || 'إلغاء';
-        confirmModalResolver = resolve;
-        modal.classList.remove('hidden');
-        updateBodyScrollLock();
+    /* ===================== أدوات ===================== */
+    function $(id) { return document.getElementById(id); }
+    function showScreen(name) {
+      ['hero', 'start', 'chat'].forEach(function (s) {
+        $('screen-' + s).classList.toggle('active', s === name);
       });
+      window.scrollTo(0, 0);
     }
-
-    function closeConfirmModal(result) {
-      document.getElementById('confirm-modal').classList.add('hidden');
-      updateBodyScrollLock();
-      if (confirmModalResolver) {
-        confirmModalResolver(result);
-        confirmModalResolver = null;
-      }
-    }
-
-    function openReopenModal() {
-      hideAlert('reopen-modal-alert');
-      document.getElementById('reopen-modal').classList.remove('hidden');
-      updateBodyScrollLock();
-    }
-
-    function closeReopenModal() {
-      document.getElementById('reopen-modal').classList.add('hidden');
-      updateBodyScrollLock();
-    }
-
-    document.getElementById('confirm-modal-ok').addEventListener('click', function () {
-      closeConfirmModal(true);
-    });
-
-    document.getElementById('confirm-modal-cancel').addEventListener('click', function () {
-      closeConfirmModal(false);
-    });
-
-    document.getElementById('confirm-modal').addEventListener('click', function (e) {
-      if (e.target === document.getElementById('confirm-modal')) {
-        closeConfirmModal(false);
-      }
-    });
-
-    function showAlert(elId, message, type) {
-      var el = document.getElementById(elId);
-      el.textContent = message;
+    function showAlert(id, msg, type) {
+      var el = $(id);
+      el.textContent = msg;
       el.className = 'alert show alert-' + type;
     }
-
-    function hideAlert(elId) {
-      document.getElementById(elId).className = 'alert';
+    function hideAlert(id) { $(id).className = 'alert'; }
+    function escapeHtml(t) {
+      return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
-
-    function setLoading(loading) {
-      document.getElementById('loader').classList.toggle('show', loading);
-      document.getElementById('follow-submit').disabled = loading;
-    }
-
     function isResolvedStatus(status) {
       var s = String(status || '').trim();
       return s === 'تم الحل' || s === 'تم الاصلاح' || s === 'تم الإصلاح';
     }
-
-    function statusBadge(status) {
-      var cls = 'badge-new';
-      if (status === 'قيد المعالجة') cls = 'badge-progress';
-      if (status === 'إعادة فتح') cls = 'badge-reopened';
-      if (isResolvedStatus(status)) cls = 'badge-resolved';
-      return '<span class="badge ' + cls + '">' + status + '</span>';
+    function stateLabel(status) {
+      if (isResolvedStatus(status)) return 'تم إنهاء المحادثة';
+      if (status === 'قيد المعالجة') return 'المحادثة مفتوحة — جاري المتابعة';
+      if (status === 'إعادة فتح') return 'بانتظار رد السنترال';
+      return 'بانتظار رد السنترال';
     }
 
-    function escapeHtml(text) {
-      return String(text || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+    /* ===================== تصنيف رسائل الشات ===================== */
+    function classifyMessage(text) {
+      var t = String(text || '').trim();
+      if (t.indexOf('العميل:') === 0) {
+        return { who: 'me', text: t.replace(/^العميل:\s*/, '') };
+      }
+      if (t.indexOf('السنترال:') === 0) {
+        return { who: 'them', text: t.replace(/^السنترال:\s*/, '') };
+      }
+      // رسائل النظام / إشعارات السنترال التلقائية
+      return { who: 'system', text: t };
     }
 
     function getNotifications(data) {
-      if (data.notifications && data.notifications.length) {
-        return data.notifications;
-      }
-      if (data.notification) {
-        return [{ date: data.lastUpdate || '', text: data.notification }];
-      }
+      if (data && data.notifications && data.notifications.length) return data.notifications;
+      if (data && data.notification) return [{ date: data.lastUpdate || '', text: data.notification }];
       return [];
     }
 
-    function renderNotifications(data) {
-      var listEl = document.getElementById('notifications-list');
+    function renderChat(data) {
+      var body = $('chat-body');
       var notifications = getNotifications(data);
+      var signature = JSON.stringify(notifications) + '|' + (data.status || '');
+
+      // حدّث رأس المحادثة دائماً
+      $('chat-line-num').textContent = data.landline ? '☎ ' + data.landline : '';
+      $('chat-line-sub').textContent = data.landline ? 'الخط: ' + data.landline : '—';
+      $('chat-state-text').textContent = stateLabel(data.status);
+
+      updateRatingUi(data);
+
+      if (signature === lastSignature) return;
+      lastSignature = signature;
 
       if (!notifications.length) {
-        listEl.innerHTML = '<div class="notif-empty">لا يوجد إشعار من السنترال حتى الآن</div>';
+        body.innerHTML = '<div class="chat-empty" id="chat-empty"><div class="big">👋</div>' +
+          '<div>أهلاً بك! اكتب رسالتك للسنترال وسيتم الرد عليك من هنا.</div></div>';
         return;
       }
 
-      listEl.innerHTML = notifications.map(function (item) {
-        var dateHtml = item.date
-          ? '<div class="notif-date">' + escapeHtml(item.date) + '</div>'
-          : '';
-        return '<div class="notif-item">' +
-          dateHtml +
-          '<div class="notif-text">' + escapeHtml(item.text) + '</div>' +
-          '</div>';
-      }).join('');
+      var lastDay = '';
+      var html = '';
+      notifications.forEach(function (n) {
+        var day = (n.date || '').split(' ')[0];
+        if (day && day !== lastDay) {
+          lastDay = day;
+          html += '<div class="day-sep">' + escapeHtml(day) + '</div>';
+        }
+        var c = classifyMessage(n.text);
+        var time = (n.date || '').split(' ')[1] || '';
+        if (c.who === 'system') {
+          html += '<div class="row system"><div class="bubble">ℹ️ ' + escapeHtml(c.text) +
+            (time ? '<span class="meta">' + escapeHtml(n.date) + '</span>' : '') + '</div></div>';
+        } else {
+          var tag = c.who === 'me' ? 'أنت' : 'سنترال فرشوط';
+          html += '<div class="row ' + c.who + '"><div class="bubble">' +
+            '<span class="sender-tag">' + tag + '</span>' +
+            escapeHtml(c.text) +
+            '<span class="meta">' + escapeHtml(n.date || '') + '</span>' +
+            '</div></div>';
+        }
+      });
+      body.innerHTML = html;
+      body.scrollTop = body.scrollHeight;
     }
 
-    function renderStatus(data) {
-      document.getElementById('s-landline').textContent = data.landline;
-      document.getElementById('s-mobile').textContent = data.mobile || '—';
-      document.getElementById('s-reason').textContent = data.reason;
-      document.getElementById('s-status').innerHTML = statusBadge(data.status);
-      document.getElementById('s-date').textContent = data.date || '—';
-      document.getElementById('s-update').textContent = data.lastUpdate || '—';
-
-      renderNotifications(data);
-
-      document.getElementById('status-box').classList.add('show');
-      document.getElementById('refresh-btn').style.display = 'block';
-      document.getElementById('auto-refresh-info').style.display = 'flex';
-
-      var ratingSection = document.getElementById('rating-section');
-      var ratingPending = document.getElementById('rating-pending');
-      var ratingSectionTitle = document.getElementById('rating-section-title');
-      var resolved = data.isResolved || isResolvedStatus(data.status);
-
-      document.getElementById('reopen-done').classList.remove('show');
-      document.getElementById('reopen-trigger-wrap').style.display = 'none';
-      document.getElementById('rating-eval-block').style.display = '';
-      closeReopenModal();
-
-      var newComplaintSection = document.getElementById('new-complaint-section');
-      var newComplaintHint = document.getElementById('new-complaint-hint');
-      if (data.canOpenNewComplaint) {
-        newComplaintSection.classList.add('show');
-        if (data.isArchiveComplaint) {
-          newComplaintHint.textContent = 'هذا بلاغ أرشيفي. إذا ظهر عطل جديد على نفس الخط، يمكنك فتح شكوى جديدة.';
-        } else {
-          newComplaintHint.textContent = 'بعد تقييم البلاغ السابق، يمكنك فتح شكوى جديدة إذا ظهر عطل مرة أخرى على نفس الخط';
-        }
-      } else {
-        newComplaintSection.classList.remove('show');
-      }
-
-      var deviceWarningEl = document.getElementById('device-warning');
+    function updateRatingUi(data) {
+      lastTicket = data;
+      var banner = $('rating-banner');
+      var canRate = data.canRate === true;
+      var alreadyRated = data.alreadyRated === true;
       var deviceBlocked = data.hasDeviceFp && data.deviceTrusted === false;
 
-      if (resolved) {
-        if (data.isArchiveComplaint && data.canOpenNewComplaint) {
-          ratingPending.textContent = 'ℹ️ هذا بلاغ أرشيفي — التقييم غير متاح. يمكنك فتح شكوى جديدة إذا ظهر عطل على الخط.';
-          ratingPending.classList.add('show');
-          ratingSection.classList.remove('show');
-        } else {
-          ratingPending.classList.remove('show');
-          ratingSection.classList.add('show');
-          ratingSectionTitle.textContent = '⭐ تقييم الخدمة';
-          if (data.alreadyRated) {
-            document.getElementById('rating-form-area').style.display = 'none';
-            document.getElementById('rating-done').style.display = 'block';
-            deviceWarningEl.style.display = 'none';
-          } else if ((data.canRate || data.canReopen) && !deviceBlocked) {
-            document.getElementById('rating-form-area').style.display = 'block';
-            document.getElementById('rating-done').style.display = 'none';
-            deviceWarningEl.style.display = 'none';
-            document.getElementById('rating-eval-block').style.display = '';
-            if (data.canReopen) {
-              document.getElementById('reopen-trigger-wrap').style.display = 'block';
-            }
-          } else if (deviceBlocked) {
-            document.getElementById('rating-form-area').style.display = 'none';
-            document.getElementById('rating-done').style.display = 'none';
-            deviceWarningEl.textContent = '🔒 التقييم وإعادة الفتح متاحان فقط من الجهاز الذي سجّل رقم الموبايل أول مرة. استخدم نفس الجهاز (حتى لو من متصفح آخر) أو غيّر رقم الموبايل من القسم المخصص.';
-            deviceWarningEl.style.display = 'block';
-          } else if (!data.ratingEligible && !data.canReopen) {
-            document.getElementById('rating-form-area').style.display = 'none';
-            document.getElementById('rating-done').style.display = 'none';
-            deviceWarningEl.style.display = 'none';
-            ratingPending.textContent = 'ℹ️ هذا البلاغ مسجّل أرشيفياً — التقييم غير متاح له.';
-            ratingPending.classList.add('show');
-            ratingSection.classList.remove('show');
-          }
+      if (canRate && !deviceBlocked) {
+        banner.classList.add('show');
+        if (!ratingPromptShown) {
+          ratingPromptShown = true;
+          setTimeout(openRatingModal, 700);
         }
+      } else if (isResolvedStatus(data.status) && alreadyRated) {
+        banner.classList.remove('show');
       } else {
-        deviceWarningEl.style.display = 'none';
-        ratingSection.classList.remove('show');
-        if (data.status === 'إعادة فتح') {
-          ratingPending.textContent = '🔄 تم إعادة فتح البلاغ. السنترال يتابع المشكلة مرة أخرى.';
-          ratingPending.classList.add('show');
-        } else if (!data.alreadyRated) {
-          ratingPending.innerHTML = '⏳ التقييم سيظهر هنا بعد أن يغيّر السنترال حالة العطل إلى <strong>تم الحل</strong>';
-          ratingPending.classList.add('show');
-        } else {
-          ratingPending.classList.remove('show');
-        }
+        banner.classList.remove('show');
       }
     }
 
-    function startAutoRefresh() {
-      stopAutoRefresh();
-      refreshTimer = setInterval(function () {
-        if (currentFollow.landline && currentFollow.mobile) {
-          fetchStatus(currentFollow.landline, currentFollow.mobile, true);
-        }
-      }, 45000);
-    }
-
-    function stopAutoRefresh() {
-      if (refreshTimer) {
-        clearInterval(refreshTimer);
-        refreshTimer = null;
-      }
-    }
-
-    function fetchStatus(landline, mobile, silent) {
-      if (!silent) {
-        setLoading(true);
-        hideAlert('follow-alert');
-      }
+    /* ===================== النداءات ===================== */
+    function startChat(landline, mobile) {
+      var btn = $('start-submit');
+      btn.disabled = true;
+      btn.textContent = 'جاري الفتح...';
+      hideAlert('start-alert');
 
       google.script.run
         .withSuccessHandler(function (data) {
-          setLoading(false);
-          renderStatus(data);
-          startAutoRefresh();
-          if (data.mobile) {
-            currentFollow.mobile = data.mobile;
-            document.getElementById('follow-mobile').value = data.mobile;
-          }
-          if (!silent) {
-            if (data.mobileJustRegistered) {
-              showAlert('follow-alert', 'تم تسجيل رقم الموبايل وبصمة الجهاز بنجاح. استخدم نفس الجهاز للتقييم لاحقاً.', 'success');
-            } else if (data.deviceFpBound) {
-              showAlert('follow-alert', 'تم ربط هذا الجهاز بالبلاغ للمتابعة والتقييم.', 'success');
-            } else {
-              showAlert('follow-alert', 'تم تحميل بيانات البلاغ', 'success');
-            }
-          }
+          btn.disabled = false;
+          btn.textContent = 'فتح المحادثة 💬';
+          session = { landline: data.landline || landline, mobile: data.mobile || mobile };
+          ratingPromptShown = false;
+          lastSignature = '';
+          showScreen('chat');
+          renderChat(data);
+          startPolling();
         })
         .withFailureHandler(function (err) {
-          setLoading(false);
-          if (!silent && isLandlineNotFoundError(err.message)) {
-            stopAutoRefresh();
-            openNoReportModal(landline, mobile);
-            return;
-          }
-          if (!silent) showAlert('follow-alert', err.message || 'حدث خطأ', 'error');
+          btn.disabled = false;
+          btn.textContent = 'فتح المحادثة 💬';
+          showAlert('start-alert', err.message || 'حدث خطأ', 'error');
         })
-        .getStatus({
-          landline: landline,
-          mobile: mobile,
-          deviceFp: deviceFingerprint
-        });
+        .startChat({ landline: landline, mobile: mobile, deviceFp: deviceFingerprint });
     }
 
-    // متابعة
-    document.getElementById('follow-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var landline = document.getElementById('follow-landline').value;
-      var mobile = document.getElementById('follow-mobile').value;
-      currentFollow = { landline: landline, mobile: mobile };
-      fetchStatus(landline, mobile, false);
-    });
+    function refreshConversation() {
+      if (!session.landline || !session.mobile) return;
+      google.script.run
+        .withSuccessHandler(function (data) {
+          if (data && data.mobile) session.mobile = data.mobile;
+          renderChat(data);
+        })
+        .withFailureHandler(function () {})
+        .getConversation({ landline: session.landline, mobile: session.mobile, deviceFp: deviceFingerprint });
+    }
 
-    document.querySelectorAll('.access-tab').forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        var panel = tab.dataset.panel;
-        document.querySelectorAll('.access-tab').forEach(function (t) {
-          t.classList.toggle('active', t === tab);
-        });
-        document.getElementById('panel-follow-access').classList.toggle('hidden', panel !== 'follow');
-        document.getElementById('panel-change-mobile-access').classList.toggle('hidden', panel !== 'change-mobile');
-        hideAlert('follow-alert');
-        hideAlert('change-mobile-alert');
-      });
-    });
+    function sendMessage() {
+      var input = $('msg-input');
+      var message = input.value.trim();
+      if (!message) return;
+      hideAlert('chat-alert');
 
-    document.getElementById('change-mobile-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      hideAlert('change-mobile-alert');
-
-      var landline = document.getElementById('change-landline').value;
-      var oldMobile = document.getElementById('change-old-mobile').value;
-      var newMobile = document.getElementById('change-new-mobile').value;
-      var btn = document.getElementById('change-mobile-submit');
+      var btn = $('send-btn');
       btn.disabled = true;
-      btn.textContent = 'جاري التحديث...';
 
+      // عرض تفاؤلي للرسالة
       google.script.run
         .withSuccessHandler(function (result) {
           btn.disabled = false;
-          btn.textContent = 'تحديث رقم الموبايل';
-          showAlert('change-mobile-alert', result.message, 'success');
-          document.getElementById('follow-landline').value = landline;
-          document.getElementById('follow-mobile').value = result.mobile || newMobile;
-          document.getElementById('change-new-mobile').value = '';
-          document.getElementById('tab-follow').click();
+          input.value = '';
+          autoResize(input);
+          if (result && result.ticket) {
+            renderChat(result.ticket);
+          } else {
+            refreshConversation();
+          }
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
-          btn.textContent = 'تحديث رقم الموبايل';
-          showAlert('change-mobile-alert', err.message || 'حدث خطأ', 'error');
+          showAlert('chat-alert', err.message || 'تعذّر إرسال الرسالة', 'error');
         })
-        .changeCustomerMobile({
-          landline: landline,
-          oldMobile: oldMobile,
-          newMobile: newMobile,
-          deviceFp: deviceFingerprint
+        .sendCustomerMessage({
+          landline: session.landline,
+          mobile: session.mobile,
+          deviceFp: deviceFingerprint,
+          message: message
         });
-    });
+    }
 
-    document.getElementById('refresh-btn').addEventListener('click', function () {
-      if (currentFollow.landline) {
-        fetchStatus(currentFollow.landline, currentFollow.mobile, false);
-      }
-    });
+    function startPolling() {
+      stopPolling();
+      pollTimer = setInterval(refreshConversation, 20000);
+    }
+    function stopPolling() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
 
-    // النجوم
+    /* ===================== التقييم ===================== */
     function setupStars(containerId, key) {
-      var container = document.getElementById(containerId);
+      var container = $(containerId);
       container.querySelectorAll('.star').forEach(function (star) {
         star.addEventListener('click', function () {
           var val = parseInt(star.dataset.val);
@@ -1390,178 +1133,155 @@
         });
       });
     }
+    function resetStars() {
+      ratings = { fault: 0, tech: 0 };
+      ['stars-fault', 'stars-tech'].forEach(function (id) {
+        var c = $(id);
+        c.dataset.rating = 0;
+        c.querySelectorAll('.star').forEach(function (s) { s.classList.remove('active'); });
+      });
+      $('rating-comment').value = '';
+    }
+    function openRatingModal() {
+      hideAlert('rating-modal-alert');
+      $('rating-form-area').style.display = 'block';
+      $('rating-done-area').style.display = 'none';
+      resetStars();
+      $('rating-modal').classList.remove('hidden');
+    }
+    function closeRatingModal() { $('rating-modal').classList.add('hidden'); }
 
-    setupStars('stars-fault', 'fault');
-    setupStars('stars-tech', 'tech');
+    function submitRating() {
+      hideAlert('rating-modal-alert');
+      if (!ratings.fault) { showAlert('rating-modal-alert', 'يرجى تقييم سرعة الاستجابة', 'error'); return; }
+      if (!ratings.tech) { showAlert('rating-modal-alert', 'يرجى تقييم تعامل الموظف', 'error'); return; }
 
-    // التقييم
-    document.getElementById('rating-submit').addEventListener('click', function () {
-      hideAlert('rating-alert');
-
-      if (!ratings.fault) {
-        showAlert('rating-alert', 'يرجى تقييم إزالة العطل', 'error');
-        return;
-      }
-      if (!ratings.tech) {
-        showAlert('rating-alert', 'يرجى تقييم الفني', 'error');
-        return;
-      }
-
-      var btn = document.getElementById('rating-submit');
+      var btn = $('rating-submit');
       btn.disabled = true;
+      btn.textContent = 'جاري الإرسال...';
 
       google.script.run
-        .withSuccessHandler(function (result) {
+        .withSuccessHandler(function () {
           btn.disabled = false;
-          document.getElementById('rating-form-area').style.display = 'none';
-          document.getElementById('rating-done').style.display = 'block';
-          showAlert('follow-alert', result.message, 'success');
-          fetchStatus(currentFollow.landline, currentFollow.mobile, true);
+          btn.textContent = 'إرسال التقييم';
+          $('rating-form-area').style.display = 'none';
+          $('rating-done-area').style.display = 'block';
+          $('rating-banner').classList.remove('show');
+          refreshConversation();
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
-          showAlert('rating-alert', err.message || 'حدث خطأ', 'error');
+          btn.textContent = 'إرسال التقييم';
+          showAlert('rating-modal-alert', err.message || 'حدث خطأ', 'error');
         })
         .submitRating({
-          landline: currentFollow.landline,
-          mobile: currentFollow.mobile,
+          landline: session.landline,
+          mobile: session.mobile,
           deviceFp: deviceFingerprint,
           ratingFault: ratings.fault,
           ratingTech: ratings.tech,
-          comment: document.getElementById('rating-comment').value
+          comment: $('rating-comment').value
         });
+    }
+
+    /* ===================== تغيير الموبايل ===================== */
+    function openChangeMobile() {
+      hideAlert('change-mobile-alert');
+      $('cm-landline').value = $('start-landline').value || '';
+      $('change-mobile-modal').classList.remove('hidden');
+    }
+    function closeChangeMobile() { $('change-mobile-modal').classList.add('hidden'); }
+
+    /* ===================== الأحداث ===================== */
+    $('hero-cta').addEventListener('click', function () {
+      showScreen('start');
+      setTimeout(function () { $('start-landline').focus(); }, 200);
+    });
+    $('to-hero-btn').addEventListener('click', function () { showScreen('hero'); });
+
+    $('start-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var landline = $('start-landline').value.trim();
+      var mobile = $('start-mobile').value.trim();
+      if (!landline || !mobile) { showAlert('start-alert', 'أدخل رقم الأرضي ورقم الموبايل', 'error'); return; }
+      startChat(landline, mobile);
     });
 
-    document.getElementById('reopen-open-btn').addEventListener('click', openReopenModal);
-    document.getElementById('reopen-cancel-btn').addEventListener('click', closeReopenModal);
-    document.getElementById('reopen-modal').addEventListener('click', function (e) {
-      if (e.target === document.getElementById('reopen-modal')) closeReopenModal();
+    $('chat-back').addEventListener('click', function () {
+      stopPolling();
+      showScreen('start');
     });
 
-    document.getElementById('no-report-continue-btn').addEventListener('click', showNoReportFormStep);
-    document.getElementById('no-report-cancel-btn').addEventListener('click', closeNoReportModal);
-    document.getElementById('no-report-back-btn').addEventListener('click', function () {
-      document.getElementById('no-report-step-form').classList.add('hidden');
-      document.getElementById('no-report-step-info').classList.remove('hidden');
-    });
-    document.getElementById('no-report-modal').addEventListener('click', function (e) {
-      if (e.target === document.getElementById('no-report-modal')) closeNoReportModal();
-    });
+    $('send-btn').addEventListener('click', sendMessage);
 
-    document.getElementById('no-report-submit-btn').addEventListener('click', function () {
-      hideAlert('no-report-modal-alert');
-
-      var reason = document.getElementById('no-report-reason').value;
-      if (!reason) {
-        showAlert('no-report-modal-alert', 'يرجى اختيار سبب الإبلاغ', 'error');
-        return;
+    var msgInput = $('msg-input');
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+    msgInput.addEventListener('input', function () { autoResize(msgInput); });
+    msgInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
       }
+    });
 
-      var btn = document.getElementById('no-report-submit-btn');
+    setupStars('stars-fault', 'fault');
+    setupStars('stars-tech', 'tech');
+    $('open-rating-btn').addEventListener('click', openRatingModal);
+    $('rating-submit').addEventListener('click', submitRating);
+    $('rating-cancel').addEventListener('click', closeRatingModal);
+    $('rating-close-done').addEventListener('click', closeRatingModal);
+    $('rating-modal').addEventListener('click', function (e) {
+      if (e.target === $('rating-modal')) closeRatingModal();
+    });
+
+    $('open-change-mobile').addEventListener('click', openChangeMobile);
+    $('cm-cancel').addEventListener('click', closeChangeMobile);
+    $('change-mobile-modal').addEventListener('click', function (e) {
+      if (e.target === $('change-mobile-modal')) closeChangeMobile();
+    });
+
+    $('change-mobile-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      hideAlert('change-mobile-alert');
+      var landline = $('cm-landline').value.trim();
+      var oldMobile = $('cm-old').value.trim();
+      var newMobile = $('cm-new').value.trim();
+      var btn = $('cm-submit');
       btn.disabled = true;
-      btn.textContent = 'جاري الإرسال...';
+      btn.textContent = 'جاري التحديث...';
 
       google.script.run
         .withSuccessHandler(function (result) {
           btn.disabled = false;
-          btn.textContent = 'إرسال البلاغ للسنترال';
-          closeNoReportModal();
-          currentFollow = {
-            landline: pendingNewReport.landline,
-            mobile: pendingNewReport.mobile
-          };
-          showAlert('follow-alert', result.message || 'تم إرسال البلاغ بنجاح', 'success');
-          fetchStatus(currentFollow.landline, currentFollow.mobile, false);
+          btn.textContent = 'تحديث الرقم';
+          closeChangeMobile();
+          $('start-landline').value = landline;
+          $('start-mobile').value = result.mobile || newMobile;
+          showAlert('start-alert', result.message || 'تم تحديث رقم الموبايل بنجاح', 'success');
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
-          btn.textContent = 'إرسال البلاغ للسنترال';
-          showAlert('no-report-modal-alert', err.message || 'حدث خطأ', 'error');
+          btn.textContent = 'تحديث الرقم';
+          showAlert('change-mobile-alert', err.message || 'حدث خطأ', 'error');
         })
-        .submitReport({
-          landline: pendingNewReport.landline,
-          mobile: pendingNewReport.mobile,
-          deviceFp: deviceFingerprint,
-          reason: reason
+        .changeCustomerMobile({
+          landline: landline,
+          oldMobile: oldMobile,
+          newMobile: newMobile,
+          deviceFp: deviceFingerprint
         });
     });
 
-    // إعادة فتح البلاغ
-    document.getElementById('reopen-submit').addEventListener('click', function () {
-      hideAlert('reopen-modal-alert');
-
-      var btn = document.getElementById('reopen-submit');
-      btn.disabled = true;
-      btn.textContent = 'جاري الإرسال...';
-
-      google.script.run
-        .withSuccessHandler(function (result) {
-          btn.disabled = false;
-          btn.textContent = 'المشكلة مازالت موجودة — إعادة فتح البلاغ';
-          closeReopenModal();
-          document.getElementById('rating-form-area').style.display = 'none';
-          document.getElementById('reopen-done').classList.add('show');
-          document.getElementById('reopen-note').value = '';
-          showAlert('follow-alert', result.message, 'success');
-          fetchStatus(currentFollow.landline, currentFollow.mobile, true);
-        })
-        .withFailureHandler(function (err) {
-          btn.disabled = false;
-          btn.textContent = 'المشكلة مازالت موجودة — إعادة فتح البلاغ';
-          showAlert('reopen-modal-alert', err.message || 'حدث خطأ', 'error');
-        })
-        .reopenTicket({
-          landline: currentFollow.landline,
-          mobile: currentFollow.mobile,
-          deviceFp: deviceFingerprint,
-          note: document.getElementById('reopen-note').value
-        });
-    });
-
-    // شكوى جديدة بعد التقييم
-    document.getElementById('new-complaint-submit').addEventListener('click', function () {
-      hideAlert('new-complaint-alert');
-
-      var reason = document.getElementById('new-complaint-reason').value;
-      if (!reason) {
-        showAlert('new-complaint-alert', 'يرجى اختيار سبب الشكوى', 'error');
-        return;
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        stopPolling();
+      } else if ($('screen-chat').classList.contains('active')) {
+        refreshConversation();
+        startPolling();
       }
-
-      showConfirmModal({
-        icon: '📋',
-        title: 'تأكيد فتح شكوى جديدة',
-        message: 'هل ترغب في تسجيل شكوى جديدة على نفس الخط الأرضي؟',
-        detail: 'سيتم إرسال البلاغ إلى السنترال للمتابعة، وستتمكن من متابعة حالة البلاغ الجديد من هذه الصفحة.',
-        confirmText: 'نعم، افتح الشكوى',
-        cancelText: 'إلغاء'
-      }).then(function (confirmed) {
-        if (!confirmed) return;
-
-        var btn = document.getElementById('new-complaint-submit');
-        btn.disabled = true;
-        btn.textContent = 'جاري الفتح...';
-
-        google.script.run
-          .withSuccessHandler(function (result) {
-            btn.disabled = false;
-            btn.textContent = 'فتح شكوى جديدة';
-            document.getElementById('new-complaint-reason').value = '';
-            showAlert('follow-alert', result.message, 'success');
-            fetchStatus(currentFollow.landline, currentFollow.mobile, false);
-          })
-          .withFailureHandler(function (err) {
-            btn.disabled = false;
-            btn.textContent = 'فتح شكوى جديدة';
-            showAlert('new-complaint-alert', err.message || 'حدث خطأ', 'error');
-          })
-          .submitNewComplaint({
-            landline: currentFollow.landline,
-            mobile: currentFollow.mobile,
-            deviceFp: deviceFingerprint,
-            reason: reason
-          });
-      });
     });
   </script>
 </body>

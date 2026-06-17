@@ -56,6 +56,27 @@ async function getStatus(payload) {
   return sheets.getStatus(payload.landline, payload.mobile);
 }
 
+async function startChat(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('startChat', payload);
+  }
+  return sheets.startChat(payload);
+}
+
+async function getConversation(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('getConversation', payload);
+  }
+  return sheets.getConversation(payload);
+}
+
+async function sendCustomerMessage(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('sendCustomerMessage', payload);
+  }
+  return sheets.sendCustomerMessage(payload);
+}
+
 async function submitRating(payload) {
   if (useAppsScriptProxy()) {
     return proxyToAppsScript('submitRating', payload);
@@ -132,6 +153,9 @@ function getBackendMode() {
 module.exports = {
   submitReport,
   getStatus,
+  startChat,
+  getConversation,
+  sendCustomerMessage,
   submitRating,
   reopenTicket,
   submitNewComplaint,

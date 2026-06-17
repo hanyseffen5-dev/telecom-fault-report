@@ -147,6 +147,10 @@ const REASONS = [
   'طلب صيانة للخط'
 ];
 
+const CHAT_REASON = 'تواصل مع السنترال';
+const MAX_MESSAGE_LENGTH = 1000;
+const CUSTOMER_MSG_PREFIX = 'العميل: ';
+
 let sheetsClient = null;
 let authClient = null;
 let sheetTitleCache = null;
@@ -750,6 +754,169 @@ async function submitNewComplaint(payload) {
   };
 }
 
+async function appendChatRow(landline, mobile, deviceFp) {
+  const title = await resolveSheetTitle();
+  const sheets = getSheets();
+  const now = nowFormatted();
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `'${title}'!A:M`,
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: [[now, landline, CHAT_REASON, mobile, STATUS_NEW, '', now, '', '', '', String(deviceFp || ''), '', '']]
+    }
+  });
+}
+
+async function startChat(payload) {
+  await ensureHeaders();
+
+  const landline = validateLandline(payload.landline);
+  const mobile = validateMobile(payload.mobile);
+
+  let data = await getAllRows();
+  const latest = findLatestByLandline(data, landline);
+
+  if (latest.rowNumber === -1) {
+    await appendChatRow(landline, mobile, payload.deviceFp);
+    data = await getAllRows();
+    const created = findLatestByLandline(data, landline);
+    const ticket = rowToObject(created.row);
+    ticket.isNewConversation = true;
+    return ticket;
+  }
+
+  const storedMobileRaw = latest.row[COL.MOBILE - 1];
+
+  if (isEmptyMobile(storedMobileRaw)) {
+    const title = await resolveSheetTitle();
+    const sheets = getSheets();
+    const now = nowFormatted();
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: SPREADSHEET_ID,
+      requestBody: {
+        valueInputOption: 'USER_ENTERED',
+        data: [
+          { range: `'${title}'!${colLetter(COL.MOBILE)}${latest.rowNumber}`, values: [[mobile]] },
+          { range: `'${title}'!${colLetter(COL.LAST_UPDATE)}${latest.rowNumber}`, values: [[now]] }
+        ]
+      }
+    });
+    latest.row[COL.MOBILE - 1] = mobile;
+  } else if (normalizeMobileForMatch(storedMobileRaw) !== normalizeMobileForMatch(mobile)) {
+    throw new Error('رقم الموبايل مختلف عن الرقم المسجّل مسبقاً لهذا الخط. استخدم رقمك الصحيح أو غيّره من «تغيير رقم الموبايل».');
+  }
+
+  return rowToObject(latest.row);
+}
+
+async function getConversation(payload) {
+  await ensureHeaders();
+
+  const landline = validateLandline(payload.landline);
+  const mobile = validateMobile(payload.mobile);
+  const data = await getAllRows();
+  const result = findLatestRowForCustomer(data, landline, mobile);
+
+  if (result.rowNumber === -1) {
+    throw new Error(getCustomerAccessError(data, landline, mobile));
+  }
+
+  if (result.needsMobileRegistration) {
+    const title = await resolveSheetTitle();
+    const sheets = getSheets();
+    const now = nowFormatted();
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: SPREADSHEET_ID,
+      requestBody: {
+        valueInputOption: 'USER_ENTERED',
+        data: [
+          { range: `'${title}'!${colLetter(COL.MOBILE)}${result.rowNumber}`, values: [[mobile]] },
+          { range: `'${title}'!${colLetter(COL.LAST_UPDATE)}${result.rowNumber}`, values: [[now]] }
+        ]
+      }
+    });
+    result.row[COL.MOBILE - 1] = mobile;
+  }
+
+  return rowToObject(result.row);
+}
+
+async function sendCustomerMessage(payload) {
+  await ensureHeaders();
+
+  const landline = validateLandline(payload.landline);
+  const mobile = validateMobile(payload.mobile);
+  const message = String(payload.message || '').trim();
+
+  if (!message) {
+    throw new Error('اكتب رسالتك أولاً');
+  }
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    throw new Error('الرسالة طويلة جداً — اجعلها أقصر من ' + MAX_MESSAGE_LENGTH + ' حرف');
+  }
+
+  let data = await getAllRows();
+  let result = findLatestRowForCustomer(data, landline, mobile);
+
+  if (result.rowNumber === -1) {
+    const latest = findLatestByLandline(data, landline);
+    if (latest.rowNumber !== -1) {
+      throw new Error(getCustomerAccessError(data, landline, mobile));
+    }
+    await appendChatRow(landline, mobile, payload.deviceFp);
+    data = await getAllRows();
+    result = findLatestByLandline(data, landline);
+    result.needsMobileRegistration = false;
+  } else if (result.needsMobileRegistration) {
+    result.row[COL.MOBILE - 1] = mobile;
+  }
+
+  const row = result.row;
+  const rowNumber = result.rowNumber;
+  const now = new Date();
+  const updatedNotifications = appendNotificationLine(
+    row[COL.NOTIFICATION - 1],
+    CUSTOMER_MSG_PREFIX + message,
+    now
+  );
+
+  const currentStatus = String(row[COL.STATUS - 1] || STATUS_NEW);
+  let nextStatus = currentStatus;
+  if (isResolvedStatus(currentStatus)) {
+    nextStatus = STATUS_REOPENED;
+  } else if (currentStatus !== STATUS_IN_PROGRESS) {
+    nextStatus = STATUS_NEW;
+  }
+
+  const title = await resolveSheetTitle();
+  const sheets = getSheets();
+  const updates = [
+    { range: `'${title}'!${colLetter(COL.NOTIFICATION)}${rowNumber}`, values: [[updatedNotifications]] },
+    { range: `'${title}'!${colLetter(COL.STATUS)}${rowNumber}`, values: [[nextStatus]] },
+    { range: `'${title}'!${colLetter(COL.LAST_UPDATE)}${rowNumber}`, values: [[nowFormatted()]] }
+  ];
+
+  if (result.needsMobileRegistration) {
+    updates.push({ range: `'${title}'!${colLetter(COL.MOBILE)}${rowNumber}`, values: [[mobile]] });
+  }
+
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: { valueInputOption: 'USER_ENTERED', data: updates }
+  });
+
+  const freshData = await getAllRows();
+  const ticket = rowToObject(freshData[rowNumber - 1]);
+
+  return {
+    success: true,
+    message: 'تم إرسال رسالتك إلى مسؤولي السنترال.',
+    ticket
+  };
+}
+
 function getCentralPin() {
   return process.env.CENTRAL_PIN || DEFAULT_CENTRAL_PIN;
 }
@@ -1076,6 +1243,9 @@ function hasCredentials() {
 module.exports = {
   submitReport,
   getStatus,
+  startChat,
+  getConversation,
+  sendCustomerMessage,
   submitRating,
   reopenTicket,
   submitNewComplaint,

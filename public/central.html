@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>لوحة السنترال — متابعة الأعطال</title>
+  <title>لوحة سنترال فرشوط — محادثات العملاء</title>
   <style>
     :root {
       --primary: #0d47a1;
@@ -327,6 +327,54 @@
 
     .notif-item .date { font-size: 0.72rem; color: var(--muted); direction: ltr; text-align: right; }
     .notif-item .text { font-size: 0.88rem; margin-top: 4px; }
+
+    /* خيط المحادثة على هيئة شات */
+    .chat-thread {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 12px;
+      margin-bottom: 16px;
+      background: linear-gradient(180deg, #f4f8fc 0%, #eef3f9 100%);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .c-row { display: flex; }
+    .c-row.me { justify-content: flex-end; }   /* العميل يسار */
+    .c-row.them { justify-content: flex-start; } /* السنترال يمين */
+    .c-row.system { justify-content: center; }
+    .c-bubble {
+      max-width: 80%;
+      padding: 9px 13px;
+      border-radius: 14px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .c-row.me .c-bubble {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    .c-row.them .c-bubble {
+      background: linear-gradient(135deg, var(--primary), #1565c0);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .c-row.system .c-bubble {
+      background: var(--warning-bg);
+      color: #b45309;
+      border: 1px solid #fcd9a3;
+      font-size: 0.8rem;
+      text-align: center;
+      max-width: 92%;
+    }
+    .c-bubble .c-tag { display: block; font-size: 0.66rem; font-weight: 800; opacity: 0.8; margin-bottom: 2px; }
+    .c-bubble .c-date { display: block; font-size: 0.64rem; opacity: 0.7; margin-top: 4px; direction: ltr; text-align: left; }
+    .chat-thread-empty { text-align: center; color: var(--muted); padding: 24px; font-size: 0.85rem; }
 
     .quick-btns {
       display: flex;
@@ -725,13 +773,13 @@
   <div class="app">
     <header class="header">
       <div class="header-icon">🏢</div>
-      <h1>لوحة السنترال</h1>
-      <p>متابعة بلاغات الأعطال وإرسال الإشعارات للعملاء</p>
+      <h1>لوحة سنترال فرشوط</h1>
+      <p>محادثات العملاء — استقبل الرسائل وردّ على المواطنين</p>
     </header>
 
     <!-- تسجيل الدخول -->
     <section id="login-section" class="card">
-      <div class="card-title">🔐 دخول السنترال</div>
+      <div class="card-title">🔐 دخول مسؤولي السنترال</div>
       <div id="login-alert" class="alert"></div>
       <div class="form-group">
         <label for="pin-input">رمز الدخول</label>
@@ -755,12 +803,12 @@
       <div id="tickets-panel">
       <div class="card add-repaired-card" id="add-repaired-card">
         <button type="button" class="add-repaired-toggle" id="add-repaired-toggle" aria-expanded="false">
-          <span class="card-title">➕ إضافة خط أرضي مُصلح للتقييم</span>
+          <span class="card-title">➕ إضافة خط وإتاحة التقييم له</span>
           <span class="add-repaired-chevron" aria-hidden="true">▼</span>
         </button>
         <div class="add-repaired-body hidden" id="add-repaired-body">
         <p style="font-size:0.82rem;color:var(--muted);margin:14px 0">
-          يُضاف السجل تلقائياً بعمود «تقييم متاح = نعم» ليتمكن العميل من التقييم.
+          يُضاف السجل تلقائياً بعمود «تقييم متاح = نعم» ليتمكن العميل من تقييم الخدمة بعد التواصل.
           السجلات المُضافة يدوياً في الشيت (اترك العمود فارغاً أو «لا») تظهر أرشيفاً فقط دون تقييم.
         </p>
         <div id="add-repaired-alert" class="alert"></div>
@@ -802,11 +850,11 @@
         جاري التحميل...
       </div>
       <div id="ticket-list" class="ticket-list"></div>
-      <div id="empty-state" class="empty-state hidden">لا توجد بلاغات مطابقة</div>
+      <div id="empty-state" class="empty-state hidden">لا توجد محادثات مطابقة</div>
       </div>
 
       <div class="card rated-section hidden" id="rated-section">
-        <p class="rated-section-hint">البلاغات التي تم حلها وحصلت على تقييم من العميل</p>
+        <p class="rated-section-hint">المحادثات المنتهية التي قيّمها العملاء</p>
         <div class="rated-toolbar">
           <input type="search" id="rated-search-input" placeholder="بحث برقم الخط أو الموبايل في التقييمات..." />
           <button type="button" class="btn btn-outline btn-sm" id="rated-refresh-btn">تحديث</button>
@@ -826,45 +874,45 @@
       <div class="card">
         <div class="detail-header">
           <button type="button" class="back-btn" id="back-btn">← رجوع</button>
-          <button type="button" class="archive-btn" id="archive-btn">📁 أرشيف شكاوى الخط</button>
-          <div class="card-title" style="margin:0">تفاصيل البلاغ</div>
+          <button type="button" class="archive-btn" id="archive-btn">📁 محادثات سابقة للخط</button>
+          <div class="card-title" style="margin:0">تفاصيل المحادثة</div>
         </div>
 
         <div id="detail-alert" class="alert"></div>
         <div id="detail-content"></div>
         <div id="resolved-notice" class="resolved-notice hidden">
-          🔒 البلاغ مغلق (تم الحل). لا يمكن إرسال إشعار حتى يعيد العميل فتح الشكوى أو يسجّل أن المشكلة مازالت موجودة.
+          🔒 المحادثة منتهية. لا يمكن إرسال رد حتى يرسل العميل رسالة جديدة.
         </div>
 
         <div id="notify-form">
           <div class="form-group">
-            <label for="status-select">حالة العطل</label>
+            <label for="status-select">حالة المحادثة</label>
             <select id="status-select">
-              <option value="جديد">جديد</option>
-              <option value="قيد المعالجة">قيد المعالجة</option>
-              <option value="إعادة فتح">إعادة فتح</option>
-              <option value="تم الحل">تم الحل</option>
+              <option value="جديد">بانتظار الرد</option>
+              <option value="قيد المعالجة">مفتوحة — جاري المتابعة</option>
+              <option value="إعادة فتح">أعاد العميل الفتح</option>
+              <option value="تم الحل">إنهاء المحادثة (وفتح التقييم)</option>
             </select>
           </div>
 
-          <div class="card-title" style="font-size:0.9rem">📢 إشعار جديد للعميل</div>
+          <div class="card-title" style="font-size:0.9rem">✍️ ردّك على العميل</div>
           <div class="quick-btns">
-            <button type="button" class="btn btn-accent btn-sm quick-msg" data-msg="جاري مراجعة بلاغكم وإرسال الفني المختص">مراجعة البلاغ</button>
-            <button type="button" class="btn btn-warning btn-sm quick-msg" data-msg="جاري إرسال الفني لسيادتكم">إرسال فني</button>
-            <button type="button" class="btn btn-success btn-sm quick-msg" data-msg="تم إصلاح العطل بنجاح">تم الإصلاح</button>
+            <button type="button" class="btn btn-accent btn-sm quick-msg" data-msg="تحية طيبة، تم استلام رسالتكم وجاري مراجعتها.">تم الاستلام</button>
+            <button type="button" class="btn btn-warning btn-sm quick-msg" data-msg="جاري العمل على طلبكم وسنوافيكم بالمستجدات.">جاري المتابعة</button>
+            <button type="button" class="btn btn-success btn-sm quick-msg" data-msg="تم الانتهاء من طلبكم. شكراً لتواصلكم مع سنترال فرشوط.">إنهاء وفتح التقييم</button>
           </div>
 
           <div class="form-group">
-            <label for="message-input">نص الإشعار</label>
-            <textarea id="message-input" placeholder="اكتب رسالة للعميل..."></textarea>
+            <label for="message-input">نص الرد</label>
+            <textarea id="message-input" placeholder="اكتب ردّك على العميل..."></textarea>
           </div>
 
-          <button type="button" class="btn btn-primary" id="save-btn">حفظ وإرسال للعميل</button>
+          <button type="button" class="btn btn-primary" id="save-btn">إرسال الرد للعميل</button>
         </div>
       </div>
     </section>
 
-    <footer class="footer">لوحة السنترال · الإصدار 1.4</footer>
+    <footer class="footer">لوحة سنترال فرشوط · محادثات العملاء · الإصدار 2.0</footer>
   </div>
 
   <div id="archive-modal" class="modal-overlay hidden">
@@ -941,10 +989,10 @@
 
     function renderStats(counts) {
       var items = [
-        { key: 'active', label: 'مفتوحة', num: counts.active || 0 },
-        { key: 'جديد', label: 'جديد', num: counts['جديد'] || 0 },
-        { key: 'قيد المعالجة', label: 'قيد المعالجة', num: counts['قيد المعالجة'] || 0 },
-        { key: 'إعادة فتح', label: 'إعادة فتح', num: counts['إعادة فتح'] || 0 },
+        { key: 'active', label: 'محادثات مفتوحة', num: counts.active || 0 },
+        { key: 'جديد', label: 'بانتظار الرد', num: counts['جديد'] || 0 },
+        { key: 'قيد المعالجة', label: 'جاري المتابعة', num: counts['قيد المعالجة'] || 0 },
+        { key: 'إعادة فتح', label: 'أعاد العميل الفتح', num: counts['إعادة فتح'] || 0 },
         { key: 'rated', label: 'تقييمات العملاء', num: counts.rated || 0 }
       ];
 
@@ -979,8 +1027,12 @@
 
       empty.classList.add('hidden');
       list.innerHTML = tickets.map(function (t) {
-        var preview = t.lastNotification
-          ? '<div class="ticket-preview">📢 ' + escapeHtml(t.lastNotification) + '</div>'
+        var previewClassified = t.lastNotification ? classifyMsg(t.lastNotification) : null;
+        var previewIcon = previewClassified
+          ? (previewClassified.who === 'me' ? '👤 العميل: ' : (previewClassified.who === 'them' ? '🏢 الرد: ' : 'ℹ️ '))
+          : '';
+        var preview = previewClassified
+          ? '<div class="ticket-preview">' + previewIcon + escapeHtml(previewClassified.text) + '</div>'
           : '';
         return '<div class="ticket-card ' + statusClass(t.status) + '" data-row="' + t.row + '">' +
           '<div class="ticket-top">' +
@@ -989,7 +1041,6 @@
           '</div>' +
           '<div class="ticket-meta">' +
             '<span>📱 ' + escapeHtml(t.mobile) + '</span>' +
-            '<span>📋 ' + escapeHtml(t.reason) + '</span>' +
             '<span>🕐 ' + escapeHtml(t.date) + '</span>' +
           '</div>' + preview +
         '</div>';
@@ -1168,12 +1219,11 @@
           '</div>' +
           '<div class="rated-meta">' +
             '<span>📱 <span class="ltr">' + escapeHtml(t.mobile || '—') + '</span></span>' +
-            '<span>📋 ' + escapeHtml(t.reason) + '</span>' +
             '<span>🕐 ' + escapeHtml(t.date) + '</span>' +
           '</div>' +
           '<div class="rated-scores">' +
-            '<div class="rated-score"><span class="lbl">تقييم إزالة العطل</span>' + starsHtml(t.ratingFault) + '</div>' +
-            '<div class="rated-score"><span class="lbl">تقييم تعامل الفني</span>' + starsHtml(t.ratingTech) + '</div>' +
+            '<div class="rated-score"><span class="lbl">سرعة الاستجابة</span>' + starsHtml(t.ratingFault) + '</div>' +
+            '<div class="rated-score"><span class="lbl">تعامل الموظف</span>' + starsHtml(t.ratingTech) + '</div>' +
           '</div>' +
           commentHtml +
           '<div class="rated-card-footer">' + archiveHtml + '</div>' +
@@ -1222,15 +1272,34 @@
       document.getElementById('archive-modal').classList.add('hidden');
     }
 
+    function classifyMsg(text) {
+      var t = String(text || '').trim();
+      if (t.indexOf('العميل:') === 0) return { who: 'me', text: t.replace(/^العميل:\s*/, '') };
+      if (t.indexOf('السنترال:') === 0) return { who: 'them', text: t.replace(/^السنترال:\s*/, '') };
+      return { who: 'system', text: t };
+    }
+
+    function renderChatThread(notifications) {
+      if (!notifications || !notifications.length) {
+        return '<div class="chat-thread-empty">لا توجد رسائل بعد في هذه المحادثة</div>';
+      }
+      return '<div class="chat-thread">' + notifications.map(function (n) {
+        var c = classifyMsg(n.text);
+        if (c.who === 'system') {
+          return '<div class="c-row system"><div class="c-bubble">ℹ️ ' + escapeHtml(c.text) +
+            (n.date ? '<span class="c-date">' + escapeHtml(n.date) + '</span>' : '') + '</div></div>';
+        }
+        var tag = c.who === 'me' ? '👤 العميل' : '🏢 السنترال';
+        return '<div class="c-row ' + c.who + '"><div class="c-bubble">' +
+          '<span class="c-tag">' + tag + '</span>' + escapeHtml(c.text) +
+          (n.date ? '<span class="c-date">' + escapeHtml(n.date) + '</span>' : '') +
+          '</div></div>';
+      }).join('') + '</div>';
+    }
+
     function renderDetail(ticket) {
       currentTicket = ticket;
-      var notifs = ticket.notifications && ticket.notifications.length
-        ? ticket.notifications.map(function (n) {
-            return '<div class="notif-item">' +
-              (n.date ? '<div class="date">' + escapeHtml(n.date) + '</div>' : '') +
-              '<div class="text">' + escapeHtml(n.text) + '</div></div>';
-          }).join('')
-        : '<div class="empty-state" style="padding:16px">لا توجد إشعارات بعد</div>';
+      var notifs = renderChatThread(ticket.notifications);
 
       var ratingHtml = '';
       var deviceHtml = '';
@@ -1243,7 +1312,7 @@
           : ' <span style="color:var(--success);font-weight:600">✓ نفس جهاز التسجيل</span>';
         ratingHtml = '<div class="detail-item" style="grid-column:1/-1;background:var(--success-bg)">' +
           '<div class="lbl">تقييم العميل</div>' +
-          '<div class="val">إزالة العطل: ' + ticket.ratingFault + '/5 — الفني: ' + ticket.ratingTech + '/5' +
+          '<div class="val">سرعة الاستجابة: ' + ticket.ratingFault + '/5 — تعامل الموظف: ' + ticket.ratingTech + '/5' +
           (ticket.comment ? ' — «' + escapeHtml(ticket.comment) + '»' : '') + mismatchNote + '</div></div>';
         if (ticket.ratingDeviceFp) {
           deviceHtml += '<div class="detail-item"><div class="lbl">بصمة جهاز التقييم</div><div class="val ltr">' + escapeHtml(ticket.ratingDeviceFp) + '</div></div>';
@@ -1252,17 +1321,16 @@
 
       document.getElementById('detail-content').innerHTML =
         '<div class="detail-grid">' +
-          '<div class="detail-item"><div class="lbl">رقم الخط</div><div class="val ltr">' + escapeHtml(ticket.landline) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">رقم الخط الأرضي</div><div class="val ltr">' + escapeHtml(ticket.landline) + '</div></div>' +
           '<div class="detail-item"><div class="lbl">رقم الموبايل</div><div class="val ltr">' + escapeHtml(ticket.mobile) + '</div></div>' +
-          '<div class="detail-item"><div class="lbl">سبب الإبلاغ</div><div class="val">' + escapeHtml(ticket.reason) + '</div></div>' +
-          '<div class="detail-item"><div class="lbl">تاريخ الإبلاغ</div><div class="val ltr">' + escapeHtml(ticket.date) + '</div></div>' +
-          '<div class="detail-item"><div class="lbl">آخر تحديث</div><div class="val ltr">' + escapeHtml(ticket.lastUpdate) + '</div></div>' +
-          '<div class="detail-item"><div class="lbl">الحالة الحالية</div><div class="val">' + statusBadge(ticket.status) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">بدء المحادثة</div><div class="val ltr">' + escapeHtml(ticket.date) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">آخر نشاط</div><div class="val ltr">' + escapeHtml(ticket.lastUpdate) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">حالة المحادثة</div><div class="val">' + statusBadge(ticket.status) + '</div></div>' +
           deviceHtml +
           ratingHtml +
         '</div>' +
-        '<div class="card-title" style="font-size:0.9rem">📜 سجل الإشعارات</div>' +
-        '<div class="notif-history">' + notifs + '</div>';
+        '<div class="card-title" style="font-size:0.9rem">💬 سجل المحادثة</div>' +
+        notifs;
 
       document.getElementById('status-select').value =
         ticket.status === 'تم الاصلاح' || ticket.status === 'تم الإصلاح' ? 'تم الحل' : ticket.status;
@@ -1290,7 +1358,7 @@
       if (!currentTicket) return;
 
       if (!currentTicket.canSendNotification) {
-        showAlert('detail-alert', 'لا يمكن الإرسال — البلاغ مغلق (تم الحل) حتى يعيد العميل فتح الشكوى', 'error');
+        showAlert('detail-alert', 'لا يمكن الإرسال — المحادثة منتهية حتى يرسل العميل رسالة جديدة', 'error');
         return;
       }
 
@@ -1298,12 +1366,12 @@
       var message = document.getElementById('message-input').value.trim();
 
       if (statusOverride === 'تم الحل' && !message) {
-        message = 'تم إصلاح العطل بنجاح';
+        message = 'تم الانتهاء من طلبكم. شكراً لتواصلكم مع سنترال فرشوط.';
         document.getElementById('message-input').value = message;
       }
 
       if (!message && status === currentTicket.status) {
-        showAlert('detail-alert', 'اكتب إشعاراً للعميل أو غيّر الحالة', 'error');
+        showAlert('detail-alert', 'اكتب ردّاً للعميل أو غيّر حالة المحادثة', 'error');
         return;
       }
 
@@ -1488,9 +1556,10 @@
     document.querySelectorAll('.quick-msg').forEach(function (btn) {
       btn.addEventListener('click', function () {
         document.getElementById('message-input').value = btn.dataset.msg;
-        if (btn.dataset.msg.indexOf('إصلاح') !== -1) {
+        var msg = btn.dataset.msg;
+        if (msg.indexOf('الانتهاء') !== -1 || msg.indexOf('شكراً لتواصلكم') !== -1) {
           document.getElementById('status-select').value = 'تم الحل';
-        } else if (btn.dataset.msg.indexOf('فني') !== -1) {
+        } else if (msg.indexOf('جاري') !== -1 || msg.indexOf('مراجعتها') !== -1) {
           document.getElementById('status-select').value = 'قيد المعالجة';
         }
       });

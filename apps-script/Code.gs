@@ -59,6 +59,11 @@ const REASONS = [
   'طلب صيانة للخط'
 ];
 
+/** نوع السجل عند بدء محادثة جديدة مع السنترال (بدلاً من بلاغ عطل) */
+const CHAT_REASON = 'تواصل مع السنترال';
+const MAX_MESSAGE_LENGTH = 1000;
+const CUSTOMER_MSG_PREFIX = 'العميل: ';
+
 const DEFAULT_CENTRAL_PIN = '1234';
 const CENTRAL_STATUSES = [
   STATUS_NEW,
@@ -142,6 +147,12 @@ function doPost(e) {
       result = submitReport(payload);
     } else if (fn === 'getStatus') {
       result = getStatus(payload);
+    } else if (fn === 'startChat') {
+      result = startChat(payload);
+    } else if (fn === 'getConversation') {
+      result = getConversation(payload);
+    } else if (fn === 'sendCustomerMessage') {
+      result = sendCustomerMessage(payload);
     } else if (fn === 'submitRating') {
       result = submitRating(payload);
     } else if (fn === 'reopenTicket') {
@@ -1252,6 +1263,174 @@ function submitNewComplaint(payload) {
     message: 'تم فتح شكوى جديدة على نفس الخط. سيتم متابعتها من السنترال.',
     landline: landline,
     mobile: mobile
+  };
+}
+
+/* ============================================================
+ * محادثة العميل مع السنترال (دردشة بدلاً من بلاغ عطل)
+ * ============================================================ */
+
+function createChatRow_(landline, mobile, deviceFp) {
+  const sheet = getSheet_();
+  const now = new Date();
+  sheet.appendRow([
+    now,
+    landline,
+    CHAT_REASON,
+    mobile,
+    STATUS_NEW,
+    '',
+    now,
+    '',
+    '',
+    '',
+    deviceFp || '',
+    '',
+    ''
+  ]);
+  const rowNumber = sheet.getLastRow();
+  return { sheet: sheet, rowNumber: rowNumber };
+}
+
+/**
+ * بدء/فتح محادثة: يطابق برقم الأرضي + الموبايل، ويُنشئ محادثة جديدة إن لم توجد.
+ */
+function startChat(payload) {
+  ensureHeaders_();
+
+  const landline = validateLandline_(payload.landline);
+  const mobile = validateMobile_(payload.mobile);
+  const deviceFp = validateDeviceFp_(payload.deviceFp, true);
+
+  const latest = findLatestByLandline_(landline);
+
+  if (latest.row === -1) {
+    const created = createChatRow_(landline, mobile, deviceFp);
+    const ticket = rowToObject_(
+      created.sheet.getRange(created.rowNumber, 1, 1, HEADERS.length).getValues()[0],
+      created.rowNumber
+    );
+    ticket.deviceTrusted = true;
+    ticket.deviceFpBound = true;
+    ticket.isNewConversation = true;
+    return ticket;
+  }
+
+  const storedMobileRaw = latest.data[latest.index][COL.MOBILE - 1];
+
+  if (isEmptyMobile_(storedMobileRaw)) {
+    registerCustomerMobile_(latest.sheet, latest.row, mobile, deviceFp);
+    latest.data[latest.index][COL.MOBILE - 1] = mobile;
+  } else if (normalizeMobileForMatch_(storedMobileRaw) !== normalizeMobileForMatch_(mobile)) {
+    throw new Error('رقم الموبايل مختلف عن الرقم المسجّل مسبقاً لهذا الخط. استخدم رقمك الصحيح أو غيّره من «تغيير رقم الموبايل».');
+  }
+
+  const ticket = rowToObject_(latest.data[latest.index], latest.row);
+  const deviceInfo = bindOrVerifyDeviceFp_(latest.sheet, latest.row, latest.data[latest.index], deviceFp);
+  ticket.deviceTrusted = deviceInfo.deviceTrusted;
+  ticket.deviceFpBound = deviceInfo.deviceFpBound;
+  ticket.deviceFp = deviceInfo.deviceFp || ticket.deviceFp;
+  return ticket;
+}
+
+/**
+ * جلب المحادثة الحالية (للتحديث التلقائي) — لا يُنشئ سجلاً جديداً.
+ */
+function getConversation(payload) {
+  ensureHeaders_();
+
+  const landline = validateLandline_(payload.landline);
+  const mobile = validateMobile_(payload.mobile);
+  const result = findLatestRowForCustomer_(landline, mobile);
+
+  if (result.row === -1) {
+    throw new Error(getCustomerAccessError_(landline, mobile));
+  }
+
+  if (result.needsMobileRegistration) {
+    registerCustomerMobile_(result.sheet, result.row, mobile, payload.deviceFp);
+    result.data[result.index][COL.MOBILE - 1] = mobile;
+  }
+
+  const ticket = rowToObject_(result.data[result.index], result.row);
+
+  if (payload.deviceFp) {
+    const info = bindOrVerifyDeviceFp_(result.sheet, result.row, result.data[result.index], payload.deviceFp);
+    ticket.deviceTrusted = info.deviceTrusted;
+    ticket.deviceFpBound = info.deviceFpBound;
+    ticket.deviceFp = info.deviceFp || ticket.deviceFp;
+  } else {
+    ticket.deviceTrusted = !ticket.hasDeviceFp;
+  }
+
+  return ticket;
+}
+
+/**
+ * إرسال رسالة من العميل إلى السنترال — تُضاف إلى سجل المحادثة.
+ */
+function sendCustomerMessage(payload) {
+  ensureHeaders_();
+
+  const landline = validateLandline_(payload.landline);
+  const mobile = validateMobile_(payload.mobile);
+  const deviceFp = validateDeviceFp_(payload.deviceFp, true);
+  const message = String(payload.message || '').trim();
+
+  if (!message) {
+    throw new Error('اكتب رسالتك أولاً');
+  }
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    throw new Error('الرسالة طويلة جداً — اجعلها أقصر من ' + MAX_MESSAGE_LENGTH + ' حرف');
+  }
+
+  let sheet;
+  let rowNumber;
+  let rowData;
+
+  const result = findLatestRowForCustomer_(landline, mobile);
+
+  if (result.row === -1) {
+    const latest = findLatestByLandline_(landline);
+    if (latest.row !== -1) {
+      throw new Error(getCustomerAccessError_(landline, mobile));
+    }
+    const created = createChatRow_(landline, mobile, deviceFp);
+    sheet = created.sheet;
+    rowNumber = created.rowNumber;
+    rowData = sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0];
+  } else {
+    if (result.needsMobileRegistration) {
+      registerCustomerMobile_(result.sheet, result.row, mobile, deviceFp);
+      result.data[result.index][COL.MOBILE - 1] = mobile;
+    }
+    sheet = result.sheet;
+    rowNumber = result.row;
+    rowData = result.data[result.index];
+  }
+
+  const now = new Date();
+  const existing = sheet.getRange(rowNumber, COL.NOTIFICATION).getValue();
+  const updated = appendNotificationLine_(existing, CUSTOMER_MSG_PREFIX + message, now);
+  sheet.getRange(rowNumber, COL.NOTIFICATION).setValue(updated);
+
+  const currentStatus = String(rowData[COL.STATUS - 1] || STATUS_NEW);
+  if (isResolvedStatus_(currentStatus)) {
+    sheet.getRange(rowNumber, COL.STATUS).setValue(STATUS_REOPENED);
+  } else if (currentStatus !== STATUS_IN_PROGRESS) {
+    sheet.getRange(rowNumber, COL.STATUS).setValue(STATUS_NEW);
+  }
+  sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(now);
+
+  const ticket = rowToObject_(
+    sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0],
+    rowNumber
+  );
+
+  return {
+    success: true,
+    message: 'تم إرسال رسالتك إلى مسؤولي السنترال.',
+    ticket: ticket
   };
 }
 
