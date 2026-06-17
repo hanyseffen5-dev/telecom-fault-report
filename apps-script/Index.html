@@ -680,7 +680,7 @@
 
         <span class="brand-chip">🏢 سنترال فرشوط · المصرية للاتصالات</span>
         <h1>التواصل مع مسؤولي سنترال فرشوط</h1>
-        <p class="lead">قناة رسمية للتواصل المباشر مع إدارة السنترال — راسلنا في أي وقت وسيرد عليك المسؤولون من هنا.</p>
+        <p class="lead">قناة للتواصل المباشر مع إدارة السنترال — راسلنا في أي وقت وسيرد عليك المسؤولون من هنا.</p>
 
         <div class="hint-grid">
           <div class="hint-card">
@@ -803,7 +803,7 @@
       <div id="rating-modal-alert" class="alert"></div>
 
       <div id="rating-form-area">
-        <div class="rating-label">سرعة الاستجابة والرد</div>
+        <div class="rating-label">جودة وكفاءة الحل</div>
         <div class="stars" id="stars-fault" data-rating="0">
           <span class="star" data-val="1">★</span>
           <span class="star" data-val="2">★</span>
@@ -1067,6 +1067,21 @@
         .startChat({ landline: landline, mobile: mobile, deviceFp: deviceFingerprint });
     }
 
+    function applyChatData(data) {
+      if (data && data.mobile) session.mobile = data.mobile;
+      renderChat(data);
+    }
+
+    function beginFreshConversation() {
+      if (!session.landline || !session.mobile) return;
+      lastSignature = '';
+      ratingPromptShown = false;
+      google.script.run
+        .withSuccessHandler(applyChatData)
+        .withFailureHandler(function () { refreshConversation(); })
+        .startChat({ landline: session.landline, mobile: session.mobile, deviceFp: deviceFingerprint });
+    }
+
     function refreshConversation() {
       if (!session.landline || !session.mobile) return;
       google.script.run
@@ -1093,8 +1108,9 @@
           btn.disabled = false;
           input.value = '';
           autoResize(input);
+          if (result && result.isNewConversation) lastSignature = '';
           if (result && result.ticket) {
-            renderChat(result.ticket);
+            applyChatData(result.ticket);
           } else {
             refreshConversation();
           }
@@ -1153,7 +1169,7 @@
 
     function submitRating() {
       hideAlert('rating-modal-alert');
-      if (!ratings.fault) { showAlert('rating-modal-alert', 'يرجى تقييم سرعة الاستجابة', 'error'); return; }
+      if (!ratings.fault) { showAlert('rating-modal-alert', 'يرجى تقييم جودة وكفاءة الحل', 'error'); return; }
       if (!ratings.tech) { showAlert('rating-modal-alert', 'يرجى تقييم تعامل الموظف', 'error'); return; }
 
       var btn = $('rating-submit');
@@ -1167,7 +1183,7 @@
           $('rating-form-area').style.display = 'none';
           $('rating-done-area').style.display = 'block';
           $('rating-banner').classList.remove('show');
-          refreshConversation();
+          beginFreshConversation();
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;

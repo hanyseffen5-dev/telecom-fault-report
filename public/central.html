@@ -1222,7 +1222,7 @@
             '<span>🕐 ' + escapeHtml(t.date) + '</span>' +
           '</div>' +
           '<div class="rated-scores">' +
-            '<div class="rated-score"><span class="lbl">سرعة الاستجابة</span>' + starsHtml(t.ratingFault) + '</div>' +
+            '<div class="rated-score"><span class="lbl">جودة وكفاءة الحل</span>' + starsHtml(t.ratingFault) + '</div>' +
             '<div class="rated-score"><span class="lbl">تعامل الموظف</span>' + starsHtml(t.ratingTech) + '</div>' +
           '</div>' +
           commentHtml +
@@ -1312,7 +1312,7 @@
           : ' <span style="color:var(--success);font-weight:600">✓ نفس جهاز التسجيل</span>';
         ratingHtml = '<div class="detail-item" style="grid-column:1/-1;background:var(--success-bg)">' +
           '<div class="lbl">تقييم العميل</div>' +
-          '<div class="val">سرعة الاستجابة: ' + ticket.ratingFault + '/5 — تعامل الموظف: ' + ticket.ratingTech + '/5' +
+          '<div class="val">جودة وكفاءة الحل: ' + ticket.ratingFault + '/5 — تعامل الموظف: ' + ticket.ratingTech + '/5' +
           (ticket.comment ? ' — «' + escapeHtml(ticket.comment) + '»' : '') + mismatchNote + '</div></div>';
         if (ticket.ratingDeviceFp) {
           deviceHtml += '<div class="detail-item"><div class="lbl">بصمة جهاز التقييم</div><div class="val ltr">' + escapeHtml(ticket.ratingDeviceFp) + '</div></div>';

@@ -397,6 +397,28 @@ function rowToObject(row) {
   };
 }
 
+function shouldShowFreshChatView(row) {
+  const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+  return isResolvedStatus(status) && isTicketRated(row);
+}
+
+function buildFreshChatView(ticket) {
+  ticket.isNewConversation = true;
+  ticket.status = STATUS_NEW;
+  ticket.notifications = [];
+  ticket.notification = '';
+  ticket.isResolved = false;
+  ticket.canRate = false;
+  ticket.alreadyRated = false;
+  ticket.canReopen = false;
+  ticket.canOpenNewComplaint = false;
+  ticket.canSendNotification = true;
+  ticket.ratingFault = '';
+  ticket.ratingTech = '';
+  ticket.comment = '';
+  return ticket;
+}
+
 async function getAllRows() {
   const title = await resolveSheetTitle();
   const sheets = getSheets();
@@ -492,7 +514,7 @@ function getCustomerAccessError(data, landline, mobile) {
   const latest = findLatestByLandline(data, landline);
 
   if (latest.rowNumber === -1) {
-    return 'لم يتم العثور على بلاغ بهذا الرقم الأرضي. تأكد من رقم التليفون الأرضي.';
+    return 'لم يتم العثور على اى تواصل لهذا الرقم الأرضي. تأكد من رقم التليفون الأرضي.';
   }
 
   const storedMobile = normalizeMobileForMatch(latest.row[COL.MOBILE - 1]);
@@ -754,17 +776,23 @@ async function submitNewComplaint(payload) {
   };
 }
 
-async function appendChatRow(landline, mobile, deviceFp) {
+async function appendChatRow(landline, mobile, deviceFp, initialMessage) {
   const title = await resolveSheetTitle();
   const sheets = getSheets();
   const now = nowFormatted();
+  const nowDate = new Date();
+  let notification = '';
+  const msg = String(initialMessage || '').trim();
+  if (msg) {
+    notification = appendNotificationLine('', CUSTOMER_MSG_PREFIX + msg, nowDate);
+  }
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `'${title}'!A:M`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
-      values: [[now, landline, CHAT_REASON, mobile, STATUS_NEW, '', now, '', '', '', String(deviceFp || ''), '', '']]
+      values: [[now, landline, CHAT_REASON, mobile, STATUS_NEW, notification, now, '', '', '', String(deviceFp || ''), '', '']]
     }
   });
 }
@@ -808,6 +836,13 @@ async function startChat(payload) {
     throw new Error('رقم الموبايل مختلف عن الرقم المسجّل مسبقاً لهذا الخط. استخدم رقمك الصحيح أو غيّره من «تغيير رقم الموبايل».');
   }
 
+  const latestStatus = String(latest.row[COL.STATUS - 1] || STATUS_NEW);
+  if (shouldShowFreshChatView(latest.row)) {
+    const ticket = rowToObject(latest.row);
+    ticket.isNewConversation = true;
+    return buildFreshChatView(ticket);
+  }
+
   return rowToObject(latest.row);
 }
 
@@ -840,7 +875,11 @@ async function getConversation(payload) {
     result.row[COL.MOBILE - 1] = mobile;
   }
 
-  return rowToObject(result.row);
+  const ticket = rowToObject(result.row);
+  if (shouldShowFreshChatView(result.row)) {
+    return buildFreshChatView(ticket);
+  }
+  return ticket;
 }
 
 async function sendCustomerMessage(payload) {
@@ -871,6 +910,20 @@ async function sendCustomerMessage(payload) {
     result.needsMobileRegistration = false;
   } else if (result.needsMobileRegistration) {
     result.row[COL.MOBILE - 1] = mobile;
+  } else {
+    const currentStatus = String(result.row[COL.STATUS - 1] || STATUS_NEW);
+    if (isResolvedStatus(currentStatus)) {
+      await appendChatRow(landline, mobile, payload.deviceFp, message);
+      const freshData = await getAllRows();
+      const created = findLatestByLandline(freshData, landline);
+      const ticket = rowToObject(created.row);
+      return {
+        success: true,
+        message: 'تم بدء محادثة جديدة وإرسال رسالتك إلى مسؤولي السنترال.',
+        ticket,
+        isNewConversation: true
+      };
+    }
   }
 
   const row = result.row;
@@ -884,9 +937,7 @@ async function sendCustomerMessage(payload) {
 
   const currentStatus = String(row[COL.STATUS - 1] || STATUS_NEW);
   let nextStatus = currentStatus;
-  if (isResolvedStatus(currentStatus)) {
-    nextStatus = STATUS_REOPENED;
-  } else if (currentStatus !== STATUS_IN_PROGRESS) {
+  if (currentStatus !== STATUS_IN_PROGRESS) {
     nextStatus = STATUS_NEW;
   }
 
