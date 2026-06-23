@@ -710,6 +710,30 @@
       margin-top: 8px;
     }
 
+    .archive-chat-thread {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 8px;
+      background: #f5f6fa;
+      border-radius: 10px;
+      margin-top: 8px;
+    }
+
+    .modal.archive-modal {
+      max-width: 680px;
+    }
+
+    .archive-section-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+
     @media (max-width: 768px) {
       .app {
         padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
@@ -765,9 +789,405 @@
 
       .notif-history { max-height: 180px; }
     }
+
+    /* تبويبات الإدارة */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      background: var(--card);
+      padding: 6px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), #1976d2);
+      color: #fff;
+    }
+    .tabs { flex-wrap: wrap; }
+
+    /* متعذر معاينات */
+    .preview-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .preview-toolbar input,
+    .preview-toolbar select {
+      flex: 1;
+      min-width: 140px;
+      margin: 0;
+    }
+    .preview-toolbar .btn { width: auto; margin: 0; white-space: nowrap; }
+    .preview-mode-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      background: #eef2f8;
+      padding: 6px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .preview-mode-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    }
+    .preview-mode-btn.active {
+      background: linear-gradient(135deg, var(--primary), #1976d2);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.35);
+    }
+    .preview-group-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .preview-group-bar .filter-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: #fff;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .preview-group-bar .filter-btn.active {
+      border-color: var(--primary);
+      background: #e3f2fd;
+      color: var(--primary);
+    }
+    .preview-export-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+    }
+    .preview-export-bar select {
+      flex: 1;
+      min-width: 160px;
+      margin: 0;
+    }
+    .preview-export-bar .btn { width: auto; margin: 0; white-space: nowrap; }
+    .preview-filter-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #e3f2fd, #f3f8ff);
+      border: 2px solid #90caf9;
+      border-radius: 12px;
+      font-size: 0.9rem;
+    }
+    .preview-filter-summary.hidden { display: none; }
+    .preview-filter-summary .count {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .preview-filter-summary .meta { color: var(--muted); font-size: 0.82rem; }
+    .stat-box.stat-highlight {
+      border: 2px solid var(--primary);
+      background: #e3f2fd;
+    }
+    .stat-box.stat-highlight .num { color: var(--primary); }
+    .preview-view-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .preview-view-bar .filter-btn { flex: 1; min-width: 120px; }
+    .preview-group-filter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      background: var(--primary-light);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+    }
+    .preview-group-filter.hidden { display: none; }
+    .preview-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      max-height: 520px;
+      overflow-y: auto;
+    }
+    .preview-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 1100px;
+    }
+    .preview-data-table th,
+    .preview-data-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      vertical-align: top;
+    }
+    .preview-data-table th {
+      position: sticky;
+      top: 0;
+      background: #f5f7fb;
+      font-weight: 700;
+      z-index: 1;
+    }
+    .preview-data-table tr:hover td { background: #fafbff; }
+    .preview-data-table .cell-notes {
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preview-link-btn {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+    .preview-link-btn:hover { background: #dbeafe; }
+    .preview-action-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .preview-action-badge.ok { background: var(--success-bg); color: var(--success); }
+    .analysis-list { display: flex; flex-direction: column; gap: 8px; }
+    .analysis-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .analysis-row:hover {
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.12);
+    }
+    .analysis-row .label { font-weight: 700; flex: 1; min-width: 0; word-break: break-word; }
+    .analysis-row .count {
+      font-weight: 800;
+      color: var(--primary);
+      font-size: 1.1rem;
+      white-space: nowrap;
+    }
+    .analysis-row .hint { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+    .analysis-summary {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* الفنيون */
+    .tech-card {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tech-info .name { font-weight: 700; }
+    .tech-info .meta { font-size: 0.8rem; color: var(--muted); }
+    .tech-status-select { width: auto; min-width: 120px; padding: 8px 10px; }
+    .tech-status { font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .tech-status.s-available { background: var(--success-bg); color: var(--success); }
+    .tech-status.s-busy { background: var(--warning-bg); color: var(--warning); }
+    .tech-status.s-inactive { background: #eceff1; color: var(--muted); }
+
+    .assign-box {
+      background: var(--primary-light);
+      border-radius: 12px;
+      padding: 14px;
+      margin: 14px 0;
+    }
+    .assign-box .lbl { font-size: 0.82rem; font-weight: 700; margin-bottom: 8px; }
+    .assign-row { display: flex; gap: 8px; align-items: center; }
+    .assign-row select { flex: 1; }
+
+    .tech-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: #ede7f6;
+      color: #5e35b1;
+      margin-top: 4px;
+    }
+    .tech-chat .c-row.them .c-bubble {
+      background: #ede7f6;
+      color: #1a2332;
+      border: 1px solid #d1c4e9;
+      border-bottom-right-radius: 4px;
+    }
+    .tech-chat .c-row.them .c-bubble .c-tag { color: #5e35b1; opacity: 1; }
+    .tech-chat .c-row.them .c-bubble .c-date { color: var(--muted); opacity: 1; }
+    .tech-chat .c-row.me .c-bubble {
+      background: linear-gradient(135deg, var(--primary), #1565c0);
+      color: #fff;
+      border: none;
+      border-bottom-left-radius: 4px;
+    }
+    .tech-chat .c-row.me .c-bubble .c-tag { color: rgba(255,255,255,0.9); }
+    .tech-chat .c-row.me .c-bubble .c-date { color: rgba(255,255,255,0.85); }
+    .msg-photo {
+      max-width: 220px; max-height: 180px; width: auto; height: auto;
+      object-fit: contain; border-radius: 8px; margin-top: 6px; display: block;
+      cursor: pointer; background: #fff;
+    }
+    .msg-photo-link {
+      display: inline-block; margin-top: 6px; font-size: 0.82rem; font-weight: 700;
+      color: #1565c0; text-decoration: none;
+    }
+    .tech-chat .c-row.me .c-bubble .msg-photo-link { color: #fff; text-decoration: underline; }
+    .tech-attach-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; margin-bottom: 8px; }
+    .tech-attach-preview {
+      background: #f8fafc; border: 1.5px dashed var(--border); border-radius: 10px;
+      padding: 10px; margin-bottom: 8px;
+    }
+    .tech-attach-preview.hidden { display: none !important; }
+    .tech-attach-preview img {
+      max-width: 100%; max-height: 180px; border-radius: 8px; display: block; margin-bottom: 6px;
+    }
+    .tech-attach-clear {
+      font-size: 0.78rem; color: var(--danger); cursor: pointer; background: none; border: none; font-family: inherit;
+    }
+    .btn-forward-photo {
+      display: block; margin-top: 8px; padding: 6px 10px; border: 1px solid #7e57c2;
+      background: #fff; color: #5e35b1; border-radius: 8px; font-size: 0.78rem;
+      font-weight: 700; cursor: pointer; font-family: inherit; width: 100%;
+    }
+    .btn-forward-photo:hover { background: #ede7f6; }
+    .btn-forward-photo.is-staged {
+      background: #5e35b1; color: #fff; border-color: #5e35b1;
+    }
+    .btn-forward-photo:disabled { opacity: 0.6; cursor: not-allowed; }
+    .customer-photo-pending {
+      background: #e8f5e9; border: 2px solid #43a047; border-radius: 12px;
+      padding: 12px; margin-bottom: 14px;
+    }
+    .customer-photo-pending.hidden { display: none !important; }
+    .customer-photo-pending .pending-photo-title {
+      font-size: 0.88rem; font-weight: 800; color: #2e7d32; margin-bottom: 8px;
+    }
+    .customer-photo-pending img {
+      max-width: 100%; max-height: 140px; border-radius: 8px; display: block; margin-bottom: 8px;
+      background: #fff;
+    }
+    .btn-clear-pending-photo {
+      background: none; border: none; color: var(--danger); font-size: 0.82rem;
+      font-weight: 700; cursor: pointer; font-family: inherit; padding: 0;
+    }
+    #save-btn.has-photo { box-shadow: 0 0 0 3px rgba(67, 160, 71, 0.35); }
+    .customer-photo-caption { display: block; margin-top: 4px; }
+    .msg-loc { display: block; margin-top: 6px; font-size: 0.82rem; }
+    .msg-loc a { color: #1565c0; font-weight: 700; text-decoration: none; }
+    .inspection-filter-bar {
+      display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .inspection-filter-bar .filter-btn {
+      flex: 1; min-width: 120px; padding: 10px 14px; border-radius: 10px;
+      border: 2px solid var(--border); background: #fff; font-family: inherit;
+      font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--text);
+    }
+    .inspection-filter-bar .filter-btn.active {
+      border-color: var(--primary); background: #e3f2fd; color: var(--primary);
+    }
+    .inspection-card { cursor: pointer; }
+    .inspection-note-preview {
+      font-size: 0.82rem; color: var(--muted); margin-top: 6px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .inspection-badge {
+      display: inline-block; font-size: 0.72rem; font-weight: 800;
+      background: #ede7f6; color: #5e35b1; padding: 2px 8px; border-radius: 999px;
+    }
+    .inspection-close-box {
+      background: #fff8e1; border: 2px solid #ffb300; border-radius: 12px;
+      padding: 14px; margin-bottom: 16px;
+    }
+    .inspection-close-box.hidden { display: none !important; }
+    .detail-mode-inspection .assign-box,
+    .detail-mode-inspection #notify-form,
+    .detail-mode-inspection #resolved-notice,
+    .detail-mode-inspection #archive-btn { display: none !important; }
+    .inspection-chat-panel {
+      margin-top: 16px; border: 2px solid #b39ddb; border-radius: var(--radius);
+    }
+    .inspection-chat-panel.hidden { display: none !important; }
+    .inspection-card.selected {
+      outline: 3px solid rgba(94, 53, 177, 0.35); outline-offset: 2px;
+    }
+    .inspection-chat-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .inspection-chat-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .inspection-chat-actions .archive-btn { width: auto; padding: 8px 12px; font-size: 0.82rem; }
+    .inspection-create-attach { margin-bottom: 12px; }
   </style>
-  <script src="config.js?v=4"></script>
-  <script src="api-bridge.js?v=4"></script>
+  <script src="config.js?v=5"></script>
+  <script src="api-bridge.js?v=5"></script>
 </head>
 <body>
   <div class="app">
@@ -793,12 +1213,23 @@
 
     <!-- القائمة الرئيسية -->
     <section id="main-section" class="hidden">
-      <div class="stats" id="stats-bar"></div>
+      <div class="tabs">
+        <button type="button" class="tab-btn active" data-tab="chats">💬 محادثات العملاء</button>
+        <button type="button" class="tab-btn" data-tab="inspections">🔍 مهام الفحص</button>
+        <button type="button" class="tab-btn" data-tab="preview-failures">🚫 متعذر معاينات</button>
+        <button type="button" class="tab-btn" data-tab="tech-reports">📢 إبلاغ الفنيين</button>
+        <button type="button" class="tab-btn" data-tab="ground-repairs">🔧 الإصلاحات الأرضية</button>
+        <button type="button" class="tab-btn" data-tab="techs">🛠️ إدارة الفنيين</button>
+      </div>
 
       <div class="toolbar toolbar-actions">
         <button type="button" class="btn btn-outline btn-sm" id="refresh-btn">تحديث</button>
         <button type="button" class="btn btn-outline btn-sm" id="logout-btn">خروج</button>
       </div>
+
+      <!-- تبويب محادثات العملاء -->
+      <div id="chats-tab">
+      <div class="stats" id="stats-bar"></div>
 
       <div id="tickets-panel">
       <div class="card add-repaired-card" id="add-repaired-card">
@@ -867,6 +1298,356 @@
         <div id="rated-list" class="rated-list"></div>
         <div id="rated-empty" class="empty-state hidden">لا توجد تقييمات بعد</div>
       </div>
+      </div><!-- /chats-tab -->
+
+      <!-- تبويب إدارة الفنيين -->
+      <div id="techs-tab" class="hidden">
+        <div class="card">
+          <div class="card-title">➕ إضافة فني جديد</div>
+          <div id="tech-add-alert" class="alert"></div>
+          <div class="form-group">
+            <label for="tech-name">اسم الفني</label>
+            <input type="text" id="tech-name" placeholder="اسم الفني" autocomplete="off" />
+          </div>
+          <div class="form-row-2">
+            <div class="form-group" style="margin-bottom:0">
+              <label for="tech-phone">رقم التليفون</label>
+              <input type="tel" id="tech-phone" placeholder="01*********" dir="ltr" autocomplete="off" />
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="tech-pin">رمز دخول الفني (PIN)</label>
+              <input type="text" id="tech-pin" placeholder="4 أرقام على الأقل" dir="ltr" autocomplete="off" />
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary" id="tech-add-btn" style="margin-top:16px">إضافة الفني</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🛠️ الفنيون</div>
+          <div id="tech-list-alert" class="alert"></div>
+          <div id="tech-loader" class="loader hidden"><div class="spinner"></div> جاري التحميل...</div>
+          <div id="tech-list"></div>
+          <div id="tech-empty" class="empty-state hidden">لا يوجد فنيون بعد — أضف فنياً للبدء</div>
+        </div>
+      </div><!-- /techs-tab -->
+
+      <!-- تبويب مهام الفحص الفني -->
+      <div id="inspections-tab" class="hidden">
+        <div class="card">
+          <div class="card-title">➕ إرسال مهمة فحص مباشرة للفني</div>
+          <p style="font-size:0.82rem;color:var(--muted);margin:0 0 14px">
+            للخطوط التي تحتاج فحصاً ميدانياً دون محادثة عميل — يُفتح شات بين السنترال والفني ويمكنك إغلاق المهمة عند الانتهاء.
+          </p>
+          <div id="inspection-create-alert" class="alert"></div>
+          <div class="form-group">
+            <label for="inspection-landline">رقم التليفون الأرضي</label>
+            <input type="tel" id="inspection-landline" placeholder="مثال: 09624******" dir="ltr" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="inspection-tech">الفني المسؤول</label>
+            <select id="inspection-tech"><option value="">— اختر الفني —</option></select>
+          </div>
+          <div class="form-group">
+            <label for="inspection-note">تفاصيل طلب الفحص</label>
+            <textarea id="inspection-note" placeholder="اكتب ما يجب على الفني فحصه أو إصلاحه..."></textarea>
+          </div>
+          <div class="inspection-create-attach">
+            <input type="file" id="inspection-create-photo-input" accept="image/*" class="hidden" />
+            <button type="button" class="btn btn-outline btn-sm" id="inspection-create-photo-btn">📷 إرفاق صورة</button>
+            <div id="inspection-create-attach-preview" class="tech-attach-preview hidden"></div>
+          </div>
+          <button type="button" class="btn btn-primary" id="inspection-create-btn">إرسال للفني</button>
+        </div>
+
+        <div class="inspection-filter-bar">
+          <button type="button" class="filter-btn active" data-inspection-filter="active">🟢 نشطة (<span id="inspection-active-count">0</span>)</button>
+          <button type="button" class="filter-btn" data-inspection-filter="closed">✅ مغلقة (<span id="inspection-closed-count">0</span>)</button>
+        </div>
+        <div class="toolbar tickets-search-toolbar">
+          <input type="search" id="inspection-search-input" placeholder="بحث برقم الخط الأرضي أو اسم الفني..." autocomplete="off" />
+        </div>
+        <div id="inspection-list-alert" class="alert"></div>
+        <div id="inspection-loader" class="loader hidden"><div class="spinner"></div> جاري التحميل...</div>
+        <div id="inspection-list" class="ticket-list"></div>
+        <div id="inspection-empty" class="empty-state hidden">لا توجد مهام فحص مطابقة</div>
+
+        <div id="inspection-chat-panel" class="card inspection-chat-panel hidden">
+          <div class="inspection-chat-header">
+            <div class="card-title" style="margin:0" id="inspection-chat-title">🔍 محادثة الفحص</div>
+            <div class="inspection-chat-actions">
+              <button type="button" class="archive-btn" id="inspection-archive-btn">📁 أرشيف الخط</button>
+              <button type="button" class="btn btn-outline btn-sm" id="inspection-chat-close-list-btn">✕ إغلاق</button>
+            </div>
+          </div>
+          <div id="inspection-chat-summary"></div>
+          <div id="inspection-chat-alert" class="alert"></div>
+          <div class="card-title" style="font-size:0.9rem;margin-top:12px">🛠️ محادثة السنترال مع الفني</div>
+          <div id="inspection-inline-thread" class="chat-thread tech-chat"></div>
+          <div class="tech-attach-bar">
+            <input type="file" id="inspection-inline-photo-input" accept="image/*" class="hidden" />
+            <button type="button" class="btn btn-outline btn-sm" id="inspection-inline-photo-btn">📷 إرفاق صورة</button>
+          </div>
+          <div id="inspection-inline-attach-preview" class="tech-attach-preview hidden"></div>
+          <div class="form-group" style="margin-top:10px">
+            <textarea id="inspection-inline-message-input" placeholder="اكتب رسالة للفني (اختياري مع الصورة)..."></textarea>
+          </div>
+          <button type="button" class="btn btn-outline" id="inspection-inline-send-btn">إرسال للفني</button>
+          <div id="inspection-inline-close-box" class="inspection-close-box" style="margin-top:16px">
+            <div class="card-title" style="font-size:0.9rem;margin-bottom:10px">🔒 إغلاق مهمة الفحص</div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label for="inspection-inline-close-note">ملاحظة الإغلاق (اختياري)</label>
+              <textarea id="inspection-inline-close-note" placeholder="مثال: تم الفحص ولا يوجد عطل..."></textarea>
+            </div>
+            <button type="button" class="btn btn-success" id="inspection-inline-close-btn">إغلاق المهمة</button>
+          </div>
+        </div>
+      </div><!-- /inspections-tab -->
+
+      <!-- تبويب متعذر معاينات -->
+      <div id="preview-failures-tab" class="hidden">
+        <div class="stats" id="preview-stats-bar"></div>
+        <div class="card">
+          <div class="card-title">🚫 متعذر معاينات</div>
+          <div class="preview-toolbar">
+            <input type="search" id="preview-search-input" placeholder="بحث في كل الحقول..." autocomplete="off" />
+            <select id="preview-action-filter"><option value="">كل الإجراءات</option></select>
+            <select id="preview-tech-filter"><option value="">كل الفنيين</option></select>
+            <button type="button" class="btn btn-outline btn-sm" id="preview-refresh-btn">تحديث</button>
+          </div>
+          <div class="preview-mode-bar">
+            <button type="button" class="preview-mode-btn active" data-preview-view="table">📋 الجدول</button>
+            <button type="button" class="preview-mode-btn" data-preview-view="analysis">📊 التحليل</button>
+          </div>
+          <div class="preview-export-bar">
+            <select id="preview-export-scope">
+              <option value="filtered">البيانات المفلترة حالياً</option>
+              <option value="all">كل البيانات</option>
+              <option value="analysis">نتيجة التحليل الحالي</option>
+            </select>
+            <button type="button" class="btn btn-success btn-sm" id="preview-export-btn">📥 تصدير Excel</button>
+          </div>
+          <div id="preview-group-filter" class="preview-group-filter hidden">
+            <span id="preview-group-filter-text"></span>
+            <button type="button" class="btn btn-outline btn-sm" id="preview-clear-group-btn">✕ إلغاء الفلتر</button>
+          </div>
+          <div id="preview-alert" class="alert"></div>
+          <div id="preview-loader" class="loader hidden"><div class="spinner"></div> جاري تحميل السجلات...</div>
+          <div id="preview-analysis-panel" class="hidden">
+            <div class="preview-group-bar">
+              <button type="button" class="filter-btn active" data-preview-group="mobile">📱 حسب المحمول</button>
+              <button type="button" class="filter-btn" data-preview-group="customer">👤 حسب اسم العميل</button>
+              <button type="button" class="filter-btn" data-preview-group="msan">🏢 حسب كابينة MSAN</button>
+              <button type="button" class="filter-btn" data-preview-group="cableCabinet">🔌 حسب الكابل + الكابينة</button>
+              <button type="button" class="filter-btn" data-preview-group="box">📦 حسب البكس + الكابل + الكابينة</button>
+            </div>
+            <p class="analysis-summary" id="preview-analysis-summary"></p>
+            <div id="preview-analysis-list" class="analysis-list"></div>
+            <div id="preview-analysis-empty" class="empty-state hidden">لا توجد بيانات للتحليل</div>
+          </div>
+          <div id="preview-filter-summary" class="preview-filter-summary hidden"></div>
+          <div id="preview-table-wrap" class="preview-table-wrap">
+            <table class="preview-data-table" id="preview-data-table">
+              <thead>
+                <tr>
+                  <th>التاريخ والوقت</th>
+                  <th>رقم المسلسل</th>
+                  <th>الفني</th>
+                  <th>المحمول</th>
+                  <th>اسم العميل</th>
+                  <th>العنوان</th>
+                  <th>كابينة MSAN</th>
+                  <th>رقم الكابل</th>
+                  <th>رقم الكابينة</th>
+                  <th>رقم البكس</th>
+                  <th>الملاحظات</th>
+                  <th>الإجراء المتخذ</th>
+                  <th>رابط الموقع</th>
+                  <th>رابط الصورة</th>
+                </tr>
+              </thead>
+              <tbody id="preview-table-body"></tbody>
+            </table>
+          </div>
+          <div id="preview-empty" class="empty-state hidden">لا توجد سجلات متعذر معاينة</div>
+        </div>
+      </div><!-- /preview-failures-tab -->
+
+      <!-- تبويب إبلاغ الفنيين -->
+      <div id="tech-reports-tab" class="hidden">
+        <div class="stats" id="tnote-stats-bar"></div>
+        <div class="card">
+          <div class="card-title">📢 إبلاغ الفنيين — ملاحظات الفنيين</div>
+          <div class="preview-toolbar">
+            <input type="search" id="tnote-search-input" placeholder="بحث في كل الحقول..." autocomplete="off" />
+            <input type="text" id="tnote-landline-filter" placeholder="رقم التليفون / عدد الخطوط" dir="ltr" autocomplete="off" />
+            <select id="tnote-tech-filter"><option value="">كل الفنيين</option></select>
+            <select id="tnote-action-filter"><option value="">كل الإجراءات</option></select>
+          </div>
+          <div class="preview-toolbar">
+            <select id="tnote-report-type-filter"><option value="">كل أنواع البلاغ</option></select>
+            <select id="tnote-connection-type-filter"><option value="">كل الأنواع (msan/ftth)</option></select>
+            <input type="text" id="tnote-cable-filter" placeholder="رقم الكابل" dir="ltr" autocomplete="off" />
+            <input type="text" id="tnote-cabinet-filter" placeholder="رقم الكابينة" dir="ltr" autocomplete="off" />
+            <input type="text" id="tnote-box-filter" placeholder="رقم البكس" dir="ltr" autocomplete="off" />
+          </div>
+          <div class="preview-toolbar">
+            <select id="tnote-date-mode">
+              <option value="">كل التواريخ</option>
+              <option value="year">فلترة بالسنة</option>
+              <option value="month">فلترة بالشهر والسنة</option>
+              <option value="day">فلترة باليوم والشهر والسنة</option>
+            </select>
+            <input type="number" id="tnote-date-year" class="tnote-date-field hidden" placeholder="السنة" min="2000" max="2100" dir="ltr" />
+            <input type="number" id="tnote-date-month" class="tnote-date-field hidden" placeholder="الشهر (1-12)" min="1" max="12" dir="ltr" />
+            <input type="date" id="tnote-date-day" class="tnote-date-field hidden" />
+            <button type="button" class="btn btn-outline btn-sm" id="tnote-refresh-btn">تحديث</button>
+          </div>
+          <div class="preview-mode-bar">
+            <button type="button" class="preview-mode-btn active" data-tnote-view="table">📋 الجدول</button>
+            <button type="button" class="preview-mode-btn" data-tnote-view="analysis">📊 التحليل</button>
+          </div>
+          <div class="preview-export-bar">
+            <select id="tnote-export-scope">
+              <option value="filtered">البيانات المفلترة حالياً</option>
+              <option value="all">كل البيانات</option>
+              <option value="analysis">نتيجة التحليل الحالي</option>
+            </select>
+            <button type="button" class="btn btn-success btn-sm" id="tnote-export-btn">📥 تصدير Excel</button>
+          </div>
+          <div id="tnote-group-filter" class="preview-group-filter hidden">
+            <span id="tnote-group-filter-text"></span>
+            <button type="button" class="btn btn-outline btn-sm" id="tnote-clear-group-btn">✕ إلغاء الفلتر</button>
+          </div>
+          <div id="tnote-alert" class="alert"></div>
+          <div id="tnote-loader" class="loader hidden"><div class="spinner"></div> جاري تحميل السجلات...</div>
+          <div id="tnote-analysis-panel" class="hidden">
+            <div class="preview-group-bar">
+              <button type="button" class="filter-btn active" data-tnote-group="landline">📱 حسب التليفون / الخطوط</button>
+              <button type="button" class="filter-btn" data-tnote-group="tech">🛠️ حسب الفني</button>
+              <button type="button" class="filter-btn" data-tnote-group="reportType">📋 حسب نوع البلاغ</button>
+              <button type="button" class="filter-btn" data-tnote-group="connectionType">🔗 حسب النوع (msan/ftth)</button>
+              <button type="button" class="filter-btn" data-tnote-group="cableCabinet">🔌 حسب الكابل + الكابينة</button>
+              <button type="button" class="filter-btn" data-tnote-group="box">📦 حسب البكس + الكابل + الكابينة</button>
+              <button type="button" class="filter-btn" data-tnote-group="action">⚙️ حسب الإجراء المتخذ</button>
+            </div>
+            <p class="analysis-summary" id="tnote-analysis-summary"></p>
+            <div id="tnote-analysis-list" class="analysis-list"></div>
+            <div id="tnote-analysis-empty" class="empty-state hidden">لا توجد بيانات للتحليل</div>
+          </div>
+          <div id="tnote-filter-summary" class="preview-filter-summary hidden"></div>
+          <div id="tnote-table-wrap" class="preview-table-wrap">
+            <table class="preview-data-table" id="tnote-data-table">
+              <thead>
+                <tr>
+                  <th>التاريخ والوقت</th>
+                  <th>رقم التليفون</th>
+                  <th>الفني</th>
+                  <th>نوع البلاغ</th>
+                  <th>الملاحظة</th>
+                  <th>النوع</th>
+                  <th>رقم الكابل</th>
+                  <th>رقم الكابينة</th>
+                  <th>رقم البكس</th>
+                  <th>الموقع</th>
+                  <th>الصورة</th>
+                  <th>الإجراء المتخذ</th>
+                </tr>
+              </thead>
+              <tbody id="tnote-table-body"></tbody>
+            </table>
+          </div>
+          <div id="tnote-empty" class="empty-state hidden">لا توجد سجلات إبلاغ فنيين</div>
+        </div>
+      </div><!-- /tech-reports-tab -->
+
+      <!-- تبويب الإصلاحات الأرضية -->
+      <div id="ground-repairs-tab" class="hidden">
+        <div class="stats" id="grepr-stats-bar"></div>
+        <div class="card">
+          <div class="card-title">🔧 الإصلاحات الأرضية</div>
+          <div class="preview-mode-bar">
+            <button type="button" class="preview-mode-btn active" data-grepr-source="archive">🔧 الإصلاحات الأرضية</button>
+            <button type="button" class="preview-mode-btn" data-grepr-source="inspection">⚠️ أرضية لم يتم إصلاحها</button>
+          </div>
+          <div class="preview-toolbar">
+            <input type="search" id="grepr-search-input" placeholder="بحث في كل الحقول..." autocomplete="off" />
+            <select id="grepr-welder-filter"><option value="">كل اللحامين</option></select>
+            <input type="text" id="grepr-ticket-filter" placeholder="رقم العطل / التذكرة" dir="ltr" autocomplete="off" />
+            <button type="button" class="btn btn-outline btn-sm" id="grepr-refresh-btn">تحديث</button>
+          </div>
+          <div class="preview-toolbar">
+            <input type="text" id="grepr-cable-filter" placeholder="رقم الكابل" dir="ltr" autocomplete="off" />
+            <input type="text" id="grepr-cabinet-filter" placeholder="رقم الكابينة" dir="ltr" autocomplete="off" />
+            <input type="text" id="grepr-box-filter" placeholder="رقم البكس" dir="ltr" autocomplete="off" />
+          </div>
+          <div class="preview-toolbar">
+            <select id="grepr-date-mode">
+              <option value="">كل التواريخ</option>
+              <option value="year">فلترة بالسنة</option>
+              <option value="month">فلترة بالشهر والسنة</option>
+              <option value="day">فلترة باليوم والشهر والسنة</option>
+            </select>
+            <input type="number" id="grepr-date-year" class="grepr-date-field hidden" placeholder="السنة" min="2000" max="2100" dir="ltr" />
+            <input type="number" id="grepr-date-month" class="grepr-date-field hidden" placeholder="الشهر (1-12)" min="1" max="12" dir="ltr" />
+            <input type="date" id="grepr-date-day" class="grepr-date-field hidden" />
+          </div>
+          <div class="preview-mode-bar">
+            <button type="button" class="preview-mode-btn active" data-grepr-view="table">📋 الجدول</button>
+            <button type="button" class="preview-mode-btn" data-grepr-view="analysis">📊 التحليل</button>
+          </div>
+          <div class="preview-export-bar">
+            <select id="grepr-export-scope">
+              <option value="filtered">البيانات المفلترة حالياً</option>
+              <option value="all">كل البيانات</option>
+              <option value="analysis">نتيجة التحليل الحالي</option>
+            </select>
+            <button type="button" class="btn btn-success btn-sm" id="grepr-export-btn">📥 تصدير Excel</button>
+          </div>
+          <div id="grepr-group-filter" class="preview-group-filter hidden">
+            <span id="grepr-group-filter-text"></span>
+            <button type="button" class="btn btn-outline btn-sm" id="grepr-clear-group-btn">✕ إلغاء الفلتر</button>
+          </div>
+          <div id="grepr-alert" class="alert"></div>
+          <div id="grepr-loader" class="loader hidden"><div class="spinner"></div> جاري تحميل السجلات...</div>
+          <div id="grepr-analysis-panel" class="hidden">
+            <div class="preview-group-bar">
+              <button type="button" class="filter-btn active" data-grepr-group="welder">🔥 حسب اللحام القائم بالفحص</button>
+              <button type="button" class="filter-btn" data-grepr-group="cableCabinet">🔌 حسب الكابل + الكابينة</button>
+              <button type="button" class="filter-btn" data-grepr-group="box">📦 حسب الكابل + الكابينة + البكس</button>
+            </div>
+            <p class="analysis-summary" id="grepr-analysis-summary"></p>
+            <div id="grepr-analysis-list" class="analysis-list"></div>
+            <div id="grepr-analysis-empty" class="empty-state hidden">لا توجد بيانات للتحليل</div>
+          </div>
+          <div id="grepr-filter-summary" class="preview-filter-summary hidden"></div>
+          <div id="grepr-table-wrap" class="preview-table-wrap">
+            <table class="preview-data-table" id="grepr-data-table">
+              <thead>
+                <tr>
+                  <th>التاريخ والوقت</th>
+                  <th>رقم التذكرة</th>
+                  <th>الفني الأصلي</th>
+                  <th>اللحام القائم بالفحص</th>
+                  <th>العامل المرافق</th>
+                  <th>تصنيف الأعمال</th>
+                  <th>نوع الأعمال</th>
+                  <th>المهمات</th>
+                  <th>حالة الإصلاح</th>
+                  <th>ملاحظات الفحص</th>
+                  <th>ملاحظات أخرى</th>
+                  <th>رقم الكابل</th>
+                  <th>رقم الكابينة</th>
+                  <th>رقم البكس</th>
+                  <th>الموقع</th>
+                  <th>الصورة</th>
+                </tr>
+              </thead>
+              <tbody id="grepr-table-body"></tbody>
+            </table>
+          </div>
+          <div id="grepr-empty" class="empty-state hidden">لا توجد سجلات إصلاحات أرضية</div>
+        </div>
+      </div><!-- /ground-repairs-tab -->
     </section>
 
     <!-- تفاصيل البلاغ -->
@@ -875,32 +1656,64 @@
         <div class="detail-header">
           <button type="button" class="back-btn" id="back-btn">← رجوع</button>
           <button type="button" class="archive-btn" id="archive-btn">📁 محادثات سابقة للخط</button>
-          <div class="card-title" style="margin:0">تفاصيل المحادثة</div>
+          <div class="card-title" id="detail-title" style="margin:0">تفاصيل المحادثة</div>
         </div>
 
         <div id="detail-alert" class="alert"></div>
         <div id="detail-content"></div>
+
+        <div id="inspection-close-box" class="inspection-close-box hidden">
+          <div class="card-title" style="font-size:0.9rem;margin-bottom:10px">🔒 إغلاق مهمة الفحص</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label for="inspection-close-note">ملاحظة الإغلاق (اختياري)</label>
+            <textarea id="inspection-close-note" placeholder="مثال: تم الفحص ولا يوجد عطل..."></textarea>
+          </div>
+          <button type="button" class="btn btn-success" id="inspection-close-btn">إغلاق المهمة</button>
+        </div>
+
+        <div class="assign-box">
+          <div class="lbl">🛠️ توجيه المهمة لفني</div>
+          <div class="assign-row">
+            <select id="assign-select"><option value="">— بدون فني —</option></select>
+            <button type="button" class="btn btn-primary btn-sm" id="assign-btn" style="width:auto">إسناد</button>
+          </div>
+        </div>
+
+        <div id="tech-chat-block">
+          <div class="card-title" style="font-size:0.9rem">🛠️ محادثة الإدارة مع الفني</div>
+          <div id="tech-chat-thread" class="chat-thread tech-chat"></div>
+          <div class="tech-attach-bar">
+            <input type="file" id="tech-photo-input" accept="image/*" class="hidden" />
+            <button type="button" class="btn btn-outline btn-sm" id="tech-photo-btn">📷 إرفاق صورة</button>
+          </div>
+          <div id="tech-attach-preview" class="tech-attach-preview hidden"></div>
+          <div class="form-group" style="margin-top:10px">
+            <textarea id="tech-message-input" placeholder="اكتب رسالة للفني المسؤول (اختياري مع الصورة)..."></textarea>
+          </div>
+          <button type="button" class="btn btn-outline" id="tech-send-btn">إرسال للفني</button>
+        </div>
+
         <div id="resolved-notice" class="resolved-notice hidden">
           🔒 المحادثة منتهية. لا يمكن إرسال رد حتى يرسل العميل رسالة جديدة.
         </div>
 
         <div id="notify-form">
-          <div class="form-group">
-            <label for="status-select">حالة المحادثة</label>
-            <select id="status-select">
-              <option value="جديد">بانتظار الرد</option>
-              <option value="قيد المعالجة">مفتوحة — جاري المتابعة</option>
-              <option value="إعادة فتح">أعاد العميل الفتح</option>
-              <option value="تم الحل">إنهاء المحادثة (وفتح التقييم)</option>
-            </select>
-          </div>
+          <!-- حالة المحادثة تُضبط تلقائياً من الأزرار السريعة -->
+          <select id="status-select" class="hidden" aria-hidden="true" tabindex="-1">
+            <option value="جديد">بانتظار الرد</option>
+            <option value="قيد المعالجة">مفتوحة — جاري المتابعة</option>
+            <option value="إعادة فتح">أعاد العميل الفتح</option>
+            <option value="تم الحل">إنهاء المحادثة (وفتح التقييم)</option>
+          </select>
 
           <div class="card-title" style="font-size:0.9rem">✍️ ردّك على العميل</div>
           <div class="quick-btns">
-            <button type="button" class="btn btn-accent btn-sm quick-msg" data-msg="تحية طيبة، تم استلام رسالتكم وجاري مراجعتها.">تم الاستلام</button>
-            <button type="button" class="btn btn-warning btn-sm quick-msg" data-msg="جاري العمل على طلبكم وسنوافيكم بالمستجدات.">جاري المتابعة</button>
-            <button type="button" class="btn btn-success btn-sm quick-msg" data-msg="تم الانتهاء من طلبكم. شكراً لتواصلكم مع سنترال فرشوط.">إنهاء وفتح التقييم</button>
+            <button type="button" class="btn btn-accent btn-sm quick-msg" data-status="قيد المعالجة" data-msg="تحية طيبة، تم استلام رسالتكم وجاري مراجعتها.">تم الاستلام</button>
+            <button type="button" class="btn btn-warning btn-sm quick-msg" data-status="قيد المعالجة" data-msg="جاري العمل على طلبكم وسنوافيكم بالمستجدات.">جاري المتابعة</button>
+            <button type="button" class="btn btn-success btn-sm quick-msg" data-status="تم الحل" data-msg="تم الانتهاء من طلبكم. شكراً لتواصلكم مع سنترال فرشوط.">إنهاء وفتح التقييم</button>
           </div>
+
+          <div id="customer-photo-pending" class="customer-photo-pending hidden" aria-live="polite"></div>
 
           <div class="form-group">
             <label for="message-input">نص الرد</label>
@@ -916,7 +1729,7 @@
   </div>
 
   <div id="archive-modal" class="modal-overlay hidden">
-    <div class="modal" role="dialog" aria-labelledby="archive-modal-title">
+    <div class="modal archive-modal" role="dialog" aria-labelledby="archive-modal-title">
       <div class="modal-header">
         <h3 id="archive-modal-title">📁 أرشيف شكاوى الخط</h3>
         <button type="button" class="modal-close" id="archive-close-btn">إغلاق</button>
@@ -931,6 +1744,1521 @@
     var currentFilter = 'active';
     var currentTicket = null;
     var refreshTimer = null;
+    var pendingCustomerPhoto = null;
+    var pendingTechPhoto = null;
+    var pendingInspectionCreatePhoto = null;
+    var pendingInspectionInlinePhoto = null;
+    var currentInspectionMode = false;
+    var inspectionFilter = 'active';
+    var inspectionSearch = '';
+    var inspectionTasksCache = [];
+    var selectedInspectionRow = null;
+    var techChatContext = 'detail';
+    var previewRecordsCache = [];
+    var previewView = 'table';
+    var previewAnalysisGroup = 'mobile';
+    var previewSearch = '';
+    var previewActionFilter = '';
+    var previewTechFilter = '';
+    var previewGroupFilter = null;
+
+    var tnoteRecordsCache = [];
+    var tnoteView = 'table';
+    var tnoteAnalysisGroup = 'landline';
+
+    var greprRecordsCache = [];
+    var greprView = 'table';
+    var greprDataSource = 'archive';
+    var greprAnalysisGroup = 'welder';
+    var greprSearch = '';
+    var greprWelderFilter = '';
+    var greprTicketFilter = '';
+    var greprCableFilter = '';
+    var greprCabinetFilter = '';
+    var greprBoxFilter = '';
+    var greprDateMode = '';
+    var greprDateYear = '';
+    var greprDateMonth = '';
+    var greprDateDay = '';
+    var greprGroupFilter = null;
+
+    var GREPR_TABLE_COLUMNS = [
+      { key: 'dateTime', label: 'التاريخ والوقت' },
+      { key: 'ticketNumber', label: 'رقم التذكرة' },
+      { key: 'originalTech', label: 'الفني الأصلي' },
+      { key: 'welder', label: 'اللحام القائم بالفحص' },
+      { key: 'companion', label: 'العامل المرافق' },
+      { key: 'workCategory', label: 'تصنيف الأعمال' },
+      { key: 'workType', label: 'نوع الأعمال' },
+      { key: 'materials', label: 'المهمات' },
+      { key: 'repairStatus', label: 'حالة الإصلاح' },
+      { key: 'inspectionNotes', label: 'ملاحظات الفحص' },
+      { key: 'otherNotes', label: 'ملاحظات أخرى' },
+      { key: 'cableNumber', label: 'رقم الكابل' },
+      { key: 'cabinetNumber', label: 'رقم الكابينة' },
+      { key: 'boxNumber', label: 'رقم البكس' },
+      { key: 'locationUrl', label: 'الموقع' },
+      { key: 'photoUrl', label: 'الصورة' }
+    ];
+    var tnoteSearch = '';
+    var tnoteLandlineFilter = '';
+    var tnoteTechFilter = '';
+    var tnoteActionFilter = '';
+    var tnoteReportTypeFilter = '';
+    var tnoteConnectionTypeFilter = '';
+    var tnoteCableFilter = '';
+    var tnoteCabinetFilter = '';
+    var tnoteBoxFilter = '';
+    var tnoteDateMode = '';
+    var tnoteDateYear = '';
+    var tnoteDateMonth = '';
+    var tnoteDateDay = '';
+    var tnoteGroupFilter = null;
+
+    var TNOTE_TABLE_COLUMNS = [
+      { key: 'dateTime', label: 'التاريخ والوقت' },
+      { key: 'landline', label: 'رقم التليفون' },
+      { key: 'tech', label: 'الفني' },
+      { key: 'reportType', label: 'نوع البلاغ' },
+      { key: 'notes', label: 'الملاحظة' },
+      { key: 'connectionType', label: 'النوع' },
+      { key: 'cableNumber', label: 'رقم الكابل' },
+      { key: 'cabinetNumber', label: 'رقم الكابينة' },
+      { key: 'boxNumber', label: 'رقم البكس' },
+      { key: 'locationUrl', label: 'الموقع' },
+      { key: 'photoUrl', label: 'الصورة' },
+      { key: 'action', label: 'الإجراء المتخذ' }
+    ];
+
+    var PREVIEW_TABLE_COLUMNS = [
+      { key: 'dateTime', label: 'التاريخ والوقت' },
+      { key: 'serial', label: 'رقم المسلسل' },
+      { key: 'tech', label: 'الفني' },
+      { key: 'mobile', label: 'المحمول' },
+      { key: 'customerName', label: 'اسم العميل' },
+      { key: 'address', label: 'العنوان' },
+      { key: 'msanCabinet', label: 'كابينة MSAN' },
+      { key: 'cableNumber', label: 'رقم الكابل' },
+      { key: 'cabinetNumber', label: 'رقم الكابينة' },
+      { key: 'boxNumber', label: 'رقم البكس' },
+      { key: 'notes', label: 'الملاحظات' },
+      { key: 'action', label: 'الإجراء المتخذ' },
+      { key: 'locationUrl', label: 'رابط الموقع' },
+      { key: 'photoUrl', label: 'رابط الصورة' }
+    ];
+
+    function previewGroupKey(rec, group) {
+      if (group === 'mobile') return rec.mobile || '—';
+      if (group === 'customer') return rec.customerName || '—';
+      if (group === 'msan') return rec.msanCabinet || '—';
+      if (group === 'cableCabinet') {
+        return (rec.cableNumber || '—') + ' / ' + (rec.cabinetNumber || '—');
+      }
+      if (group === 'box') {
+        return 'كابل ' + (rec.cableNumber || '—') + ' / كابينة ' + (rec.cabinetNumber || '—') +
+          ' / بكس ' + (rec.boxNumber || '—');
+      }
+      return '';
+    }
+
+    function previewGroupStorageKey(rec, group) {
+      if (group === 'cableCabinet') {
+        return String(rec.cableNumber || '') + '|' + String(rec.cabinetNumber || '');
+      }
+      if (group === 'box') {
+        return String(rec.cableNumber || '') + '|' + String(rec.cabinetNumber || '') + '|' +
+          String(rec.boxNumber || '');
+      }
+      if (group === 'mobile') return String(rec.mobile || '');
+      if (group === 'customer') return String(rec.customerName || '');
+      if (group === 'msan') return String(rec.msanCabinet || '');
+      return '';
+    }
+
+    function previewMatchesGroupFilter(rec) {
+      if (!previewGroupFilter) return true;
+      return previewGroupStorageKey(rec, previewGroupFilter.group) === previewGroupFilter.key;
+    }
+
+    function previewRecordMatchesSearch(rec, q) {
+      if (!q) return true;
+      var hay = [
+        rec.dateTime, rec.serial, rec.tech, rec.mobile, rec.customerName, rec.address,
+        rec.msanCabinet, rec.cableNumber, rec.cabinetNumber, rec.boxNumber,
+        rec.notes, rec.action
+      ].join(' ').toLowerCase();
+      return hay.indexOf(q) !== -1;
+    }
+
+    function filterPreviewRecords(records) {
+      var q = previewSearch.toLowerCase().trim();
+      return records.filter(function (rec) {
+        if (previewActionFilter && rec.action !== previewActionFilter) return false;
+        if (previewTechFilter && rec.tech !== previewTechFilter) return false;
+        if (!previewMatchesGroupFilter(rec)) return false;
+        return previewRecordMatchesSearch(rec, q);
+      });
+    }
+
+    function previewActionClass(action) {
+      if (action === 'فك تعذر') return 'ok';
+      return '';
+    }
+
+    function renderPreviewLink(url, label) {
+      if (!url) return '—';
+      return '<a class="preview-link-btn" href="' + escapeHtml(url) + '" target="_blank" rel="noopener">' +
+        escapeHtml(label) + ' ↗</a>';
+    }
+
+    function populatePreviewFilterOptions(records) {
+      var actionSel = document.getElementById('preview-action-filter');
+      var techSel = document.getElementById('preview-tech-filter');
+      var prevAction = previewActionFilter;
+      var prevTech = previewTechFilter;
+      var actions = [];
+      var techs = [];
+      records.forEach(function (rec) {
+        if (rec.action && actions.indexOf(rec.action) === -1) actions.push(rec.action);
+        if (rec.tech && techs.indexOf(rec.tech) === -1) techs.push(rec.tech);
+      });
+      actions.sort();
+      techs.sort();
+      actionSel.innerHTML = '<option value="">كل الإجراءات</option>' +
+        actions.map(function (a) {
+          return '<option value="' + escapeHtml(a) + '">' + escapeHtml(a) + '</option>';
+        }).join('');
+      techSel.innerHTML = '<option value="">كل الفنيين</option>' +
+        techs.map(function (t) {
+          return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>';
+        }).join('');
+      actionSel.value = prevAction;
+      techSel.value = prevTech;
+    }
+
+    function isPreviewFilterActive() {
+      return !!(previewSearch || previewActionFilter || previewTechFilter || previewGroupFilter);
+    }
+
+    function renderPreviewFilterSummary(total, filteredCount) {
+      var el = document.getElementById('preview-filter-summary');
+      if (!el) return;
+      if (previewView !== 'table' || !isPreviewFilterActive()) {
+        el.classList.add('hidden');
+        return;
+      }
+      el.classList.remove('hidden');
+      var parts = [];
+      if (previewSearch) parts.push('بحث');
+      if (previewActionFilter) parts.push('إجراء');
+      if (previewTechFilter) parts.push('فني');
+      if (previewGroupFilter) parts.push('تجميع');
+      el.innerHTML =
+        '<div>' +
+          '<div>🔎 <strong>إجمالي السجلات المفلترة</strong></div>' +
+          '<div class="meta">فلاتر نشطة: ' + escapeHtml(parts.join(' · ')) + '</div>' +
+        '</div>' +
+        '<div style="text-align:left">' +
+          '<div class="count">' + filteredCount + '</div>' +
+          '<div class="meta">من إجمالي ' + total + ' سجل</div>' +
+        '</div>';
+    }
+
+    function renderPreviewStats(records, filtered) {
+      var statsSource = (previewView === 'table' && isPreviewFilterActive()) ? filtered : records;
+      var repeatedMobiles = {};
+      statsSource.forEach(function (rec) {
+        if (!rec.mobile) return;
+        repeatedMobiles[rec.mobile] = (repeatedMobiles[rec.mobile] || 0) + 1;
+      });
+      var multiMobile = Object.keys(repeatedMobiles).filter(function (m) {
+        return repeatedMobiles[m] > 1;
+      }).length;
+      var filterActive = previewView === 'table' && isPreviewFilterActive();
+      var bar = document.getElementById('preview-stats-bar');
+      bar.innerHTML =
+        '<div class="stat-box"><div class="num">' + records.length + '</div><div class="lbl">إجمالي السجلات</div></div>' +
+        '<div class="stat-box' + (filterActive ? ' stat-highlight' : '') + '"><div class="num">' + filtered.length +
+          '</div><div class="lbl">' + (filterActive ? 'إجمالي المفلتر' : 'المعروض الآن') + '</div></div>' +
+        '<div class="stat-box"><div class="num">' + multiMobile + '</div><div class="lbl">' +
+          (filterActive ? 'محمولات متكررة (مفلتر)' : 'محمولات متكررة') + '</div></div>' +
+        '<div class="stat-box"><div class="num">' + Object.keys(repeatedMobiles).length + '</div><div class="lbl">' +
+          (filterActive ? 'محمولات مختلفة (مفلتر)' : 'محمولات مختلفة') + '</div></div>';
+    }
+
+    function renderPreviewTableBody(records) {
+      var tbody = document.getElementById('preview-table-body');
+      var wrap = document.getElementById('preview-table-wrap');
+      var empty = document.getElementById('preview-empty');
+      if (!records.length) {
+        tbody.innerHTML = '';
+        wrap.classList.add('hidden');
+        empty.classList.remove('hidden');
+        empty.textContent = isPreviewFilterActive()
+          ? 'لا توجد سجلات مطابقة للفلتر (0 من ' + previewRecordsCache.length + ')'
+          : 'لا توجد سجلات متعذر معاينة';
+        return;
+      }
+      empty.classList.add('hidden');
+      wrap.classList.remove('hidden');
+      tbody.innerHTML = records.map(function (rec) {
+        return '<tr>' +
+          '<td>' + escapeHtml(rec.dateTime) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.serial) + '</td>' +
+          '<td>' + escapeHtml(rec.tech) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.mobile) + '</td>' +
+          '<td>' + escapeHtml(rec.customerName) + '</td>' +
+          '<td>' + escapeHtml(rec.address) + '</td>' +
+          '<td>' + escapeHtml(rec.msanCabinet) + '</td>' +
+          '<td>' + escapeHtml(rec.cableNumber) + '</td>' +
+          '<td>' + escapeHtml(rec.cabinetNumber) + '</td>' +
+          '<td>' + escapeHtml(rec.boxNumber) + '</td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.notes) + '">' + escapeHtml(rec.notes) + '</td>' +
+          '<td><span class="preview-action-badge ' + previewActionClass(rec.action) + '">' +
+            escapeHtml(rec.action || '—') + '</span></td>' +
+          '<td>' + renderPreviewLink(rec.locationUrl, '📍 موقع') + '</td>' +
+          '<td>' + renderPreviewLink(rec.photoUrl, '🖼️ صورة') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function buildPreviewAnalysisGroups(records, group) {
+      var map = {};
+      records.forEach(function (rec) {
+        var key = previewGroupStorageKey(rec, group);
+        var label = previewGroupKey(rec, group);
+        if (!map[key]) {
+          map[key] = { key: key, label: label, count: 0, actions: {} };
+        }
+        map[key].count++;
+        if (rec.action) {
+          map[key].actions[rec.action] = (map[key].actions[rec.action] || 0) + 1;
+        }
+      });
+      return Object.keys(map).map(function (k) { return map[k]; })
+        .sort(function (a, b) { return b.count - a.count || a.label.localeCompare(b.label, 'ar'); });
+    }
+
+    function previewAnalysisGroupLabel(group) {
+      if (group === 'mobile') return 'المحمول';
+      if (group === 'customer') return 'اسم العميل';
+      if (group === 'msan') return 'كابينة MSAN';
+      if (group === 'cableCabinet') return 'الكابل + الكابينة';
+      if (group === 'box') return 'البكس + الكابل + الكابينة';
+      return '';
+    }
+
+    function previewExcelCell(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function previewExportStamp() {
+      var d = new Date();
+      var p = function (n) { return String(n).padStart(2, '0'); };
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '_' +
+        p(d.getHours()) + p(d.getMinutes());
+    }
+
+    function downloadPreviewExcel(filename, tableHtml) {
+      var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>' +
+        tableHtml + '</body></html>';
+      var blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename.indexOf('.xls') !== -1 ? filename : filename + '.xls';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    }
+
+    function buildPreviewRecordsTableHtml(records) {
+      var head = PREVIEW_TABLE_COLUMNS.map(function (col) {
+        return '<th>' + previewExcelCell(col.label) + '</th>';
+      }).join('');
+      var body = records.map(function (rec) {
+        return '<tr>' + PREVIEW_TABLE_COLUMNS.map(function (col) {
+          return '<td>' + previewExcelCell(rec[col.key] || '') + '</td>';
+        }).join('') + '</tr>';
+      }).join('');
+      return '<table border="1"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+    }
+
+    function buildPreviewAnalysisTableHtml(records) {
+      var groups = buildPreviewAnalysisGroups(records, previewAnalysisGroup);
+      var groupLabel = previewAnalysisGroupLabel(previewAnalysisGroup);
+      var head = '<th>نوع التجميع</th><th>القيمة</th><th>العدد</th><th>أكثر إجراء</th>';
+      var body = groups.map(function (g) {
+        var topAction = Object.keys(g.actions).sort(function (a, b) {
+          return g.actions[b] - g.actions[a];
+        })[0] || '';
+        return '<tr>' +
+          '<td>' + previewExcelCell(groupLabel) + '</td>' +
+          '<td>' + previewExcelCell(g.label) + '</td>' +
+          '<td>' + previewExcelCell(g.count) + '</td>' +
+          '<td>' + previewExcelCell(topAction) + '</td>' +
+        '</tr>';
+      }).join('');
+      return '<table border="1"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+    }
+
+    function exportPreviewToExcel() {
+      var scope = document.getElementById('preview-export-scope').value;
+      var stamp = previewExportStamp();
+      if (scope === 'analysis') {
+        var analysisRecords = filterPreviewRecords(previewRecordsCache);
+        var groups = buildPreviewAnalysisGroups(analysisRecords, previewAnalysisGroup);
+        if (!groups.length) {
+          showAlert('preview-alert', 'لا توجد بيانات تحليل للتصدير', 'error');
+          return;
+        }
+        downloadPreviewExcel(
+          'متعذر_معاينات_تحليل_' + previewAnalysisGroup + '_' + stamp + '.xls',
+          buildPreviewAnalysisTableHtml(analysisRecords)
+        );
+        hideAlert('preview-alert');
+        return;
+      }
+      var records = scope === 'all' ? previewRecordsCache.slice() : filterPreviewRecords(previewRecordsCache);
+      if (!records.length) {
+        showAlert('preview-alert', 'لا توجد بيانات للتصدير', 'error');
+        return;
+      }
+      var prefix = scope === 'all' ? 'متعذر_معاينات_الكل' : 'متعذر_معاينات_مفلتر';
+      downloadPreviewExcel(prefix + '_' + stamp + '.xls', buildPreviewRecordsTableHtml(records));
+      hideAlert('preview-alert');
+    }
+
+    function renderPreviewAnalysis(records) {
+      var list = document.getElementById('preview-analysis-list');
+      var empty = document.getElementById('preview-analysis-empty');
+      var summary = document.getElementById('preview-analysis-summary');
+      var groups = buildPreviewAnalysisGroups(records, previewAnalysisGroup);
+      summary.textContent = 'تجميع المتعذرات حسب ' + previewAnalysisGroupLabel(previewAnalysisGroup) +
+        ' — اضغط على أي صف لعرض سجلاته في الجدول';
+      if (!groups.length) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      list.innerHTML = groups.map(function (g) {
+        var topAction = Object.keys(g.actions).sort(function (a, b) {
+          return g.actions[b] - g.actions[a];
+        })[0] || '';
+        var hint = topAction ? 'أكثر إجراء: ' + topAction : '';
+        return '<div class="analysis-row" data-group-key="' + escapeHtml(g.key) + '" data-group-label="' +
+          escapeHtml(g.label) + '">' +
+          '<div><div class="label">' + escapeHtml(g.label) + '</div>' +
+          (hint ? '<div class="hint">' + escapeHtml(hint) + '</div>' : '') +
+          '</div>' +
+          '<div class="count">' + g.count + '</div>' +
+        '</div>';
+      }).join('');
+      list.querySelectorAll('.analysis-row').forEach(function (row) {
+        row.addEventListener('click', function () {
+          previewGroupFilter = {
+            group: previewAnalysisGroup,
+            key: row.dataset.groupKey,
+            label: row.dataset.groupLabel
+          };
+          updatePreviewGroupFilterBar();
+          switchPreviewView('table');
+          renderPreviewView();
+        });
+      });
+    }
+
+    function updatePreviewGroupFilterBar() {
+      var bar = document.getElementById('preview-group-filter');
+      var text = document.getElementById('preview-group-filter-text');
+      if (!previewGroupFilter) {
+        bar.classList.add('hidden');
+        return;
+      }
+      bar.classList.remove('hidden');
+      text.textContent = 'فلتر نشط: ' + previewAnalysisGroupLabel(previewGroupFilter.group) +
+        ' = ' + previewGroupFilter.label;
+    }
+
+    function clearPreviewGroupFilter() {
+      previewGroupFilter = null;
+      updatePreviewGroupFilterBar();
+      renderPreviewView();
+    }
+
+    function switchPreviewView(view) {
+      previewView = view;
+      document.querySelectorAll('[data-preview-view]').forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.previewView === view);
+      });
+      var exportScope = document.getElementById('preview-export-scope');
+      if (exportScope && view === 'analysis') {
+        exportScope.value = 'analysis';
+      } else if (exportScope && exportScope.value === 'analysis') {
+        exportScope.value = 'filtered';
+      }
+      document.getElementById('preview-analysis-panel').classList.toggle('hidden', view !== 'analysis');
+      document.getElementById('preview-table-wrap').classList.toggle('hidden', view === 'analysis');
+      document.getElementById('preview-empty').classList.toggle('hidden', view === 'analysis');
+      renderPreviewView();
+    }
+
+    function renderPreviewView() {
+      document.getElementById('preview-loader').classList.add('hidden');
+      var filtered = filterPreviewRecords(previewRecordsCache);
+      renderPreviewStats(previewRecordsCache, filtered);
+      renderPreviewFilterSummary(previewRecordsCache.length, filtered.length);
+      if (previewView === 'analysis') {
+        renderPreviewAnalysis(filterPreviewRecords(previewRecordsCache));
+      } else {
+        renderPreviewTableBody(filtered);
+      }
+    }
+
+    function loadPreviewInspections() {
+      document.getElementById('preview-loader').classList.remove('hidden');
+      hideAlert('preview-alert');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          document.getElementById('preview-loader').classList.add('hidden');
+          previewRecordsCache = data.records || [];
+          populatePreviewFilterOptions(previewRecordsCache);
+          renderPreviewView();
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('preview-loader').classList.add('hidden');
+          showAlert('preview-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralGetPreviewInspections({ pin: currentPin });
+    }
+
+    function normalizeWesternDigits(str) {
+      return String(str || '').replace(/[\u0660-\u0669]/g, function (ch) {
+        return String(ch.charCodeAt(0) - 0x0660);
+      }).replace(/[\u06F0-\u06F9]/g, function (ch) {
+        return String(ch.charCodeAt(0) - 0x06F0);
+      }).trim();
+    }
+
+    function parseSheetDateParts(dateTime) {
+      var s = normalizeWesternDigits(dateTime);
+      if (!s) return null;
+      var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) {
+        return { day: parseInt(m[1], 10), month: parseInt(m[2], 10), year: parseInt(m[3], 10) };
+      }
+      m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (m) {
+        return { day: parseInt(m[3], 10), month: parseInt(m[2], 10), year: parseInt(m[1], 10) };
+      }
+      var d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        return { day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear() };
+      }
+      return null;
+    }
+
+    function isSheetDateFilterReady(mode, year, month, day) {
+      if (!mode) return false;
+      if (mode === 'year') return parseInt(year, 10) > 0;
+      if (mode === 'month') {
+        var y = parseInt(year, 10);
+        var m = parseInt(month, 10);
+        return y > 0 && m >= 1 && m <= 12;
+      }
+      if (mode === 'day') return !!day;
+      return false;
+    }
+
+    function recordMatchesSheetDateFilter(rec, mode, year, month, day) {
+      if (!mode) return true;
+      if (!isSheetDateFilterReady(mode, year, month, day)) return true;
+      var p = parseSheetDateParts(rec.dateTime);
+      if (!p) return false;
+      if (mode === 'year') return p.year === parseInt(year, 10);
+      if (mode === 'month') {
+        return p.year === parseInt(year, 10) && p.month === parseInt(month, 10);
+      }
+      if (mode === 'day') {
+        var parts = day.split('-');
+        if (parts.length !== 3) return false;
+        return p.year === parseInt(parts[0], 10) &&
+          p.month === parseInt(parts[1], 10) &&
+          p.day === parseInt(parts[2], 10);
+      }
+      return true;
+    }
+
+    function sheetDateFilterLabel(mode, year, month, day) {
+      if (!mode) return 'كل التواريخ';
+      if (!isSheetDateFilterReady(mode, year, month, day)) return 'حدّد التاريخ';
+      if (mode === 'year') return 'السنة ' + year;
+      if (mode === 'month') return 'شهر ' + month + '/' + year;
+      if (mode === 'day') {
+        var parts = day.split('-');
+        if (parts.length === 3) return 'يوم ' + parts[2] + '/' + parts[1] + '/' + parts[0];
+        return 'يوم ' + day;
+      }
+      return 'تاريخ';
+    }
+
+    function readTnoteDateFiltersFromDom() {
+      var modeEl = document.getElementById('tnote-date-mode');
+      var yearEl = document.getElementById('tnote-date-year');
+      var monthEl = document.getElementById('tnote-date-month');
+      var dayEl = document.getElementById('tnote-date-day');
+      if (modeEl) tnoteDateMode = modeEl.value;
+      if (yearEl) tnoteDateYear = yearEl.value.trim();
+      if (monthEl) tnoteDateMonth = monthEl.value.trim();
+      if (dayEl) tnoteDateDay = dayEl.value;
+    }
+
+    function tnoteMatchesDateFilter(rec) {
+      return recordMatchesSheetDateFilter(rec, tnoteDateMode, tnoteDateYear, tnoteDateMonth, tnoteDateDay);
+    }
+
+    function isTnoteDateFilterActive() {
+      readTnoteDateFiltersFromDom();
+      return isSheetDateFilterReady(tnoteDateMode, tnoteDateYear, tnoteDateMonth, tnoteDateDay);
+    }
+
+    function filterTnoteByDate(records) {
+      readTnoteDateFiltersFromDom();
+      return records.filter(function (rec) {
+        return recordMatchesSheetDateFilter(rec, tnoteDateMode, tnoteDateYear, tnoteDateMonth, tnoteDateDay);
+      });
+    }
+
+    function tnoteNorm(value) {
+      return String(value || '').toLowerCase().trim();
+    }
+
+    function tnoteGroupKey(rec, group) {
+      if (group === 'landline') return rec.landline || '—';
+      if (group === 'tech') return rec.tech || '—';
+      if (group === 'reportType') return rec.reportType || '—';
+      if (group === 'connectionType') return rec.connectionType || '—';
+      if (group === 'action') return rec.action || '—';
+      if (group === 'cableCabinet') {
+        return (rec.cableNumber || '—') + ' / ' + (rec.cabinetNumber || '—');
+      }
+      if (group === 'box') {
+        return 'كابل ' + (rec.cableNumber || '—') + ' / كابينة ' + (rec.cabinetNumber || '—') +
+          ' / بكس ' + (rec.boxNumber || '—');
+      }
+      return '';
+    }
+
+    function tnoteGroupStorageKey(rec, group) {
+      if (group === 'cableCabinet') {
+        return String(rec.cableNumber || '') + '|' + String(rec.cabinetNumber || '');
+      }
+      if (group === 'box') {
+        return String(rec.cableNumber || '') + '|' + String(rec.cabinetNumber || '') + '|' +
+          String(rec.boxNumber || '');
+      }
+      if (group === 'landline') return String(rec.landline || '');
+      if (group === 'tech') return String(rec.tech || '');
+      if (group === 'reportType') return String(rec.reportType || '');
+      if (group === 'connectionType') return String(rec.connectionType || '');
+      if (group === 'action') return String(rec.action || '');
+      return '';
+    }
+
+    function tnoteMatchesGroupFilter(rec) {
+      if (!tnoteGroupFilter) return true;
+      return tnoteGroupStorageKey(rec, tnoteGroupFilter.group) === tnoteGroupFilter.key;
+    }
+
+    function tnoteRecordMatchesSearch(rec, q) {
+      if (!q) return true;
+      var hay = [
+        rec.dateTime, rec.landline, rec.tech, rec.reportType, rec.notes, rec.connectionType,
+        rec.cableNumber, rec.cabinetNumber, rec.boxNumber, rec.action
+      ].join(' ').toLowerCase();
+      return hay.indexOf(q) !== -1;
+    }
+
+    function filterTnoteRecords(records) {
+      readTnoteDateFiltersFromDom();
+      var q = tnoteSearch.toLowerCase().trim();
+      var landlineQ = tnoteNorm(tnoteLandlineFilter);
+      var cableQ = tnoteNorm(tnoteCableFilter);
+      var cabinetQ = tnoteNorm(tnoteCabinetFilter);
+      var boxQ = tnoteNorm(tnoteBoxFilter);
+      return records.filter(function (rec) {
+        if (tnoteTechFilter && rec.tech !== tnoteTechFilter) return false;
+        if (tnoteActionFilter && rec.action !== tnoteActionFilter) return false;
+        if (tnoteReportTypeFilter && rec.reportType !== tnoteReportTypeFilter) return false;
+        if (tnoteConnectionTypeFilter && rec.connectionType !== tnoteConnectionTypeFilter) return false;
+        if (landlineQ && tnoteNorm(rec.landline).indexOf(landlineQ) === -1) return false;
+        if (cableQ && tnoteNorm(rec.cableNumber).indexOf(cableQ) === -1) return false;
+        if (cabinetQ && tnoteNorm(rec.cabinetNumber).indexOf(cabinetQ) === -1) return false;
+        if (boxQ && tnoteNorm(rec.boxNumber).indexOf(boxQ) === -1) return false;
+        if (!tnoteMatchesDateFilter(rec)) return false;
+        if (!tnoteMatchesGroupFilter(rec)) return false;
+        return tnoteRecordMatchesSearch(rec, q);
+      });
+    }
+
+    function populateTnoteFilterOptions(records) {
+      var techSel = document.getElementById('tnote-tech-filter');
+      var actionSel = document.getElementById('tnote-action-filter');
+      var reportSel = document.getElementById('tnote-report-type-filter');
+      var connSel = document.getElementById('tnote-connection-type-filter');
+      var prevTech = tnoteTechFilter;
+      var prevAction = tnoteActionFilter;
+      var prevReport = tnoteReportTypeFilter;
+      var prevConn = tnoteConnectionTypeFilter;
+      var techs = [];
+      var actions = [];
+      var reports = [];
+      var conns = [];
+      records.forEach(function (rec) {
+        if (rec.tech && techs.indexOf(rec.tech) === -1) techs.push(rec.tech);
+        if (rec.action && actions.indexOf(rec.action) === -1) actions.push(rec.action);
+        if (rec.reportType && reports.indexOf(rec.reportType) === -1) reports.push(rec.reportType);
+        if (rec.connectionType && conns.indexOf(rec.connectionType) === -1) conns.push(rec.connectionType);
+      });
+      techs.sort();
+      actions.sort();
+      reports.sort();
+      conns.sort();
+      techSel.innerHTML = '<option value="">كل الفنيين</option>' + techs.map(function (t) {
+        return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>';
+      }).join('');
+      actionSel.innerHTML = '<option value="">كل الإجراءات</option>' + actions.map(function (a) {
+        return '<option value="' + escapeHtml(a) + '">' + escapeHtml(a) + '</option>';
+      }).join('');
+      reportSel.innerHTML = '<option value="">كل أنواع البلاغ</option>' + reports.map(function (r) {
+        return '<option value="' + escapeHtml(r) + '">' + escapeHtml(r) + '</option>';
+      }).join('');
+      connSel.innerHTML = '<option value="">كل الأنواع (msan/ftth)</option>' + conns.map(function (c) {
+        return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
+      }).join('');
+      techSel.value = prevTech;
+      actionSel.value = prevAction;
+      reportSel.value = prevReport;
+      connSel.value = prevConn;
+    }
+
+    function isTnoteFilterActive() {
+      return !!(tnoteSearch || tnoteLandlineFilter || tnoteTechFilter || tnoteActionFilter ||
+        tnoteReportTypeFilter || tnoteConnectionTypeFilter || tnoteCableFilter || tnoteCabinetFilter ||
+        tnoteBoxFilter || isTnoteDateFilterActive() || tnoteGroupFilter);
+    }
+
+    function tnoteDateFilterLabel() {
+      readTnoteDateFiltersFromDom();
+      return sheetDateFilterLabel(tnoteDateMode, tnoteDateYear, tnoteDateMonth, tnoteDateDay);
+    }
+
+    function renderTnoteFilterSummary(total, filteredCount) {
+      var el = document.getElementById('tnote-filter-summary');
+      if (!el) return;
+      if (tnoteView === 'analysis') {
+        if (!isTnoteDateFilterActive()) {
+          el.classList.add('hidden');
+          return;
+        }
+        el.classList.remove('hidden');
+        el.innerHTML =
+          '<div><div>📅 <strong>فترة التحليل</strong></div>' +
+          '<div class="meta">' + escapeHtml(tnoteDateFilterLabel()) + '</div></div>' +
+          '<div style="text-align:left"><div class="count">' + filteredCount + '</div>' +
+          '<div class="meta">من إجمالي ' + total + ' سجل</div></div>';
+        return;
+      }
+      if (!isTnoteFilterActive()) {
+        el.classList.add('hidden');
+        return;
+      }
+      el.classList.remove('hidden');
+      var parts = [];
+      if (tnoteSearch) parts.push('بحث');
+      if (tnoteLandlineFilter) parts.push('تليفون');
+      if (tnoteTechFilter) parts.push('فني');
+      if (tnoteActionFilter) parts.push('إجراء');
+      if (tnoteReportTypeFilter) parts.push('نوع بلاغ');
+      if (tnoteConnectionTypeFilter) parts.push('نوع');
+      if (tnoteCableFilter) parts.push('كابل');
+      if (tnoteCabinetFilter) parts.push('كابينة');
+      if (tnoteBoxFilter) parts.push('بكس');
+      if (isTnoteDateFilterActive()) parts.push(tnoteDateFilterLabel());
+      if (tnoteGroupFilter) parts.push('تجميع');
+      el.innerHTML =
+        '<div><div>🔎 <strong>إجمالي السجلات المفلترة</strong></div>' +
+        '<div class="meta">فلاتر نشطة: ' + escapeHtml(parts.join(' · ')) + '</div></div>' +
+        '<div style="text-align:left"><div class="count">' + filteredCount + '</div>' +
+        '<div class="meta">من إجمالي ' + total + ' سجل</div></div>';
+    }
+
+    function renderTnoteStats(records, filtered) {
+      var inAnalysis = tnoteView === 'analysis';
+      var filterActive = inAnalysis ? isTnoteDateFilterActive() : isTnoteFilterActive();
+      var statsSource = filterActive ? filtered : records;
+      var repeatedLandlines = {};
+      statsSource.forEach(function (rec) {
+        if (!rec.landline) return;
+        repeatedLandlines[rec.landline] = (repeatedLandlines[rec.landline] || 0) + 1;
+      });
+      var multiLandline = Object.keys(repeatedLandlines).filter(function (k) {
+        return repeatedLandlines[k] > 1;
+      }).length;
+      var filteredLabel = inAnalysis
+        ? (filterActive ? 'سجلات الفترة' : 'المعروض في التحليل')
+        : (filterActive ? 'إجمالي المفلتر' : 'المعروض الآن');
+      var bar = document.getElementById('tnote-stats-bar');
+      bar.innerHTML =
+        '<div class="stat-box"><div class="num">' + records.length + '</div><div class="lbl">إجمالي السجلات</div></div>' +
+        '<div class="stat-box' + (filterActive ? ' stat-highlight' : '') + '"><div class="num">' + filtered.length +
+          '</div><div class="lbl">' + filteredLabel + '</div></div>' +
+        '<div class="stat-box"><div class="num">' + multiLandline + '</div><div class="lbl">' +
+          (filterActive ? 'أرقام متكررة (مفلتر)' : 'أرقام متكررة') + '</div></div>' +
+        '<div class="stat-box"><div class="num">' + Object.keys(repeatedLandlines).length + '</div><div class="lbl">' +
+          (filterActive ? 'أرقام مختلفة (مفلتر)' : 'أرقام مختلفة') + '</div></div>';
+    }
+
+    function renderTnoteTableBody(records) {
+      var tbody = document.getElementById('tnote-table-body');
+      var wrap = document.getElementById('tnote-table-wrap');
+      var empty = document.getElementById('tnote-empty');
+      if (!records.length) {
+        tbody.innerHTML = '';
+        wrap.classList.add('hidden');
+        empty.classList.remove('hidden');
+        empty.textContent = isTnoteFilterActive()
+          ? 'لا توجد سجلات مطابقة للفلتر (0 من ' + tnoteRecordsCache.length + ')'
+          : 'لا توجد سجلات إبلاغ فنيين';
+        return;
+      }
+      empty.classList.add('hidden');
+      wrap.classList.remove('hidden');
+      tbody.innerHTML = records.map(function (rec) {
+        return '<tr>' +
+          '<td>' + escapeHtml(rec.dateTime) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.landline) + '</td>' +
+          '<td>' + escapeHtml(rec.tech) + '</td>' +
+          '<td>' + escapeHtml(rec.reportType) + '</td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.notes) + '">' + escapeHtml(rec.notes) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.connectionType) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.cableNumber) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.cabinetNumber) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.boxNumber) + '</td>' +
+          '<td>' + renderPreviewLink(rec.locationUrl, '📍 موقع') + '</td>' +
+          '<td>' + renderPreviewLink(rec.photoUrl, '🖼️ صورة') + '</td>' +
+          '<td><span class="preview-action-badge">' + escapeHtml(rec.action || '—') + '</span></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function buildTnoteAnalysisGroups(records, group) {
+      var map = {};
+      records.forEach(function (rec) {
+        var key = tnoteGroupStorageKey(rec, group);
+        var label = tnoteGroupKey(rec, group);
+        if (!map[key]) {
+          map[key] = { key: key, label: label, count: 0, actions: {}, reportTypes: {} };
+        }
+        map[key].count++;
+        if (rec.action) {
+          map[key].actions[rec.action] = (map[key].actions[rec.action] || 0) + 1;
+        }
+        if (rec.reportType) {
+          map[key].reportTypes[rec.reportType] = (map[key].reportTypes[rec.reportType] || 0) + 1;
+        }
+      });
+      return Object.keys(map).map(function (k) { return map[k]; })
+        .sort(function (a, b) { return b.count - a.count || a.label.localeCompare(b.label, 'ar'); });
+    }
+
+    function tnoteAnalysisGroupLabel(group) {
+      if (group === 'landline') return 'التليفون / عدد الخطوط';
+      if (group === 'tech') return 'الفني';
+      if (group === 'reportType') return 'نوع البلاغ';
+      if (group === 'connectionType') return 'النوع (msan/ftth)';
+      if (group === 'cableCabinet') return 'الكابل + الكابينة';
+      if (group === 'box') return 'البكس + الكابل + الكابينة';
+      if (group === 'action') return 'الإجراء المتخذ';
+      return '';
+    }
+
+    function buildTnoteRecordsTableHtml(records) {
+      var head = TNOTE_TABLE_COLUMNS.map(function (col) {
+        return '<th>' + previewExcelCell(col.label) + '</th>';
+      }).join('');
+      var body = records.map(function (rec) {
+        return '<tr>' + TNOTE_TABLE_COLUMNS.map(function (col) {
+          return '<td>' + previewExcelCell(rec[col.key] || '') + '</td>';
+        }).join('') + '</tr>';
+      }).join('');
+      return '<table border="1"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+    }
+
+    function buildTnoteAnalysisTableHtml(records) {
+      var groups = buildTnoteAnalysisGroups(records, tnoteAnalysisGroup);
+      var groupLabel = tnoteAnalysisGroupLabel(tnoteAnalysisGroup);
+      var period = isTnoteDateFilterActive() ? tnoteDateFilterLabel() : 'كل التواريخ';
+      var head = '<th>نوع التجميع</th><th>القيمة</th><th>العدد</th><th>أكثر إجراء</th><th>أكثر نوع بلاغ</th><th>الفترة</th>';
+      var body = groups.map(function (g) {
+        var topAction = Object.keys(g.actions).sort(function (a, b) {
+          return g.actions[b] - g.actions[a];
+        })[0] || '';
+        var topReport = Object.keys(g.reportTypes).sort(function (a, b) {
+          return g.reportTypes[b] - g.reportTypes[a];
+        })[0] || '';
+        return '<tr>' +
+          '<td>' + previewExcelCell(groupLabel) + '</td>' +
+          '<td>' + previewExcelCell(g.label) + '</td>' +
+          '<td>' + previewExcelCell(g.count) + '</td>' +
+          '<td>' + previewExcelCell(topAction) + '</td>' +
+          '<td>' + previewExcelCell(topReport) + '</td>' +
+          '<td>' + previewExcelCell(period) + '</td>' +
+        '</tr>';
+      }).join('');
+      return '<table border="1"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+    }
+
+    function exportTnoteToExcel() {
+      var scope = document.getElementById('tnote-export-scope').value;
+      var stamp = previewExportStamp();
+      if (scope === 'analysis') {
+        var analysisRecords = filterTnoteByDate(tnoteRecordsCache);
+        var groups = buildTnoteAnalysisGroups(analysisRecords, tnoteAnalysisGroup);
+        if (!groups.length) {
+          showAlert('tnote-alert', 'لا توجد بيانات تحليل للتصدير', 'error');
+          return;
+        }
+        downloadPreviewExcel(
+          'ابلاغ_الفنيين_تحليل_' + tnoteAnalysisGroup + '_' + stamp + '.xls',
+          buildTnoteAnalysisTableHtml(analysisRecords)
+        );
+        hideAlert('tnote-alert');
+        return;
+      }
+      var records = scope === 'all' ? tnoteRecordsCache.slice() : filterTnoteRecords(tnoteRecordsCache);
+      if (!records.length) {
+        showAlert('tnote-alert', 'لا توجد بيانات للتصدير', 'error');
+        return;
+      }
+      var prefix = scope === 'all' ? 'ابلاغ_الفنيين_الكل' : 'ابلاغ_الفنيين_مفلتر';
+      downloadPreviewExcel(prefix + '_' + stamp + '.xls', buildTnoteRecordsTableHtml(records));
+      hideAlert('tnote-alert');
+    }
+
+    function renderTnoteAnalysis(records) {
+      var list = document.getElementById('tnote-analysis-list');
+      var empty = document.getElementById('tnote-analysis-empty');
+      var summary = document.getElementById('tnote-analysis-summary');
+      var groups = buildTnoteAnalysisGroups(records, tnoteAnalysisGroup);
+      var periodHint = ' — الفترة: ' + (isTnoteDateFilterActive() ? tnoteDateFilterLabel() : 'كل التواريخ');
+      summary.textContent = 'تجميع الإبلاغات حسب ' + tnoteAnalysisGroupLabel(tnoteAnalysisGroup) +
+        periodHint + ' — اضغط على أي صف لعرض سجلاته في الجدول';
+      if (!groups.length) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      list.innerHTML = groups.map(function (g) {
+        var topAction = Object.keys(g.actions).sort(function (a, b) {
+          return g.actions[b] - g.actions[a];
+        })[0] || '';
+        var hint = topAction ? 'أكثر إجراء: ' + topAction : '';
+        if (tnoteAnalysisGroup === 'landline' && g.count > 1) {
+          hint = (hint ? hint + ' · ' : '') + 'تكرار ' + g.count + ' مرة';
+        }
+        return '<div class="analysis-row" data-group-key="' + escapeHtml(g.key) + '" data-group-label="' +
+          escapeHtml(g.label) + '">' +
+          '<div><div class="label">' + escapeHtml(g.label) + '</div>' +
+          (hint ? '<div class="hint">' + escapeHtml(hint) + '</div>' : '') +
+          '</div>' +
+          '<div class="count">' + g.count + '</div>' +
+        '</div>';
+      }).join('');
+      list.querySelectorAll('.analysis-row').forEach(function (row) {
+        row.addEventListener('click', function () {
+          tnoteGroupFilter = {
+            group: tnoteAnalysisGroup,
+            key: row.dataset.groupKey,
+            label: row.dataset.groupLabel
+          };
+          updateTnoteGroupFilterBar();
+          switchTnoteView('table');
+          renderTnoteView();
+        });
+      });
+    }
+
+    function updateTnoteGroupFilterBar() {
+      var bar = document.getElementById('tnote-group-filter');
+      var text = document.getElementById('tnote-group-filter-text');
+      if (!tnoteGroupFilter) {
+        bar.classList.add('hidden');
+        return;
+      }
+      bar.classList.remove('hidden');
+      text.textContent = 'فلتر نشط: ' + tnoteAnalysisGroupLabel(tnoteGroupFilter.group) +
+        ' = ' + tnoteGroupFilter.label;
+    }
+
+    function clearTnoteGroupFilter() {
+      tnoteGroupFilter = null;
+      updateTnoteGroupFilterBar();
+      renderTnoteView();
+    }
+
+    function updateTnoteDateFields() {
+      var mode = document.getElementById('tnote-date-mode').value;
+      tnoteDateMode = mode;
+      document.querySelectorAll('.tnote-date-field').forEach(function (el) { el.classList.add('hidden'); });
+      if (mode === 'year') {
+        document.getElementById('tnote-date-year').classList.remove('hidden');
+      } else if (mode === 'month') {
+        document.getElementById('tnote-date-year').classList.remove('hidden');
+        document.getElementById('tnote-date-month').classList.remove('hidden');
+      } else if (mode === 'day') {
+        document.getElementById('tnote-date-day').classList.remove('hidden');
+      }
+      readTnoteDateFiltersFromDom();
+      renderTnoteView();
+    }
+
+    function switchTnoteView(view) {
+      tnoteView = view;
+      document.querySelectorAll('[data-tnote-view]').forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.tnoteView === view);
+      });
+      var exportScope = document.getElementById('tnote-export-scope');
+      if (exportScope && view === 'analysis') {
+        exportScope.value = 'analysis';
+      } else if (exportScope && exportScope.value === 'analysis') {
+        exportScope.value = 'filtered';
+      }
+      document.getElementById('tnote-analysis-panel').classList.toggle('hidden', view !== 'analysis');
+      document.getElementById('tnote-table-wrap').classList.toggle('hidden', view === 'analysis');
+      document.getElementById('tnote-empty').classList.toggle('hidden', view === 'analysis');
+      renderTnoteView();
+    }
+
+    function renderTnoteView() {
+      document.getElementById('tnote-loader').classList.add('hidden');
+      readTnoteDateFiltersFromDom();
+      var filtered = filterTnoteRecords(tnoteRecordsCache);
+      var analysisRecords = filterTnoteByDate(tnoteRecordsCache);
+      if (tnoteView === 'analysis') {
+        renderTnoteStats(tnoteRecordsCache, analysisRecords);
+        renderTnoteFilterSummary(tnoteRecordsCache.length, analysisRecords.length);
+        renderTnoteAnalysis(analysisRecords);
+      } else {
+        renderTnoteStats(tnoteRecordsCache, filtered);
+        renderTnoteFilterSummary(tnoteRecordsCache.length, filtered.length);
+        renderTnoteTableBody(filtered);
+      }
+    }
+
+    function loadTechnicianNotes() {
+      document.getElementById('tnote-loader').classList.remove('hidden');
+      hideAlert('tnote-alert');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          document.getElementById('tnote-loader').classList.add('hidden');
+          tnoteRecordsCache = data.records || [];
+          populateTnoteFilterOptions(tnoteRecordsCache);
+          renderTnoteView();
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('tnote-loader').classList.add('hidden');
+          showAlert('tnote-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralGetTechnicianNotes({ pin: currentPin });
+    }
+
+    function greprGroupKey(rec, group) {
+      if (group === 'welder') return rec.welder || '—';
+      if (group === 'cableCabinet') {
+        return (rec.cableNumber || '—') + ' / ' + (rec.cabinetNumber || '—');
+      }
+      if (group === 'box') {
+        return 'كابل ' + (rec.cableNumber || '—') + ' / كابينة ' + (rec.cabinetNumber || '—') +
+          ' / بكس ' + (rec.boxNumber || '—');
+      }
+      return '';
+    }
+
+    function greprGroupStorageKey(rec, group) {
+      if (group === 'welder') return String(rec.welder || '');
+      if (group === 'cableCabinet') {
+        return String(rec.cableNumber || '') + '|' + String(rec.cabinetNumber || '');
+      }
+      if (group === 'box') {
+        return String(rec.cableNumber || '') + '|' + String(rec.cabinetNumber || '') + '|' +
+          String(rec.boxNumber || '');
+      }
+      return '';
+    }
+
+    function greprMatchesGroupFilter(rec) {
+      if (!greprGroupFilter) return true;
+      return greprGroupStorageKey(rec, greprGroupFilter.group) === greprGroupFilter.key;
+    }
+
+    function greprRecordMatchesSearch(rec, q) {
+      if (!q) return true;
+      var hay = [
+        rec.dateTime, rec.ticketNumber, rec.originalTech, rec.welder, rec.companion,
+        rec.workCategory, rec.workType, rec.materials, rec.repairStatus, rec.inspectionNotes,
+        rec.otherNotes, rec.cableNumber, rec.cabinetNumber, rec.boxNumber
+      ].join(' ').toLowerCase();
+      return hay.indexOf(q) !== -1;
+    }
+
+    function readGreprDateFiltersFromDom() {
+      var modeEl = document.getElementById('grepr-date-mode');
+      var yearEl = document.getElementById('grepr-date-year');
+      var monthEl = document.getElementById('grepr-date-month');
+      var dayEl = document.getElementById('grepr-date-day');
+      if (modeEl) greprDateMode = modeEl.value;
+      if (yearEl) greprDateYear = yearEl.value.trim();
+      if (monthEl) greprDateMonth = monthEl.value.trim();
+      if (dayEl) greprDateDay = dayEl.value;
+    }
+
+    function greprMatchesDateFilter(rec) {
+      return recordMatchesSheetDateFilter(rec, greprDateMode, greprDateYear, greprDateMonth, greprDateDay);
+    }
+
+    function isGreprDateFilterActive() {
+      readGreprDateFiltersFromDom();
+      return isSheetDateFilterReady(greprDateMode, greprDateYear, greprDateMonth, greprDateDay);
+    }
+
+    function filterGreprByDate(records) {
+      readGreprDateFiltersFromDom();
+      return records.filter(function (rec) {
+        return recordMatchesSheetDateFilter(rec, greprDateMode, greprDateYear, greprDateMonth, greprDateDay);
+      });
+    }
+
+    function filterGreprRecords(records) {
+      readGreprDateFiltersFromDom();
+      var q = greprSearch.toLowerCase().trim();
+      var ticketQ = tnoteNorm(greprTicketFilter);
+      var cableQ = tnoteNorm(greprCableFilter);
+      var cabinetQ = tnoteNorm(greprCabinetFilter);
+      var boxQ = tnoteNorm(greprBoxFilter);
+      return records.filter(function (rec) {
+        if (greprWelderFilter && rec.welder !== greprWelderFilter) return false;
+        if (ticketQ && tnoteNorm(rec.ticketNumber).indexOf(ticketQ) === -1) return false;
+        if (cableQ && tnoteNorm(rec.cableNumber).indexOf(cableQ) === -1) return false;
+        if (cabinetQ && tnoteNorm(rec.cabinetNumber).indexOf(cabinetQ) === -1) return false;
+        if (boxQ && tnoteNorm(rec.boxNumber).indexOf(boxQ) === -1) return false;
+        if (!greprMatchesDateFilter(rec)) return false;
+        if (!greprMatchesGroupFilter(rec)) return false;
+        return greprRecordMatchesSearch(rec, q);
+      });
+    }
+
+    function populateGreprFilterOptions(records) {
+      var welderSel = document.getElementById('grepr-welder-filter');
+      var prevWelder = greprWelderFilter;
+      var welders = [];
+      records.forEach(function (rec) {
+        if (rec.welder && welders.indexOf(rec.welder) === -1) welders.push(rec.welder);
+      });
+      welders.sort();
+      welderSel.innerHTML = '<option value="">كل اللحامين</option>' + welders.map(function (w) {
+        return '<option value="' + escapeHtml(w) + '">' + escapeHtml(w) + '</option>';
+      }).join('');
+      welderSel.value = prevWelder;
+    }
+
+    function isGreprFilterActive() {
+      return !!(greprSearch || greprWelderFilter || greprTicketFilter || greprCableFilter ||
+        greprCabinetFilter || greprBoxFilter || isGreprDateFilterActive() || greprGroupFilter);
+    }
+
+    function greprDateFilterLabel() {
+      readGreprDateFiltersFromDom();
+      return sheetDateFilterLabel(greprDateMode, greprDateYear, greprDateMonth, greprDateDay);
+    }
+
+    function renderGreprFilterSummary(total, filteredCount) {
+      var el = document.getElementById('grepr-filter-summary');
+      if (!el) return;
+      if (greprView === 'analysis') {
+        if (!isGreprDateFilterActive()) {
+          el.classList.add('hidden');
+          return;
+        }
+        el.classList.remove('hidden');
+        el.innerHTML =
+          '<div><div>📅 <strong>فترة التحليل</strong></div>' +
+          '<div class="meta">' + escapeHtml(greprDateFilterLabel()) + '</div></div>' +
+          '<div style="text-align:left"><div class="count">' + filteredCount + '</div>' +
+          '<div class="meta">من إجمالي ' + total + ' سجل</div></div>';
+        return;
+      }
+      if (!isGreprFilterActive()) {
+        el.classList.add('hidden');
+        return;
+      }
+      el.classList.remove('hidden');
+      var parts = [];
+      if (greprSearch) parts.push('بحث');
+      if (greprWelderFilter) parts.push('لحام');
+      if (greprTicketFilter) parts.push('عطل');
+      if (greprCableFilter) parts.push('كابل');
+      if (greprCabinetFilter) parts.push('كابينة');
+      if (greprBoxFilter) parts.push('بكس');
+      if (isGreprDateFilterActive()) parts.push(greprDateFilterLabel());
+      if (greprGroupFilter) parts.push('تجميع');
+      el.innerHTML =
+        '<div><div>🔎 <strong>إجمالي السجلات المفلترة</strong></div>' +
+        '<div class="meta">فلاتر نشطة: ' + escapeHtml(parts.join(' · ')) + '</div></div>' +
+        '<div style="text-align:left"><div class="count">' + filteredCount + '</div>' +
+        '<div class="meta">من إجمالي ' + total + ' سجل</div></div>';
+    }
+
+    function renderGreprStats(records, filtered) {
+      var inAnalysis = greprView === 'analysis';
+      var filterActive = inAnalysis ? isGreprDateFilterActive() : isGreprFilterActive();
+      var statsSource = filterActive ? filtered : records;
+      var repeatedTickets = {};
+      var statusCounts = {};
+      statsSource.forEach(function (rec) {
+        if (rec.ticketNumber) {
+          repeatedTickets[rec.ticketNumber] = (repeatedTickets[rec.ticketNumber] || 0) + 1;
+        }
+        if (rec.repairStatus) {
+          statusCounts[rec.repairStatus] = (statusCounts[rec.repairStatus] || 0) + 1;
+        }
+      });
+      var multiTicket = Object.keys(repeatedTickets).filter(function (k) {
+        return repeatedTickets[k] > 1;
+      }).length;
+      var filteredLabel = inAnalysis
+        ? (filterActive ? 'سجلات الفترة' : 'المعروض في التحليل')
+        : (filterActive ? 'إجمالي المفلتر' : 'المعروض الآن');
+      var bar = document.getElementById('grepr-stats-bar');
+      bar.innerHTML =
+        '<div class="stat-box"><div class="num">' + records.length + '</div><div class="lbl">إجمالي السجلات</div></div>' +
+        '<div class="stat-box' + (filterActive ? ' stat-highlight' : '') + '"><div class="num">' + filtered.length +
+          '</div><div class="lbl">' + filteredLabel + '</div></div>' +
+        '<div class="stat-box"><div class="num">' + multiTicket + '</div><div class="lbl">' +
+          (filterActive ? 'تذاكر متكررة (مفلتر)' : 'تذاكر متكررة') + '</div></div>' +
+        '<div class="stat-box"><div class="num">' + Object.keys(statusCounts).length + '</div><div class="lbl">' +
+          (filterActive ? 'حالات إصلاح (مفلتر)' : 'حالات إصلاح مختلفة') + '</div></div>';
+    }
+
+    function renderGreprTableBody(records) {
+      var tbody = document.getElementById('grepr-table-body');
+      var wrap = document.getElementById('grepr-table-wrap');
+      var empty = document.getElementById('grepr-empty');
+      if (!records.length) {
+        tbody.innerHTML = '';
+        wrap.classList.add('hidden');
+        empty.classList.remove('hidden');
+        empty.textContent = isGreprFilterActive()
+          ? 'لا توجد سجلات مطابقة للفلتر (0 من ' + greprRecordsCache.length + ')'
+          : greprSourceEmptyLabel();
+        return;
+      }
+      empty.classList.add('hidden');
+      wrap.classList.remove('hidden');
+      tbody.innerHTML = records.map(function (rec) {
+        return '<tr>' +
+          '<td>' + escapeHtml(rec.dateTime) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.ticketNumber) + '</td>' +
+          '<td>' + escapeHtml(rec.originalTech) + '</td>' +
+          '<td>' + escapeHtml(rec.welder) + '</td>' +
+          '<td>' + escapeHtml(rec.companion) + '</td>' +
+          '<td>' + escapeHtml(rec.workCategory) + '</td>' +
+          '<td>' + escapeHtml(rec.workType) + '</td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.materials) + '">' + escapeHtml(rec.materials) + '</td>' +
+          '<td><span class="preview-action-badge">' + escapeHtml(rec.repairStatus || '—') + '</span></td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.inspectionNotes) + '">' + escapeHtml(rec.inspectionNotes) + '</td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.otherNotes) + '">' + escapeHtml(rec.otherNotes) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.cableNumber) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.cabinetNumber) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.boxNumber) + '</td>' +
+          '<td>' + renderPreviewLink(rec.locationUrl, '📍 موقع') + '</td>' +
+          '<td>' + renderPreviewLink(rec.photoUrl, '🖼️ صورة') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function buildGreprAnalysisGroups(records, group) {
+      var map = {};
+      records.forEach(function (rec) {
+        var key = greprGroupStorageKey(rec, group);
+        var label = greprGroupKey(rec, group);
+        if (!map[key]) {
+          map[key] = { key: key, label: label, count: 0, statuses: {}, workTypes: {} };
+        }
+        map[key].count++;
+        if (rec.repairStatus) {
+          map[key].statuses[rec.repairStatus] = (map[key].statuses[rec.repairStatus] || 0) + 1;
+        }
+        if (rec.workType) {
+          map[key].workTypes[rec.workType] = (map[key].workTypes[rec.workType] || 0) + 1;
+        }
+      });
+      return Object.keys(map).map(function (k) { return map[k]; })
+        .sort(function (a, b) { return b.count - a.count || a.label.localeCompare(b.label, 'ar'); });
+    }
+
+    function greprAnalysisGroupLabel(group) {
+      if (group === 'welder') return 'اللحام القائم بالفحص';
+      if (group === 'cableCabinet') return 'الكابل + الكابينة';
+      if (group === 'box') return 'الكابل + الكابينة + البكس';
+      return '';
+    }
+
+    function greprSourceEmptyLabel() {
+      return greprDataSource === 'inspection'
+        ? 'لا توجد سجلات أرضية لم يتم إصلاحها'
+        : 'لا توجد سجلات إصلاحات أرضية';
+    }
+
+    function greprExportPrefix() {
+      return greprDataSource === 'inspection' ? 'ارضية_لم_يتم_اصلاحها' : 'الاصلاحات_الارضية';
+    }
+
+    function updateGreprSourceButtons() {
+      document.querySelectorAll('[data-grepr-source]').forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.greprSource === greprDataSource);
+      });
+    }
+
+    function switchGreprSource(source) {
+      if (greprDataSource === source) return;
+      greprDataSource = source;
+      greprGroupFilter = null;
+      updateGreprGroupFilterBar();
+      updateGreprSourceButtons();
+      loadGroundRepairs();
+    }
+
+    function buildGreprRecordsTableHtml(records) {
+      var head = GREPR_TABLE_COLUMNS.map(function (col) {
+        return '<th>' + previewExcelCell(col.label) + '</th>';
+      }).join('');
+      var body = records.map(function (rec) {
+        return '<tr>' + GREPR_TABLE_COLUMNS.map(function (col) {
+          return '<td>' + previewExcelCell(rec[col.key] || '') + '</td>';
+        }).join('') + '</tr>';
+      }).join('');
+      return '<table border="1"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+    }
+
+    function buildGreprAnalysisTableHtml(records) {
+      var groups = buildGreprAnalysisGroups(records, greprAnalysisGroup);
+      var groupLabel = greprAnalysisGroupLabel(greprAnalysisGroup);
+      var period = isGreprDateFilterActive() ? greprDateFilterLabel() : 'كل التواريخ';
+      var head = '<th>نوع التجميع</th><th>القيمة</th><th>العدد</th><th>أكثر حالة إصلاح</th><th>أكثر نوع أعمال</th><th>الفترة</th>';
+      var body = groups.map(function (g) {
+        var topStatus = Object.keys(g.statuses).sort(function (a, b) {
+          return g.statuses[b] - g.statuses[a];
+        })[0] || '';
+        var topWork = Object.keys(g.workTypes).sort(function (a, b) {
+          return g.workTypes[b] - g.workTypes[a];
+        })[0] || '';
+        return '<tr>' +
+          '<td>' + previewExcelCell(groupLabel) + '</td>' +
+          '<td>' + previewExcelCell(g.label) + '</td>' +
+          '<td>' + previewExcelCell(g.count) + '</td>' +
+          '<td>' + previewExcelCell(topStatus) + '</td>' +
+          '<td>' + previewExcelCell(topWork) + '</td>' +
+          '<td>' + previewExcelCell(period) + '</td>' +
+        '</tr>';
+      }).join('');
+      return '<table border="1"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+    }
+
+    function exportGreprToExcel() {
+      var scope = document.getElementById('grepr-export-scope').value;
+      var stamp = previewExportStamp();
+      if (scope === 'analysis') {
+        var analysisRecords = filterGreprByDate(greprRecordsCache);
+        var groups = buildGreprAnalysisGroups(analysisRecords, greprAnalysisGroup);
+        if (!groups.length) {
+          showAlert('grepr-alert', 'لا توجد بيانات تحليل للتصدير', 'error');
+          return;
+        }
+        downloadPreviewExcel(
+          greprExportPrefix() + '_تحليل_' + greprAnalysisGroup + '_' + stamp + '.xls',
+          buildGreprAnalysisTableHtml(analysisRecords)
+        );
+        hideAlert('grepr-alert');
+        return;
+      }
+      var records = scope === 'all' ? greprRecordsCache.slice() : filterGreprRecords(greprRecordsCache);
+      if (!records.length) {
+        showAlert('grepr-alert', 'لا توجد بيانات للتصدير', 'error');
+        return;
+      }
+      var prefix = scope === 'all' ? greprExportPrefix() + '_الكل' : greprExportPrefix() + '_مفلتر';
+      downloadPreviewExcel(prefix + '_' + stamp + '.xls', buildGreprRecordsTableHtml(records));
+      hideAlert('grepr-alert');
+    }
+
+    function renderGreprAnalysis(records) {
+      var list = document.getElementById('grepr-analysis-list');
+      var empty = document.getElementById('grepr-analysis-empty');
+      var summary = document.getElementById('grepr-analysis-summary');
+      var groups = buildGreprAnalysisGroups(records, greprAnalysisGroup);
+      var periodHint = ' — الفترة: ' + (isGreprDateFilterActive() ? greprDateFilterLabel() : 'كل التواريخ');
+      summary.textContent = 'تجميع الإصلاحات حسب ' + greprAnalysisGroupLabel(greprAnalysisGroup) +
+        periodHint + ' — اضغط على أي صف لعرض سجلاته في الجدول';
+      if (!groups.length) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      list.innerHTML = groups.map(function (g) {
+        var topStatus = Object.keys(g.statuses).sort(function (a, b) {
+          return g.statuses[b] - g.statuses[a];
+        })[0] || '';
+        var hint = topStatus ? 'أكثر حالة: ' + topStatus : '';
+        if (g.count > 1) {
+          hint = (hint ? hint + ' · ' : '') + g.count + ' إصلاح';
+        }
+        return '<div class="analysis-row" data-group-key="' + escapeHtml(g.key) + '" data-group-label="' +
+          escapeHtml(g.label) + '">' +
+          '<div><div class="label">' + escapeHtml(g.label) + '</div>' +
+          (hint ? '<div class="hint">' + escapeHtml(hint) + '</div>' : '') +
+          '</div>' +
+          '<div class="count">' + g.count + '</div>' +
+        '</div>';
+      }).join('');
+      list.querySelectorAll('.analysis-row').forEach(function (row) {
+        row.addEventListener('click', function () {
+          greprGroupFilter = {
+            group: greprAnalysisGroup,
+            key: row.dataset.groupKey,
+            label: row.dataset.groupLabel
+          };
+          updateGreprGroupFilterBar();
+          switchGreprView('table');
+          renderGreprView();
+        });
+      });
+    }
+
+    function updateGreprGroupFilterBar() {
+      var bar = document.getElementById('grepr-group-filter');
+      var text = document.getElementById('grepr-group-filter-text');
+      if (!greprGroupFilter) {
+        bar.classList.add('hidden');
+        return;
+      }
+      bar.classList.remove('hidden');
+      text.textContent = 'فلتر نشط: ' + greprAnalysisGroupLabel(greprGroupFilter.group) +
+        ' = ' + greprGroupFilter.label;
+    }
+
+    function clearGreprGroupFilter() {
+      greprGroupFilter = null;
+      updateGreprGroupFilterBar();
+      renderGreprView();
+    }
+
+    function updateGreprDateFields() {
+      var mode = document.getElementById('grepr-date-mode').value;
+      greprDateMode = mode;
+      document.querySelectorAll('.grepr-date-field').forEach(function (el) { el.classList.add('hidden'); });
+      if (mode === 'year') {
+        document.getElementById('grepr-date-year').classList.remove('hidden');
+      } else if (mode === 'month') {
+        document.getElementById('grepr-date-year').classList.remove('hidden');
+        document.getElementById('grepr-date-month').classList.remove('hidden');
+      } else if (mode === 'day') {
+        document.getElementById('grepr-date-day').classList.remove('hidden');
+      }
+      readGreprDateFiltersFromDom();
+      renderGreprView();
+    }
+
+    function switchGreprView(view) {
+      greprView = view;
+      document.querySelectorAll('[data-grepr-view]').forEach(function (btn) {
+        btn.classList.toggle('active', btn.dataset.greprView === view);
+      });
+      var exportScope = document.getElementById('grepr-export-scope');
+      if (exportScope && view === 'analysis') {
+        exportScope.value = 'analysis';
+      } else if (exportScope && exportScope.value === 'analysis') {
+        exportScope.value = 'filtered';
+      }
+      document.getElementById('grepr-analysis-panel').classList.toggle('hidden', view !== 'analysis');
+      document.getElementById('grepr-table-wrap').classList.toggle('hidden', view === 'analysis');
+      document.getElementById('grepr-empty').classList.toggle('hidden', view === 'analysis');
+      renderGreprView();
+    }
+
+    function renderGreprView() {
+      document.getElementById('grepr-loader').classList.add('hidden');
+      readGreprDateFiltersFromDom();
+      var filtered = filterGreprRecords(greprRecordsCache);
+      var analysisRecords = filterGreprByDate(greprRecordsCache);
+      if (greprView === 'analysis') {
+        renderGreprStats(greprRecordsCache, analysisRecords);
+        renderGreprFilterSummary(greprRecordsCache.length, analysisRecords.length);
+        renderGreprAnalysis(analysisRecords);
+      } else {
+        renderGreprStats(greprRecordsCache, filtered);
+        renderGreprFilterSummary(greprRecordsCache.length, filtered.length);
+        renderGreprTableBody(filtered);
+      }
+    }
+
+    function loadGroundRepairs() {
+      document.getElementById('grepr-loader').classList.remove('hidden');
+      hideAlert('grepr-alert');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          document.getElementById('grepr-loader').classList.add('hidden');
+          greprRecordsCache = data.records || [];
+          populateGreprFilterOptions(greprRecordsCache);
+          renderGreprView();
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('grepr-loader').classList.add('hidden');
+          showAlert('grepr-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralGetGroundRepairs({ pin: currentPin, source: greprDataSource });
+    }
+
+    function getTechChatContext() {
+      return techChatContext === 'inline' ? {
+        threadId: 'inspection-inline-thread',
+        photoInputId: 'inspection-inline-photo-input',
+        previewId: 'inspection-inline-attach-preview',
+        messageInputId: 'inspection-inline-message-input',
+        sendBtnId: 'inspection-inline-send-btn',
+        photoBtnId: 'inspection-inline-photo-btn',
+        getPendingPhoto: function () { return pendingInspectionInlinePhoto; },
+        setPendingPhoto: function (v) { pendingInspectionInlinePhoto = v; },
+        alertId: 'inspection-chat-alert'
+      } : {
+        threadId: 'tech-chat-thread',
+        photoInputId: 'tech-photo-input',
+        previewId: 'tech-attach-preview',
+        messageInputId: 'tech-message-input',
+        sendBtnId: 'tech-send-btn',
+        photoBtnId: 'tech-photo-btn',
+        getPendingPhoto: function () { return pendingTechPhoto; },
+        setPendingPhoto: function (v) { pendingTechPhoto = v; },
+        alertId: 'detail-alert'
+      };
+    }
 
     function getPin() {
       return sessionStorage.getItem(PIN_KEY) || '';
@@ -944,6 +3272,326 @@
     function clearPin() {
       sessionStorage.removeItem(PIN_KEY);
       currentPin = '';
+    }
+
+    function setDetailMode(mode) {
+      currentInspectionMode = mode === 'inspection';
+      var section = document.getElementById('detail-section');
+      section.classList.toggle('detail-mode-inspection', currentInspectionMode);
+      document.getElementById('detail-title').textContent =
+        currentInspectionMode ? '🔍 مهمة فحص فني' : 'تفاصيل المحادثة';
+      document.getElementById('inspection-close-box').classList.toggle('hidden', !currentInspectionMode);
+    }
+
+    function populateInspectionTechSelect() {
+      var sel = document.getElementById('inspection-tech');
+      if (!sel) return;
+      var opts = '<option value="">— اختر الفني —</option>';
+      technicians.forEach(function (t) {
+        if (t.status === 'غير نشط') return;
+        opts += '<option value="' + t.id + '">' + escapeHtml(t.name) + ' (' + escapeHtml(t.status) + ')</option>';
+      });
+      sel.innerHTML = opts;
+    }
+
+    function filterInspectionTasks(tasks) {
+      if (!inspectionSearch) return tasks;
+      var q = inspectionSearch.toLowerCase().replace(/\s/g, '');
+      return tasks.filter(function (t) {
+        var landline = String(t.landline || '').toLowerCase().replace(/\s/g, '');
+        var tech = String(techNameById(t.assignedTech) || t.assignedTech || '').toLowerCase();
+        var note = String(t.note || '').toLowerCase();
+        return landline.indexOf(q) !== -1 || tech.indexOf(q) !== -1 || note.indexOf(q) !== -1;
+      });
+    }
+
+    function renderInspectionList(tasks) {
+      var list = document.getElementById('inspection-list');
+      var empty = document.getElementById('inspection-empty');
+      if (!tasks.length) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      list.innerHTML = tasks.map(function (t) {
+        var selected = selectedInspectionRow === t.row ? ' selected' : '';
+        return '<div class="ticket-card inspection-card ' + statusClass(t.status) + selected + '" data-row="' + t.row + '">' +
+          '<div class="ticket-top">' +
+            '<div class="ticket-phone">☎ ' + escapeHtml(t.landline) + ' <span class="inspection-badge">فحص فني</span></div>' +
+            statusBadge(t.status) +
+          '</div>' +
+          '<div class="ticket-meta">' +
+            '<span>🛠️ ' + escapeHtml(techNameById(t.assignedTech) || t.assignedTech) + '</span>' +
+            '<span>🕐 ' + escapeHtml(t.lastUpdate || t.date) + '</span>' +
+          '</div>' +
+          (t.note ? '<div class="inspection-note-preview">' + escapeHtml(t.note) + '</div>' : '') +
+        '</div>';
+      }).join('');
+      list.querySelectorAll('.inspection-card').forEach(function (card) {
+        card.addEventListener('click', function () {
+          var row = Number(card.dataset.row);
+          if (selectedInspectionRow === row) {
+            hideInspectionChatPanel();
+          } else {
+            openInspectionInline(row);
+          }
+        });
+      });
+    }
+
+    function loadInspections() {
+      document.getElementById('inspection-loader').classList.remove('hidden');
+      hideAlert('inspection-list-alert');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          document.getElementById('inspection-loader').classList.add('hidden');
+          document.getElementById('inspection-active-count').textContent = data.activeCount || 0;
+          document.getElementById('inspection-closed-count').textContent = data.closedCount || 0;
+          inspectionTasksCache = data.tasks || [];
+          renderInspectionList(filterInspectionTasks(inspectionTasksCache));
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('inspection-loader').classList.add('hidden');
+          showAlert('inspection-list-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralListTechInspections({ pin: currentPin, filter: inspectionFilter });
+    }
+
+    function submitInspection() {
+      var landline = document.getElementById('inspection-landline').value.trim();
+      var techId = document.getElementById('inspection-tech').value;
+      var note = document.getElementById('inspection-note').value.trim();
+      if (!landline) { showAlert('inspection-create-alert', 'أدخل رقم الخط الأرضي', 'error'); return; }
+      if (!techId) { showAlert('inspection-create-alert', 'اختر الفني', 'error'); return; }
+      if (!note && !pendingInspectionCreatePhoto) {
+        showAlert('inspection-create-alert', 'اكتب تفاصيل الفحص أو أرفق صورة', 'error');
+        return;
+      }
+
+      var btn = document.getElementById('inspection-create-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري الإرسال...';
+      hideAlert('inspection-create-alert');
+
+      var payload = {
+        pin: currentPin,
+        landline: landline,
+        techId: techId,
+        note: note
+      };
+      if (pendingInspectionCreatePhoto) {
+        payload.photoBase64 = pendingInspectionCreatePhoto.base64;
+        payload.photoMimeType = pendingInspectionCreatePhoto.mimeType;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          btn.textContent = 'إرسال للفني';
+          showAlert('inspection-create-alert', result.message, 'success');
+          document.getElementById('inspection-landline').value = '';
+          document.getElementById('inspection-note').value = '';
+          document.getElementById('inspection-tech').value = '';
+          clearInspectionCreateAttach();
+          loadInspections();
+          if (result.ticket) {
+            openInspectionInline(result.ticket.row);
+          }
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'إرسال للفني';
+          showAlert('inspection-create-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralCreateTechInspection(payload);
+    }
+
+    function hideInspectionChatPanel() {
+      selectedInspectionRow = null;
+      document.getElementById('inspection-chat-panel').classList.add('hidden');
+      document.querySelectorAll('.inspection-card.selected').forEach(function (el) {
+        el.classList.remove('selected');
+      });
+    }
+
+    function renderInspectionInlineChat(ticket) {
+      currentTicket = ticket;
+      currentInspectionMode = true;
+      selectedInspectionRow = ticket.row;
+      techChatContext = 'inline';
+      document.getElementById('inspection-chat-panel').classList.remove('hidden');
+      document.getElementById('inspection-chat-title').textContent =
+        '🔍 فحص — ☎ ' + (ticket.landline || '');
+      var techLabel = ticket.assignedTechName || techNameById(ticket.assignedTech) || ticket.assignedTech || '—';
+      document.getElementById('inspection-chat-summary').innerHTML =
+        '<div class="detail-grid" style="margin-top:10px">' +
+          '<div class="detail-item"><div class="lbl">الفني</div><div class="val">' + escapeHtml(techLabel) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">الحالة</div><div class="val">' + statusBadge(ticket.status) + '</div></div>' +
+        '</div>' +
+        (ticket.inspectionNote
+          ? '<p style="font-size:0.88rem;color:var(--muted);margin:10px 0 0"><strong>التفاصيل:</strong> ' + escapeHtml(ticket.inspectionNote) + '</p>'
+          : '');
+      document.getElementById('inspection-inline-close-box').style.display =
+        ticket.canCloseInspection ? 'block' : 'none';
+      document.getElementById('inspection-inline-close-note').value = '';
+      clearTechAttach();
+      renderTechChat(ticket.techMessages || []);
+      document.getElementById('inspection-inline-message-input').value = '';
+      updateInspectionInlineControls(ticket);
+      updateInspectionArchiveButton(ticket);
+      document.getElementById('inspection-chat-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function updateInspectionArchiveButton(ticket) {
+      var btn = document.getElementById('inspection-archive-btn');
+      if (!btn) return;
+      var count = (ticket.archive && ticket.archive.length) || 0;
+      btn.classList.toggle('has-archive', count > 0);
+      btn.textContent = count
+        ? '📁 أرشيف الخط (' + count + ')'
+        : '📁 أرشيف الخط';
+      btn.title = count
+        ? 'عرض ' + count + ' سجل سابق لهذا الخط (بدون محادثات فني مهام الفحص)'
+        : 'لا يوجد أرشيف سابق لهذا الخط';
+    }
+
+    function updateInspectionInlineControls(ticket) {
+      var resolved = ticket.status === 'تم الحل' || ticket.status === 'تم الاصلاح' || ticket.status === 'تم الإصلاح';
+      ['inspection-inline-send-btn', 'inspection-inline-photo-btn'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.disabled = resolved;
+        el.style.opacity = resolved ? '0.5' : '';
+      });
+      var input = document.getElementById('inspection-inline-message-input');
+      if (input) input.disabled = resolved;
+    }
+
+    function openInspectionInline(row) {
+      switchTab('inspections');
+      showSection('main');
+      hideAlert('inspection-chat-alert');
+      document.getElementById('inspection-chat-summary').innerHTML =
+        '<div class="loader"><div class="spinner"></div></div>';
+      document.getElementById('inspection-chat-panel').classList.remove('hidden');
+      document.querySelectorAll('.inspection-card').forEach(function (el) {
+        el.classList.toggle('selected', Number(el.dataset.row) === row);
+      });
+      google.script.run
+        .withSuccessHandler(function (ticket) {
+          ticket.canCloseInspection = ticket.canCloseInspection !== false &&
+            !(ticket.status === 'تم الحل' || ticket.status === 'تم الاصلاح' || ticket.status === 'تم الإصلاح');
+          renderInspectionInlineChat(ticket);
+        })
+        .withFailureHandler(function (err) {
+          showAlert('inspection-chat-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralGetTechInspection({ pin: currentPin, row: row });
+    }
+
+    function closeInspectionInline() {
+      if (!currentTicket || techChatContext !== 'inline') return;
+      var btn = document.getElementById('inspection-inline-close-btn');
+      btn.disabled = true;
+      var note = document.getElementById('inspection-inline-close-note').value.trim();
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          showAlert('inspection-chat-alert', result.message, 'success');
+          renderInspectionInlineChat(result.ticket);
+          loadInspections();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          showAlert('inspection-chat-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralCloseTechInspection({ pin: currentPin, row: currentTicket.row, note: note });
+    }
+
+    function clearInspectionCreateAttach() {
+      pendingInspectionCreatePhoto = null;
+      var input = document.getElementById('inspection-create-photo-input');
+      if (input) input.value = '';
+      var box = document.getElementById('inspection-create-attach-preview');
+      if (!box) return;
+      box.classList.add('hidden');
+      box.innerHTML = '';
+    }
+
+    function renderInspectionCreateAttachPreview() {
+      var box = document.getElementById('inspection-create-attach-preview');
+      if (!box) return;
+      if (!pendingInspectionCreatePhoto) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+      }
+      box.classList.remove('hidden');
+      box.innerHTML = '<img src="' + escapeAttr(pendingInspectionCreatePhoto.previewUrl) + '" alt="معاينة الصورة" />' +
+        '<button type="button" class="tech-attach-clear" id="inspection-create-attach-clear">✕ إزالة الصورة</button>';
+      document.getElementById('inspection-create-attach-clear').addEventListener('click', clearInspectionCreateAttach);
+    }
+
+    function renderInspectionDetail(ticket) {
+      techChatContext = 'detail';
+      currentTicket = ticket;
+      setDetailMode('inspection');
+      var techLabel = ticket.assignedTechName || techNameById(ticket.assignedTech) || ticket.assignedTech || '—';
+      var closeBox = document.getElementById('inspection-close-box');
+      closeBox.classList.toggle('hidden', !ticket.canCloseInspection);
+      document.getElementById('inspection-close-note').value = '';
+
+      document.getElementById('detail-content').innerHTML =
+        '<div class="detail-grid">' +
+          '<div class="detail-item"><div class="lbl">رقم الخط الأرضي</div><div class="val ltr">' + escapeHtml(ticket.landline) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">الفني المسؤول</div><div class="val">' + escapeHtml(techLabel) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">تاريخ الإرسال</div><div class="val ltr">' + escapeHtml(ticket.date) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">آخر نشاط</div><div class="val ltr">' + escapeHtml(ticket.lastUpdate) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">حالة المهمة</div><div class="val">' + statusBadge(ticket.status) + '</div></div>' +
+        '</div>' +
+        (ticket.inspectionNote
+          ? '<div class="card-title" style="font-size:0.9rem;margin-top:12px">📋 تفاصيل طلب الفحص</div>' +
+            '<p style="font-size:0.9rem;line-height:1.6;margin:0">' + escapeHtml(ticket.inspectionNote) + '</p>'
+          : '');
+
+      hideAlert('detail-alert');
+      clearTechAttach();
+      document.getElementById('tech-chat-block').style.display = 'block';
+      renderTechChat(ticket.techMessages || []);
+      document.getElementById('tech-message-input').value = '';
+      var sendBtn = document.getElementById('tech-send-btn');
+      var resolved = ticket.status === 'تم الحل' || ticket.status === 'تم الاصلاح' || ticket.status === 'تم الإصلاح';
+      sendBtn.disabled = resolved;
+      sendBtn.style.opacity = resolved ? '0.5' : '';
+      var photoBtn = document.getElementById('tech-photo-btn');
+      if (photoBtn) {
+        photoBtn.disabled = resolved;
+        photoBtn.style.opacity = resolved ? '0.5' : '';
+      }
+    }
+
+    function openInspection(row) {
+      openInspectionInline(row);
+    }
+
+    function closeInspection() {
+      if (!currentTicket || !currentInspectionMode) return;
+      var btn = document.getElementById('inspection-close-btn');
+      btn.disabled = true;
+      var note = document.getElementById('inspection-close-note').value.trim();
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          showAlert('detail-alert', result.message, 'success');
+          renderInspectionDetail(result.ticket);
+          loadInspections();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          showAlert('detail-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralCloseTechInspection({ pin: currentPin, row: currentTicket.row, note: note });
     }
 
     function showAlert(id, msg, type) {
@@ -973,6 +3621,88 @@
 
     function escapeHtml(t) {
       return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function parseAttachment(raw) {
+      if (!raw) return null;
+      var s = String(raw).trim();
+      if (!s) return null;
+      if (s.charAt(0) === '{') {
+        try { return JSON.parse(s); } catch (e) { return { photoUrl: s }; }
+      }
+      if (s.indexOf('http') === 0) return { photoUrl: s };
+      return null;
+    }
+
+    function driveImageUrl(url) {
+      var s = normalizePhotoUrl(url);
+      var id = extractDriveFileId(s);
+      if (id) return 'https://lh3.googleusercontent.com/d/' + id + '=w400-rw';
+      return s;
+    }
+
+    function normalizePhotoUrl(url) {
+      return String(url || '').trim().replace(/&amp;/gi, '&');
+    }
+
+    function extractDriveFileId(url) {
+      var s = normalizePhotoUrl(url);
+      var m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/) || s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      return m ? m[1] : '';
+    }
+
+    function escapeAttr(t) {
+      return String(t || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    }
+
+    function attachmentHtml(raw) {
+      var meta = parseAttachment(raw);
+      if (!meta) return '';
+      var html = '';
+      if (meta.photoUrl) {
+        var viewUrl = normalizePhotoUrl(meta.photoUrl);
+        var thumb = driveImageUrl(viewUrl);
+        html += '<a class="photo-view-link" href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">' +
+          '<img class="msg-photo" referrerpolicy="no-referrer" src="' + escapeAttr(thumb) + '" alt="صورة من الفني" loading="lazy" /></a>' +
+          '<a class="msg-photo-link" href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">📷 فتح الصورة</a>';
+      }
+      if (meta.location && meta.location.lat != null) {
+        var mapsUrl = meta.location.mapsUrl || ('https://www.google.com/maps?q=' + meta.location.lat + ',' + meta.location.lng);
+        html += '<div class="msg-loc">📍 <a href="' + escapeHtml(mapsUrl) + '" target="_blank" rel="noopener">موقع الفني على الخريطة</a>';
+        if (meta.location.accuracy) html += ' <span style="color:var(--muted)">(±' + Math.round(meta.location.accuracy) + 'م)</span>';
+        html += '</div>';
+      }
+      return html;
+    }
+
+    function parseCustomerPhotoBody(text) {
+      var t = String(text || '').trim();
+      var m = t.match(/\[صورة\]([^\|]+)(?:\|([\s\S]*))?/);
+      if (!m) return null;
+      return { photoUrl: normalizePhotoUrl(m[1]), caption: (m[2] || '').trim() };
+    }
+
+    function customerMessageBodyHtml(text) {
+      var photo = parseCustomerPhotoBody(text);
+      var textPart = photo
+        ? String(text || '').replace(/\[صورة\][^\|]+(?:\|[\s\S]*)?/, '').trim()
+        : String(text || '');
+      if (!photo) return escapeHtml(text);
+      var viewUrl = photo.photoUrl;
+      var thumb = driveImageUrl(viewUrl);
+      var html = '';
+      if (textPart) {
+        html += escapeHtml(textPart);
+      }
+      if (photo.caption && photo.caption !== 'صورة من الفني') {
+        html += (textPart ? '<br/>' : '') +
+          '<span class="customer-photo-caption">' + escapeHtml(photo.caption) + '</span>';
+      }
+      html += (textPart || (photo.caption && photo.caption !== 'صورة من الفني') ? '<br/>' : '') +
+        '<a class="photo-view-link" href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">' +
+        '<img class="msg-photo" referrerpolicy="no-referrer" src="' + escapeAttr(thumb) + '" alt="صورة" loading="lazy" /></a>' +
+        '<a class="msg-photo-link" href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">📷 فتح الصورة</a>';
+      return html;
     }
 
     function showSection(name) {
@@ -1034,6 +3764,9 @@
         var preview = previewClassified
           ? '<div class="ticket-preview">' + previewIcon + escapeHtml(previewClassified.text) + '</div>'
           : '';
+        var techBadge = t.assignedTech
+          ? '<div class="tech-badge">🛠️ ' + escapeHtml(techNameById(t.assignedTech) || t.assignedTech) + '</div>'
+          : '';
         return '<div class="ticket-card ' + statusClass(t.status) + '" data-row="' + t.row + '">' +
           '<div class="ticket-top">' +
             '<div class="ticket-phone">☎ ' + escapeHtml(t.landline) + '</div>' +
@@ -1042,7 +3775,7 @@
           '<div class="ticket-meta">' +
             '<span>📱 ' + escapeHtml(t.mobile) + '</span>' +
             '<span>🕐 ' + escapeHtml(t.date) + '</span>' +
-          '</div>' + preview +
+          '</div>' + preview + techBadge +
         '</div>';
       }).join('');
 
@@ -1135,6 +3868,42 @@
         : 'لا يوجد أرشيف سابق';
     }
 
+    function renderArchiveCustomerChat(notifications) {
+      notifications = newestFirst(notifications);
+      if (!notifications || !notifications.length) {
+        return '<div class="chat-thread-empty" style="padding:12px;font-size:0.82rem">لا توجد رسائل</div>';
+      }
+      return '<div class="archive-chat-thread">' + notifications.map(function (n) {
+        var c = classifyMsg(n.text);
+        if (c.who === 'system') {
+          return '<div class="c-row system"><div class="c-bubble">ℹ️ ' + escapeHtml(c.text) +
+            (n.date ? '<span class="c-date">' + escapeHtml(n.date) + '</span>' : '') + '</div></div>';
+        }
+        var tag = c.who === 'me' ? '👤 العميل' : '🏢 السنترال';
+        return '<div class="c-row ' + c.who + '"><div class="c-bubble">' +
+          '<span class="c-tag">' + tag + '</span>' + customerMessageBodyHtml(c.text) +
+          (n.date ? '<span class="c-date">' + escapeHtml(n.date) + '</span>' : '') +
+          '</div></div>';
+      }).join('') + '</div>';
+    }
+
+    function renderArchiveTechChat(messages) {
+      messages = newestFirst(messages);
+      if (!messages || !messages.length) {
+        return '<div class="chat-thread-empty" style="padding:12px;font-size:0.82rem">لا توجد رسائل مع الفني</div>';
+      }
+      return '<div class="archive-chat-thread">' + messages.map(function (m) {
+        var mine = m.senderType === 'فني';
+        var who = mine ? '🛠️ الفني' : '🏢 الإدارة';
+        return '<div class="c-row ' + (mine ? 'them' : 'me') + '"><div class="c-bubble">' +
+          '<span class="c-tag">' + who + '</span>' +
+          (m.text ? escapeHtml(m.text) : '') +
+          attachmentHtml(m.attachment) +
+          (m.date ? '<span class="c-date">' + escapeHtml(m.date) + '</span>' : '') +
+          '</div></div>';
+      }).join('') + '</div>';
+    }
+
     function renderArchiveModal(archive) {
       var body = document.getElementById('archive-modal-body');
 
@@ -1144,24 +3913,31 @@
       }
 
       body.innerHTML = '<div class="archive-list">' + archive.map(function (item, idx) {
-        var notifs = item.notifications && item.notifications.length
-          ? item.notifications.map(function (n) {
-              return '<div class="notif-item">' +
-                (n.date ? '<div class="date">' + escapeHtml(n.date) + '</div>' : '') +
-                '<div class="text">' + escapeHtml(n.text) + '</div></div>';
-            }).join('')
-          : '<div style="font-size:0.82rem;color:var(--muted)">لا توجد إشعارات</div>';
-
+        var inspectionBadge = item.isInspection
+          ? ' <span class="inspection-badge">فحص فني</span>'
+          : '';
+        var techChatHtml = item.isInspection
+          ? '<p style="font-size:0.82rem;color:var(--muted);margin-top:8px">🔒 محادثة الفني غير مضمّنة في الأرشيف — مهمة فحص داخلية</p>'
+          : '<div class="archive-section-title">🛠️ محادثة الفني والإدارة</div>' +
+            renderArchiveTechChat(item.techMessages);
+        var noteHtml = item.isInspection && item.inspectionNote
+          ? '<p style="font-size:0.84rem;color:var(--muted);margin:8px 0"><strong>طلب الفحص:</strong> ' +
+            escapeHtml(item.inspectionNote) + '</p>'
+          : '';
         return '<div class="archive-item" data-idx="' + idx + '">' +
-          '<div class="archive-date">📅 ' + escapeHtml(item.date) + '</div>' +
+          '<div class="archive-date">📅 ' + escapeHtml(item.date) + inspectionBadge + '</div>' +
           '<div class="archive-meta">' +
             statusBadge(item.status) +
             ' · ' + escapeHtml(item.reason) +
             (item.lastUpdate ? ' · آخر تحديث: ' + escapeHtml(item.lastUpdate) : '') +
           '</div>' +
           '<div class="archive-detail hidden" id="archive-detail-' + idx + '">' +
-            '<div class="card-title" style="font-size:0.82rem;margin-top:8px">سجل الإشعارات</div>' +
-            notifs +
+            noteHtml +
+            '<div class="archive-section-title">💬 ' +
+            (item.isInspection ? 'سجل مهمة الفحص' : 'محادثة العميل والسنترال') +
+            '</div>' +
+            renderArchiveCustomerChat(item.notifications) +
+            techChatHtml +
           '</div></div>';
       }).join('') + '</div>';
 
@@ -1178,7 +3954,8 @@
 
     function openArchiveModal() {
       if (!currentTicket) return;
-      document.getElementById('archive-modal-title').textContent = '📁 أرشيف شكاوى الخط';
+      document.getElementById('archive-modal-title').textContent =
+        '📁 أرشيف شكاوى الخط — ' + (currentTicket.landline || '');
       renderArchiveModal(currentTicket.archive || []);
       document.getElementById('archive-modal').classList.remove('hidden');
     }
@@ -1272,6 +4049,10 @@
       document.getElementById('archive-modal').classList.add('hidden');
     }
 
+    function newestFirst(list) {
+      return (list && list.length) ? list.slice().reverse() : [];
+    }
+
     function classifyMsg(text) {
       var t = String(text || '').trim();
       if (t.indexOf('العميل:') === 0) return { who: 'me', text: t.replace(/^العميل:\s*/, '') };
@@ -1280,6 +4061,7 @@
     }
 
     function renderChatThread(notifications) {
+      notifications = newestFirst(notifications);
       if (!notifications || !notifications.length) {
         return '<div class="chat-thread-empty">لا توجد رسائل بعد في هذه المحادثة</div>';
       }
@@ -1291,14 +4073,16 @@
         }
         var tag = c.who === 'me' ? '👤 العميل' : '🏢 السنترال';
         return '<div class="c-row ' + c.who + '"><div class="c-bubble">' +
-          '<span class="c-tag">' + tag + '</span>' + escapeHtml(c.text) +
+          '<span class="c-tag">' + tag + '</span>' + customerMessageBodyHtml(c.text) +
           (n.date ? '<span class="c-date">' + escapeHtml(n.date) + '</span>' : '') +
           '</div></div>';
       }).join('') + '</div>';
     }
 
     function renderDetail(ticket) {
+      var prevRow = currentTicket ? currentTicket.row : null;
       currentTicket = ticket;
+      setDetailMode('ticket');
       var notifs = renderChatThread(ticket.notifications);
 
       var ratingHtml = '';
@@ -1332,15 +4116,23 @@
         '<div class="card-title" style="font-size:0.9rem">💬 سجل المحادثة</div>' +
         notifs;
 
+      var chatThread = document.querySelector('#detail-content .chat-thread');
+      if (chatThread) chatThread.scrollTop = 0;
+
       document.getElementById('status-select').value =
         ticket.status === 'تم الاصلاح' || ticket.status === 'تم الإصلاح' ? 'تم الحل' : ticket.status;
       document.getElementById('message-input').value = '';
       hideAlert('detail-alert');
+      if (prevRow !== null && prevRow !== ticket.row) {
+        clearPendingCustomerPhoto();
+      }
       updateNotifyFormState(ticket);
       updateArchiveButton(ticket);
+      updateTechAssignmentUi(ticket);
     }
 
     function openTicket(row) {
+      currentInspectionMode = false;
       showSection('detail');
       document.getElementById('detail-content').innerHTML = '<div class="loader"><div class="spinner"></div></div>';
 
@@ -1354,6 +4146,67 @@
         .centralGetTicket({ pin: currentPin, row: row });
     }
 
+    function clearPendingCustomerPhoto() {
+      pendingCustomerPhoto = null;
+      renderPendingCustomerPhoto();
+      updateSaveBtnLabel();
+      updateForwardButtonsState();
+    }
+
+    function renderPendingCustomerPhoto() {
+      var box = document.getElementById('customer-photo-pending');
+      if (!box) return;
+      if (!pendingCustomerPhoto) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+      }
+      var thumb = driveImageUrl(pendingCustomerPhoto);
+      box.classList.remove('hidden');
+      box.innerHTML =
+        '<div class="pending-photo-title">📷 صورة جاهزة — ستُرسل مع ردك للعميل</div>' +
+        '<img src="' + escapeAttr(thumb) + '" referrerpolicy="no-referrer" alt="صورة مرفقة للعميل" />' +
+        '<button type="button" class="btn-clear-pending-photo" id="clear-pending-photo-btn">✕ إلغاء إرفاق الصورة</button>';
+      document.getElementById('clear-pending-photo-btn').addEventListener('click', clearPendingCustomerPhoto);
+    }
+
+    function updateSaveBtnLabel() {
+      var btn = document.getElementById('save-btn');
+      if (!btn) return;
+      if (pendingCustomerPhoto) {
+        btn.textContent = 'إرسال الرد والصورة للعميل 📷';
+        btn.classList.add('has-photo');
+      } else {
+        btn.textContent = 'إرسال الرد للعميل';
+        btn.classList.remove('has-photo');
+      }
+    }
+
+    function updateForwardButtonsState() {
+      document.querySelectorAll('.btn-forward-photo').forEach(function (b) {
+        var url = normalizePhotoUrl(b.getAttribute('data-photo') || '');
+        var active = pendingCustomerPhoto && normalizePhotoUrl(pendingCustomerPhoto) === url;
+        b.textContent = active ? '✓ مرفقة للرد على العميل' : '📎 إرفاق للرد على العميل';
+        b.classList.toggle('is-staged', active);
+      });
+    }
+
+    function stagePhotoForCustomer(photoUrl) {
+      if (!currentTicket || !photoUrl) return;
+      if (!currentTicket.canSendNotification) {
+        showAlert('detail-alert', 'لا يمكن الإرسال — المحادثة منتهية', 'error');
+        return;
+      }
+      pendingCustomerPhoto = normalizePhotoUrl(String(photoUrl || '').replace(/&amp;/g, '&'));
+      renderPendingCustomerPhoto();
+      updateSaveBtnLabel();
+      updateForwardButtonsState();
+      showAlert('detail-alert', 'تم إرفاق الصورة — اكتب ردك ثم اضغط «إرسال الرد والصورة للعميل»', 'success');
+      var pendingBox = document.getElementById('customer-photo-pending');
+      if (pendingBox) pendingBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('message-input').focus();
+    }
+
     function saveTicket(statusOverride) {
       if (!currentTicket) return;
 
@@ -1364,14 +4217,15 @@
 
       var status = statusOverride || document.getElementById('status-select').value;
       var message = document.getElementById('message-input').value.trim();
+      var photoToSend = pendingCustomerPhoto;
 
       if (statusOverride === 'تم الحل' && !message) {
         message = 'تم الانتهاء من طلبكم. شكراً لتواصلكم مع سنترال فرشوط.';
         document.getElementById('message-input').value = message;
       }
 
-      if (!message && status === currentTicket.status) {
-        showAlert('detail-alert', 'اكتب ردّاً للعميل أو غيّر حالة المحادثة', 'error');
+      if (!message && !photoToSend && status === currentTicket.status) {
+        showAlert('detail-alert', 'اكتب ردّاً للعميل أو أرفق صورة أو اختر أحد الأزرار السريعة', 'error');
         return;
       }
 
@@ -1381,7 +4235,11 @@
       google.script.run
         .withSuccessHandler(function (result) {
           btn.disabled = false;
-          showAlert('detail-alert', result.message, 'success');
+          clearPendingCustomerPhoto();
+          var customMsg = result.message;
+          if (photoToSend && message) customMsg = 'تم إرسال الرد والصورة للعميل';
+          else if (photoToSend) customMsg = 'تم إرسال الصورة للعميل';
+          showAlert('detail-alert', customMsg, 'success');
           renderDetail(result.ticket);
           loadTickets();
         })
@@ -1393,7 +4251,9 @@
           pin: currentPin,
           row: currentTicket.row,
           status: status,
-          message: message
+          message: message,
+          photoUrl: photoToSend || '',
+          photoCaption: 'صورة من الفني'
         });
     }
 
@@ -1409,6 +4269,7 @@
           setPin(pin);
           showSection('main');
           initRepairedFormDates();
+          loadTechnicians();
           loadTickets();
           startAutoRefresh();
         })
@@ -1421,9 +4282,19 @@
     }
 
     function refreshMainData() {
-      loadTickets();
-      if (currentFilter === 'rated') {
-        loadRatedTickets();
+      if (currentTab === 'inspections') {
+        loadInspections();
+      } else if (currentTab === 'preview-failures') {
+        loadPreviewInspections();
+      } else if (currentTab === 'tech-reports') {
+        loadTechnicianNotes();
+      } else if (currentTab === 'ground-repairs') {
+        loadGroundRepairs();
+      } else {
+        loadTickets();
+        if (currentFilter === 'rated') {
+          loadRatedTickets();
+        }
       }
     }
 
@@ -1498,6 +4369,580 @@
         });
     }
 
+    /* ===================== الفنيون والتعيين ===================== */
+    var technicians = [];
+    var currentTab = 'chats';
+
+    function techStatusClass(status) {
+      if (status === 'مشغول') return 's-busy';
+      if (status === 'غير نشط') return 's-inactive';
+      return 's-available';
+    }
+
+    function techNameById(id) {
+      var t = technicians.find(function (x) { return x.id === id; });
+      return t ? t.name : '';
+    }
+
+    function switchTab(name) {
+      currentTab = name;
+      document.querySelectorAll('.tab-btn').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.tab === name);
+      });
+      document.getElementById('chats-tab').classList.toggle('hidden', name !== 'chats');
+      document.getElementById('inspections-tab').classList.toggle('hidden', name !== 'inspections');
+      document.getElementById('preview-failures-tab').classList.toggle('hidden', name !== 'preview-failures');
+      document.getElementById('tech-reports-tab').classList.toggle('hidden', name !== 'tech-reports');
+      document.getElementById('ground-repairs-tab').classList.toggle('hidden', name !== 'ground-repairs');
+      document.getElementById('techs-tab').classList.toggle('hidden', name !== 'techs');
+      if (name === 'techs') {
+        loadTechnicians();
+      }
+      if (name === 'inspections') {
+        loadTechnicians(function () {
+          populateInspectionTechSelect();
+          loadInspections();
+        });
+      }
+      if (name === 'preview-failures') {
+        loadPreviewInspections();
+      }
+      if (name === 'tech-reports') {
+        loadTechnicianNotes();
+      }
+      if (name === 'ground-repairs') {
+        loadGroundRepairs();
+      }
+    }
+
+    function populateAssignSelect(selectedId) {
+      var sel = document.getElementById('assign-select');
+      var opts = '<option value="">— بدون فني —</option>';
+      technicians.forEach(function (t) {
+        if (t.status === 'غير نشط') return;
+        opts += '<option value="' + t.id + '"' + (t.id === selectedId ? ' selected' : '') + '>' +
+          escapeHtml(t.name) + ' (' + escapeHtml(t.status) + ')</option>';
+      });
+      sel.innerHTML = opts;
+      sel.value = selectedId || '';
+    }
+
+    function renderTechList(list) {
+      var container = document.getElementById('tech-list');
+      var empty = document.getElementById('tech-empty');
+      if (!list.length) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      container.innerHTML = list.map(function (t) {
+        return '<div class="tech-card">' +
+          '<div class="tech-info">' +
+            '<div class="name">🛠️ ' + escapeHtml(t.name) +
+              ' <span class="tech-status ' + techStatusClass(t.status) + '">' + escapeHtml(t.status) + '</span></div>' +
+            '<div class="meta">' + escapeHtml(t.id) + (t.phone ? ' · 📱 ' + escapeHtml(t.phone) : '') + '</div>' +
+          '</div>' +
+          '<select class="tech-status-select" data-id="' + t.id + '">' +
+            ['متاح', 'مشغول', 'غير نشط'].map(function (s) {
+              return '<option value="' + s + '"' + (s === t.status ? ' selected' : '') + '>' + s + '</option>';
+            }).join('') +
+          '</select>' +
+        '</div>';
+      }).join('');
+
+      container.querySelectorAll('.tech-status-select').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          setTechStatus(sel.dataset.id, sel.value);
+        });
+      });
+    }
+
+    function loadTechnicians(cb) {
+      document.getElementById('tech-loader').classList.remove('hidden');
+      hideAlert('tech-list-alert');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          document.getElementById('tech-loader').classList.add('hidden');
+          technicians = data.technicians || [];
+          renderTechList(technicians);
+          if (cb) cb();
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('tech-loader').classList.add('hidden');
+          showAlert('tech-list-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .techList({ pin: currentPin });
+    }
+
+    function addTechnician() {
+      var name = document.getElementById('tech-name').value.trim();
+      var phone = document.getElementById('tech-phone').value.trim();
+      var techPin = document.getElementById('tech-pin').value.trim();
+      if (!name) { showAlert('tech-add-alert', 'أدخل اسم الفني', 'error'); return; }
+      if (techPin.length < 4) { showAlert('tech-add-alert', 'رمز الدخول 4 أرقام على الأقل', 'error'); return; }
+
+      var btn = document.getElementById('tech-add-btn');
+      btn.disabled = true;
+      hideAlert('tech-add-alert');
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          showAlert('tech-add-alert', result.message, 'success');
+          document.getElementById('tech-name').value = '';
+          document.getElementById('tech-phone').value = '';
+          document.getElementById('tech-pin').value = '';
+          loadTechnicians();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          showAlert('tech-add-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .techAdd({ pin: currentPin, name: name, phone: phone, techPin: techPin });
+    }
+
+    function setTechStatus(techId, status) {
+      google.script.run
+        .withSuccessHandler(function () { loadTechnicians(); })
+        .withFailureHandler(function (err) {
+          showAlert('tech-list-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .techUpdateStatus({ pin: currentPin, techId: techId, status: status });
+    }
+
+    function assignTech() {
+      if (!currentTicket) return;
+      var techId = document.getElementById('assign-select').value;
+      var btn = document.getElementById('assign-btn');
+      btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          showAlert('detail-alert', result.message, 'success');
+          openTicket(currentTicket.row);
+          loadTickets();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          showAlert('detail-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .assignTechnician({ pin: currentPin, row: currentTicket.row, techId: techId });
+    }
+
+    function renderTechChat(messages) {
+      var ctx = getTechChatContext();
+      var thread = document.getElementById(ctx.threadId);
+      if (!thread) return;
+      messages = newestFirst(messages);
+      if (!messages || !messages.length) {
+        thread.innerHTML = '<div class="chat-thread-empty">لا توجد رسائل مع الفني بعد</div>';
+        return;
+      }
+      thread.innerHTML = messages.map(function (m) {
+        var mine = m.senderType === 'إدارة';
+        var who = mine ? '🏢 الإدارة' : ('🛠️ ' + (techNameById(m.senderId) || 'الفني'));
+        var meta = parseAttachment(m.attachment);
+        var extras = attachmentHtml(m.attachment);
+        var canForward = !mine && techChatContext === 'detail' && !currentInspectionMode && meta && meta.photoUrl && currentTicket && currentTicket.canSendNotification;
+        var forwardBtn = canForward
+          ? '<button type="button" class="btn-forward-photo" data-photo="' + escapeAttr(meta.photoUrl) + '">📎 إرفاق للرد على العميل</button>'
+          : '';
+        return '<div class="c-row ' + (mine ? 'me' : 'them') + '"><div class="c-bubble">' +
+          '<span class="c-tag">' + who + '</span>' +
+          (m.text ? escapeHtml(m.text) : '') +
+          extras +
+          forwardBtn +
+          (m.date ? '<span class="c-date">' + escapeHtml(m.date) + '</span>' : '') +
+          '</div></div>';
+      }).join('');
+      thread.scrollTop = 0;
+      if (techChatContext === 'detail') updateForwardButtonsState();
+    }
+
+    function clearTechAttach() {
+      var ctx = getTechChatContext();
+      ctx.setPendingPhoto(null);
+      var input = document.getElementById(ctx.photoInputId);
+      if (input) input.value = '';
+      renderTechAttachPreview();
+    }
+
+    function renderTechAttachPreview() {
+      var ctx = getTechChatContext();
+      var box = document.getElementById(ctx.previewId);
+      var pending = ctx.getPendingPhoto();
+      if (!box) return;
+      if (!pending) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+      }
+      box.classList.remove('hidden');
+      box.innerHTML = '<img src="' + escapeAttr(pending.previewUrl) + '" alt="معاينة الصورة" />' +
+        '<button type="button" class="tech-attach-clear tech-attach-clear-active">✕ إزالة الصورة</button>';
+      box.querySelector('.tech-attach-clear-active').addEventListener('click', clearTechAttach);
+    }
+
+    var PHOTO_TARGET_BYTES = 4 * 1024 * 1024;
+
+    function estimateBase64Bytes(b64) {
+      return Math.floor(b64.length * 3 / 4);
+    }
+
+    function compressCanvasToPhoto(canvas, cb) {
+      var maxDim = 1280;
+      var srcW = canvas.width;
+      var srcH = canvas.height;
+      var w = srcW;
+      var h = srcH;
+
+      function scaleToMaxDim() {
+        if (w <= maxDim && h <= maxDim) return;
+        if (w >= h) {
+          h = Math.round(h * maxDim / w);
+          w = maxDim;
+        } else {
+          w = Math.round(w * maxDim / h);
+          h = maxDim;
+        }
+      }
+
+      scaleToMaxDim();
+
+      function render(quality) {
+        var out = document.createElement('canvas');
+        out.width = w;
+        out.height = h;
+        out.getContext('2d').drawImage(canvas, 0, 0, w, h);
+        return out.toDataURL('image/jpeg', quality);
+      }
+
+      var quality = 0.82;
+      var dataUrl = render(quality);
+      var b64 = dataUrl.split(',')[1];
+
+      while (estimateBase64Bytes(b64) > PHOTO_TARGET_BYTES) {
+        if (quality > 0.4) {
+          quality = Math.max(0.4, quality - 0.1);
+        } else if (maxDim > 640) {
+          maxDim = Math.max(640, Math.round(maxDim * 0.8));
+          w = srcW;
+          h = srcH;
+          scaleToMaxDim();
+          quality = 0.75;
+        } else {
+          break;
+        }
+        dataUrl = render(quality);
+        b64 = dataUrl.split(',')[1];
+      }
+
+      cb({
+        base64: b64,
+        mimeType: 'image/jpeg',
+        previewUrl: dataUrl
+      });
+    }
+
+    function handleTechPhotoFile(file, alertId) {
+      if (!file) return;
+      compressTechPhoto(file, function (data) {
+        var ctx = getTechChatContext();
+        ctx.setPendingPhoto(data);
+        renderTechAttachPreview();
+        hideAlert(alertId);
+      });
+    }
+
+    function compressTechPhoto(file, cb) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var img = new Image();
+        img.onload = function () {
+          var canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext('2d').drawImage(img, 0, 0);
+          compressCanvasToPhoto(canvas, cb);
+        };
+        img.onerror = function () { showAlert('detail-alert', 'تعذر قراءة الصورة', 'error'); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function () { showAlert('detail-alert', 'تعذر فتح الملف', 'error'); };
+      reader.readAsDataURL(file);
+    }
+
+    function sendTechMessage() {
+      if (!currentTicket) return;
+      var ctx = getTechChatContext();
+      var resolved = currentTicket.status === 'تم الحل' || currentTicket.status === 'تم الاصلاح' || currentTicket.status === 'تم الإصلاح';
+      if (resolved) {
+        showAlert(ctx.alertId, 'المهمة مغلقة — لا يمكن إرسال رسائل', 'error');
+        return;
+      }
+      var input = document.getElementById(ctx.messageInputId);
+      var message = input.value.trim();
+      var pending = ctx.getPendingPhoto();
+      if (!message && !pending) {
+        showAlert(ctx.alertId, 'اكتب رسالة أو أرفق صورة للفني', 'error');
+        return;
+      }
+      var btn = document.getElementById(ctx.sendBtnId);
+      btn.disabled = true;
+      var payload = {
+        pin: currentPin,
+        row: currentTicket.row,
+        message: message
+      };
+      if (pending) {
+        payload.photoBase64 = pending.base64;
+        payload.photoMimeType = pending.mimeType;
+      }
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          input.value = '';
+          clearTechAttach();
+          renderTechChat(result.messages);
+          showAlert(ctx.alertId, result.message, 'success');
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          showAlert(ctx.alertId, err.message || 'حدث خطأ', 'error');
+        })
+        .centralSendTechMessage(payload);
+    }
+
+    function updateTechAssignmentUi(ticket) {
+      techChatContext = 'detail';
+      populateAssignSelect(ticket.assignedTech || '');
+      var hasTech = !!ticket.assignedTech;
+      document.getElementById('tech-chat-block').style.display = hasTech ? 'block' : 'none';
+      if (hasTech) {
+        renderTechChat(ticket.techMessages || []);
+      }
+    }
+
+    document.getElementById('inspection-create-btn').addEventListener('click', submitInspection);
+    document.getElementById('inspection-close-btn').addEventListener('click', closeInspection);
+    document.getElementById('inspection-inline-close-btn').addEventListener('click', closeInspectionInline);
+    document.getElementById('inspection-inline-send-btn').addEventListener('click', function () {
+      techChatContext = 'inline';
+      sendTechMessage();
+    });
+    document.getElementById('inspection-inline-photo-btn').addEventListener('click', function () {
+      techChatContext = 'inline';
+      document.getElementById('inspection-inline-photo-input').click();
+    });
+    document.getElementById('inspection-inline-photo-input').addEventListener('change', function () {
+      techChatContext = 'inline';
+      handleTechPhotoFile(this.files && this.files[0], 'inspection-chat-alert');
+      this.value = '';
+    });
+    document.getElementById('inspection-create-photo-btn').addEventListener('click', function () {
+      document.getElementById('inspection-create-photo-input').click();
+    });
+    document.getElementById('inspection-create-photo-input').addEventListener('change', function () {
+      var file = this.files && this.files[0];
+      if (!file) return;
+      compressTechPhoto(file, function (data) {
+        pendingInspectionCreatePhoto = data;
+        renderInspectionCreateAttachPreview();
+        hideAlert('inspection-create-alert');
+      });
+      this.value = '';
+    });
+    document.getElementById('inspection-chat-close-list-btn').addEventListener('click', hideInspectionChatPanel);
+    document.getElementById('inspection-search-input').addEventListener('input', function () {
+      inspectionSearch = this.value.trim();
+      renderInspectionList(filterInspectionTasks(inspectionTasksCache));
+    });
+    document.querySelectorAll('[data-inspection-filter]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        inspectionFilter = btn.dataset.inspectionFilter;
+        document.querySelectorAll('[data-inspection-filter]').forEach(function (b) {
+          b.classList.toggle('active', b.dataset.inspectionFilter === inspectionFilter);
+        });
+        loadInspections();
+      });
+    });
+
+    document.getElementById('preview-refresh-btn').addEventListener('click', loadPreviewInspections);
+    document.getElementById('preview-search-input').addEventListener('input', function () {
+      previewSearch = this.value.trim();
+      renderPreviewView();
+    });
+    document.getElementById('preview-action-filter').addEventListener('change', function () {
+      previewActionFilter = this.value;
+      renderPreviewView();
+    });
+    document.getElementById('preview-tech-filter').addEventListener('change', function () {
+      previewTechFilter = this.value;
+      renderPreviewView();
+    });
+    document.getElementById('preview-clear-group-btn').addEventListener('click', clearPreviewGroupFilter);
+    document.getElementById('preview-export-btn').addEventListener('click', exportPreviewToExcel);
+    document.querySelectorAll('[data-preview-view]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        switchPreviewView(btn.dataset.previewView);
+      });
+    });
+    document.querySelectorAll('[data-preview-group]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        previewAnalysisGroup = btn.dataset.previewGroup;
+        document.querySelectorAll('[data-preview-group]').forEach(function (b) {
+          b.classList.toggle('active', b.dataset.previewGroup === previewAnalysisGroup);
+        });
+        renderPreviewView();
+      });
+    });
+
+    document.getElementById('tnote-refresh-btn').addEventListener('click', loadTechnicianNotes);
+    document.getElementById('tnote-search-input').addEventListener('input', function () {
+      tnoteSearch = this.value.trim();
+      renderTnoteView();
+    });
+    document.getElementById('tnote-landline-filter').addEventListener('input', function () {
+      tnoteLandlineFilter = this.value.trim();
+      renderTnoteView();
+    });
+    document.getElementById('tnote-cable-filter').addEventListener('input', function () {
+      tnoteCableFilter = this.value.trim();
+      renderTnoteView();
+    });
+    document.getElementById('tnote-cabinet-filter').addEventListener('input', function () {
+      tnoteCabinetFilter = this.value.trim();
+      renderTnoteView();
+    });
+    document.getElementById('tnote-box-filter').addEventListener('input', function () {
+      tnoteBoxFilter = this.value.trim();
+      renderTnoteView();
+    });
+    document.getElementById('tnote-tech-filter').addEventListener('change', function () {
+      tnoteTechFilter = this.value;
+      renderTnoteView();
+    });
+    document.getElementById('tnote-action-filter').addEventListener('change', function () {
+      tnoteActionFilter = this.value;
+      renderTnoteView();
+    });
+    document.getElementById('tnote-report-type-filter').addEventListener('change', function () {
+      tnoteReportTypeFilter = this.value;
+      renderTnoteView();
+    });
+    document.getElementById('tnote-connection-type-filter').addEventListener('change', function () {
+      tnoteConnectionTypeFilter = this.value;
+      renderTnoteView();
+    });
+    document.getElementById('tnote-date-mode').addEventListener('change', updateTnoteDateFields);
+    document.getElementById('tnote-date-year').addEventListener('input', function () {
+      tnoteDateYear = this.value.trim();
+      renderTnoteView();
+    });
+    document.getElementById('tnote-date-month').addEventListener('input', function () {
+      tnoteDateMonth = this.value.trim();
+      renderTnoteView();
+    });
+    document.getElementById('tnote-date-day').addEventListener('change', function () {
+      tnoteDateDay = this.value;
+      renderTnoteView();
+    });
+    document.getElementById('tnote-clear-group-btn').addEventListener('click', clearTnoteGroupFilter);
+    document.getElementById('tnote-export-btn').addEventListener('click', exportTnoteToExcel);
+    document.querySelectorAll('[data-tnote-view]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        switchTnoteView(btn.dataset.tnoteView);
+      });
+    });
+    document.querySelectorAll('[data-tnote-group]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        tnoteAnalysisGroup = btn.dataset.tnoteGroup;
+        document.querySelectorAll('[data-tnote-group]').forEach(function (b) {
+          b.classList.toggle('active', b.dataset.tnoteGroup === tnoteAnalysisGroup);
+        });
+        renderTnoteView();
+      });
+    });
+
+    document.getElementById('grepr-refresh-btn').addEventListener('click', loadGroundRepairs);
+    document.querySelectorAll('[data-grepr-source]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        switchGreprSource(btn.dataset.greprSource);
+      });
+    });
+    document.getElementById('grepr-search-input').addEventListener('input', function () {
+      greprSearch = this.value.trim();
+      renderGreprView();
+    });
+    document.getElementById('grepr-welder-filter').addEventListener('change', function () {
+      greprWelderFilter = this.value;
+      renderGreprView();
+    });
+    document.getElementById('grepr-ticket-filter').addEventListener('input', function () {
+      greprTicketFilter = this.value.trim();
+      renderGreprView();
+    });
+    document.getElementById('grepr-cable-filter').addEventListener('input', function () {
+      greprCableFilter = this.value.trim();
+      renderGreprView();
+    });
+    document.getElementById('grepr-cabinet-filter').addEventListener('input', function () {
+      greprCabinetFilter = this.value.trim();
+      renderGreprView();
+    });
+    document.getElementById('grepr-box-filter').addEventListener('input', function () {
+      greprBoxFilter = this.value.trim();
+      renderGreprView();
+    });
+    document.getElementById('grepr-date-mode').addEventListener('change', updateGreprDateFields);
+    document.getElementById('grepr-date-year').addEventListener('input', function () {
+      greprDateYear = this.value.trim();
+      renderGreprView();
+    });
+    document.getElementById('grepr-date-month').addEventListener('input', function () {
+      greprDateMonth = this.value.trim();
+      renderGreprView();
+    });
+    document.getElementById('grepr-date-day').addEventListener('change', function () {
+      greprDateDay = this.value;
+      renderGreprView();
+    });
+    document.getElementById('grepr-clear-group-btn').addEventListener('click', clearGreprGroupFilter);
+    document.getElementById('grepr-export-btn').addEventListener('click', exportGreprToExcel);
+    document.querySelectorAll('[data-grepr-view]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        switchGreprView(btn.dataset.greprView);
+      });
+    });
+    document.querySelectorAll('[data-grepr-group]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        greprAnalysisGroup = btn.dataset.greprGroup;
+        document.querySelectorAll('[data-grepr-group]').forEach(function (b) {
+          b.classList.toggle('active', b.dataset.greprGroup === greprAnalysisGroup);
+        });
+        renderGreprView();
+      });
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(function (b) {
+      b.addEventListener('click', function () { switchTab(b.dataset.tab); });
+    });
+    document.getElementById('tech-add-btn').addEventListener('click', addTechnician);
+    document.getElementById('assign-btn').addEventListener('click', assignTech);
+    document.getElementById('tech-send-btn').addEventListener('click', function () {
+      techChatContext = 'detail';
+      sendTechMessage();
+    });
+    document.getElementById('tech-photo-btn').addEventListener('click', function () {
+      techChatContext = 'detail';
+      document.getElementById('tech-photo-input').click();
+    });
+    document.getElementById('tech-photo-input').addEventListener('change', function () {
+      techChatContext = 'detail';
+      handleTechPhotoFile(this.files && this.files[0], 'detail-alert');
+      this.value = '';
+    });
+
     document.getElementById('login-btn').addEventListener('click', function () {
       var pin = document.getElementById('pin-input').value.trim();
       if (!pin) { showAlert('login-alert', 'أدخل رمز الدخول', 'error'); return; }
@@ -1541,11 +4986,16 @@
 
     document.getElementById('back-btn').addEventListener('click', function () {
       closeArchiveModal();
-      showSection('main');
+      var returnTab = currentInspectionMode ? 'inspections' : 'chats';
       currentTicket = null;
+      currentInspectionMode = false;
+      setDetailMode('ticket');
+      showSection('main');
+      switchTab(returnTab);
     });
 
     document.getElementById('archive-btn').addEventListener('click', openArchiveModal);
+    document.getElementById('inspection-archive-btn').addEventListener('click', openArchiveModal);
     document.getElementById('archive-close-btn').addEventListener('click', closeArchiveModal);
     document.getElementById('archive-modal').addEventListener('click', function (e) {
       if (e.target === document.getElementById('archive-modal')) closeArchiveModal();
@@ -1553,14 +5003,31 @@
 
     document.getElementById('save-btn').addEventListener('click', function () { saveTicket(); });
 
+    document.getElementById('tech-chat-thread').addEventListener('click', function (e) {
+      var btn = e.target.closest('.btn-forward-photo');
+      if (!btn || btn.disabled) return;
+      var url = btn.getAttribute('data-photo');
+      if (pendingCustomerPhoto && normalizePhotoUrl(pendingCustomerPhoto) === normalizePhotoUrl(url)) {
+        clearPendingCustomerPhoto();
+        showAlert('detail-alert', 'تم إلغاء إرفاق الصورة', 'success');
+        return;
+      }
+      stagePhotoForCustomer(url);
+    });
+
     document.querySelectorAll('.quick-msg').forEach(function (btn) {
       btn.addEventListener('click', function () {
         document.getElementById('message-input').value = btn.dataset.msg;
-        var msg = btn.dataset.msg;
-        if (msg.indexOf('الانتهاء') !== -1 || msg.indexOf('شكراً لتواصلكم') !== -1) {
-          document.getElementById('status-select').value = 'تم الحل';
-        } else if (msg.indexOf('جاري') !== -1 || msg.indexOf('مراجعتها') !== -1) {
-          document.getElementById('status-select').value = 'قيد المعالجة';
+        var status = btn.dataset.status;
+        if (status) {
+          document.getElementById('status-select').value = status;
+        } else {
+          var msg = btn.dataset.msg;
+          if (msg.indexOf('الانتهاء') !== -1 || msg.indexOf('شكراً لتواصلكم') !== -1) {
+            document.getElementById('status-select').value = 'تم الحل';
+          } else if (msg.indexOf('جاري') !== -1 || msg.indexOf('مراجعتها') !== -1) {
+            document.getElementById('status-select').value = 'قيد المعالجة';
+          }
         }
       });
     });
@@ -1570,6 +5037,7 @@
     if (currentPin) {
       showSection('main');
       initRepairedFormDates();
+      loadTechnicians();
       loadTickets();
       startAutoRefresh();
     } else {

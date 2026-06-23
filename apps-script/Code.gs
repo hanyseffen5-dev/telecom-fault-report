@@ -7,6 +7,116 @@ const SPREADSHEET_ID = '1T5agEVNB6lLNkkiqjaXSufoE3gF59bH1_wLhWC0h_0A';
 const SHEET_GID = 80364727;
 const SHEET_NAME = 'ابلاغ عميل';
 
+/** شيت فرشوط — تبويب بيانات المسلسلات (تعذر معاينة) */
+const FARSHOOT_DATA_SPREADSHEET_ID = '1xNfavCbGCTSVfw440gIszwF9ejJL1UUGKxpNiHKYbdI';
+const FARSHOOT_DATA_SHEET_NAME = 'بيانات';
+const FARSHOOT_DATA_SHEET_GID = 289885306;
+const FARSHOOT_PREVIEW_SHEET_NAME = 'تعذر معاينة';
+const FARSHOOT_PREVIEW_SHEET_GID = 393999157;
+const PREVIEW_DRIVE_ROOT_NAME = 'مرفقات_تعذر_معاينة_فرشوط';
+
+const PREVIEW_INSPECTION_RESULTS = [
+  'تعذر بكس معطل',
+  'تعذر بكس ممتلىء',
+  'تعذر كابينة معطلة',
+  'تعذر لا يوجد شبكة',
+  'فك تعذر'
+];
+
+const PREVIEW_SHEET_HEADERS = [
+  'التاريخ والوقت',
+  'رقم المسلسل',
+  'الفني',
+  'المحمول',
+  'اسم العميل',
+  'العنوان',
+  'كابينة MSAN',
+  'رقم الكابل',
+  'رقم الكابينة',
+  'رقم البكس',
+  'الملاحظات',
+  'الإجراء المتخذ',
+  'رابط الموقع',
+  'رابط الصورة'
+];
+
+const TECH_NOTES_SHEET_NAME = 'ملاحظات الفنيين';
+const TECH_NOTES_SHEET_GID = 1001187135;
+const TECH_NOTES_DRIVE_ROOT_NAME = 'مرفقات_ملاحظات_الفنيين';
+
+const TECH_NOTE_REPORT_TYPES = [
+  'عطل ارضى',
+  'تعذر تركيب',
+  'اعمال صيانة'
+];
+
+const TECH_NOTE_ACTIONS = [
+  'تحويل للشبكات',
+  'تحويل لمراقب الشؤون الخارجية',
+  'تم الإصلاح',
+  'قيد المعالجة'
+];
+
+const TECH_NOTE_CONNECTION_TYPES = [
+  'msan',
+  'ftth'
+];
+
+const TECH_NOTES_SHEET_HEADERS = [
+  'التاريخ والوقت',
+  'رقم التليفون',
+  'الفني',
+  'نوع البلاغ',
+  'الملاحظة',
+  'النوع',
+  'رقم الكابل',
+  'رقم الكابينة',
+  'رقم البكس',
+  'الموقع',
+  'الصورة',
+  'الإجراء المتخذ'
+];
+
+const NETWORK_INSPECTION_SHEET_NAME = 'فحص الشبكات';
+const NETWORK_INSPECTION_SHEET_GID = 107583306;
+const NETWORK_ARCHIVE_SHEET_NAME = 'ارشيف الشبكات';
+const NETWORK_ARCHIVE_SHEET_GID = 268424427;
+const NETWORK_INSPECTION_DRIVE_ROOT_NAME = 'مرفقات_فحص_الشبكات';
+
+const NETWORK_WORK_CLASSIFICATIONS = [
+  'رفع كفاءة',
+  'سرقات وإتلافات',
+  'صيانة علاجية',
+  'فك تعذرات'
+];
+
+const NETWORK_REPAIR_STATUSES = [
+  'إصلاح مؤقت',
+  'إصلاح دائم',
+  'جاري الإصلاح',
+  'يصعب الإصلاح'
+];
+
+const NETWORK_INSPECTION_SHEET_HEADERS = [
+  'التاريخ والوقت',
+  'رقم التذكرة',
+  'الفني الأصلي',
+  'اللحام القائم بالفحص',
+  'العامل المرافق',
+  'تصنيف الأعمال',
+  'نوع الأعمال',
+  'المهمات المستخدمة/المطلوبة',
+  'حالة الإصلاح',
+  'ملاحظات الفحص',
+  'ملاحظات أخرى',
+  'رقم الكابل',
+  'رقم الكابينة',
+  'رقم البكس',
+  'رابط الموقع',
+  'رابط الصورة',
+  'تاريخ بلاغ العطل'
+];
+
 const COL = {
   DATE: 1,
   LANDLINE: 2,
@@ -20,7 +130,10 @@ const COL = {
   COMMENT: 10,
   DEVICE_FP: 11,
   RATING_DEVICE_FP: 12,
-  RATING_FLAG: 13
+  RATING_FLAG: 13,
+  ASSIGNED_TECH: 14,
+  CUST_TECH_CHANNEL: 15,
+  DRIVE_FOLDER: 16
 };
 
 const HEADERS = [
@@ -36,8 +149,38 @@ const HEADERS = [
   'تعليق العميل',
   'بصمة الجهاز',
   'بصمة جهاز التقييم',
-  'تقييم متاح'
+  'تقييم متاح',
+  'الفني المسؤول',
+  'قناة عميل-فني',
+  'مجلد Drive'
 ];
+
+/* ============================================================
+ * تبويب الفنيين وتبويب الرسائل (نظام المهام الثلاثي)
+ * ============================================================ */
+
+const TECH_SHEET_NAME = 'الفنيين';
+const TECH_HEADERS = ['tech_id', 'الاسم', 'رقم التليفون', 'PIN', 'الحالة'];
+const TECH_COL = { ID: 1, NAME: 2, PHONE: 3, PIN: 4, STATUS: 5 };
+
+const MSG_SHEET_NAME = 'الرسائل';
+const MSG_HEADERS = ['msg_id', 'ticket_row', 'sender_type', 'sender_id', 'recipient_id', 'النص', 'رابط_المرفق', 'التاريخ'];
+const MSG_COL = { ID: 1, TICKET_ROW: 2, SENDER_TYPE: 3, SENDER_ID: 4, RECIPIENT_ID: 5, TEXT: 6, ATTACHMENT: 7, DATE: 8 };
+
+const SENDER_CUSTOMER = 'عميل';
+const SENDER_CENTRAL = 'إدارة';
+const SENDER_TECH = 'فني';
+
+const RECIPIENT_CENTRAL = 'central';
+const RECIPIENT_CUSTOMER = 'customer';
+
+const TECH_STATUS_AVAILABLE = 'متاح';
+const TECH_STATUS_BUSY = 'مشغول';
+const TECH_STATUS_INACTIVE = 'غير نشط';
+const TECH_STATUSES = [TECH_STATUS_AVAILABLE, TECH_STATUS_BUSY, TECH_STATUS_INACTIVE];
+
+const CHANNEL_OPEN = 'مفتوحة';
+const CHANNEL_CLOSED = 'مغلقة';
 
 const RATING_FLAG_YES = 'نعم';
 const RATING_FLAG_NO = 'لا';
@@ -61,8 +204,14 @@ const REASONS = [
 
 /** نوع السجل عند بدء محادثة جديدة مع السنترال (بدلاً من بلاغ عطل) */
 const CHAT_REASON = 'تواصل مع السنترال';
+/** مهمة فحص يرسلها السنترال مباشرة للفني — بدون محادثة عميل */
+const TECH_INSPECTION_REASON = 'فحص فني — سنترال';
 const MAX_MESSAGE_LENGTH = 1000;
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const TECH_DRIVE_ROOT_NAME = 'مرفقات_فني_فرشوط';
 const CUSTOMER_MSG_PREFIX = 'العميل: ';
+const CUSTOMER_PHOTO_TAG = '[صورة]';
+const COMPLAINT_REOPEN_DAYS = 5;
 
 const DEFAULT_CENTRAL_PIN = '1234';
 const CENTRAL_STATUSES = [
@@ -171,6 +320,60 @@ function doPost(e) {
       result = centralAddRepairedLandline(payload);
     } else if (fn === 'centralListRatedTickets') {
       result = centralListRatedTickets(payload);
+    } else if (fn === 'techList') {
+      result = techList(payload);
+    } else if (fn === 'techAdd') {
+      result = techAdd(payload);
+    } else if (fn === 'techUpdateStatus') {
+      result = techUpdateStatus(payload);
+    } else if (fn === 'assignTechnician') {
+      result = assignTechnician(payload);
+    } else if (fn === 'techLogin') {
+      result = techLogin(payload);
+    } else if (fn === 'techListTasks') {
+      result = techListTasks(payload);
+    } else if (fn === 'techGetTask') {
+      result = techGetTask(payload);
+    } else if (fn === 'techSendMessage') {
+      result = techSendMessage(payload);
+    } else if (fn === 'centralSendTechMessage') {
+      result = centralSendTechMessage(payload);
+    } else if (fn === 'centralForwardTechPhoto') {
+      result = centralForwardTechPhoto(payload);
+    } else if (fn === 'centralCreateTechInspection') {
+      result = centralCreateTechInspection(payload);
+    } else if (fn === 'centralListTechInspections') {
+      result = centralListTechInspections(payload);
+    } else if (fn === 'centralGetTechInspection') {
+      result = centralGetTechInspection(payload);
+    } else if (fn === 'centralCloseTechInspection') {
+      result = centralCloseTechInspection(payload);
+    } else if (fn === 'techSearchSerialData') {
+      result = techSearchSerialData(payload);
+    } else if (fn === 'techSubmitPreviewInspection') {
+      result = techSubmitPreviewInspection(payload);
+    } else if (fn === 'centralGetPreviewInspections') {
+      result = centralGetPreviewInspections(payload);
+    } else if (fn === 'centralGetTechnicianNotes') {
+      result = centralGetTechnicianNotes(payload);
+    } else if (fn === 'centralGetGroundRepairs') {
+      result = centralGetGroundRepairs(payload);
+    } else if (fn === 'techSubmitTechnicianNote') {
+      result = techSubmitTechnicianNote(payload);
+    } else if (fn === 'netTechGetGroundFaults') {
+      result = netTechGetGroundFaults(payload);
+    } else if (fn === 'techSearchLandlineData') {
+      result = techSearchLandlineData(payload);
+    } else if (fn === 'netTechSubmitNetworkInspection') {
+      result = netTechSubmitNetworkInspection(payload);
+    } else if (fn === 'netTechGetNetworkArchive') {
+      result = netTechGetNetworkArchive(payload);
+    } else if (fn === 'netTechGetUnrepairedInspections') {
+      result = netTechGetUnrepairedInspections(payload);
+    } else if (fn === 'netTechCheckOpenNetworkInspection') {
+      result = netTechCheckOpenNetworkInspection(payload);
+    } else if (fn === 'netTechGetNetworkInspectionHistory') {
+      result = netTechGetNetworkInspectionHistory(payload);
     } else {
       throw new Error('دالة غير معروفة');
     }
@@ -361,9 +564,31 @@ function findLatestByLandline_(landline) {
   return { sheet: sheet, data: data, row: -1, index: -1 };
 }
 
+/** أحدث صف عميل للخط — يستثني مهام الفحص الداخلية (سنترال ↔ فني) */
+function findLatestCustomerRowByLandline_(landline) {
+  const sheet = getSheet_();
+  const data = sheet.getDataRange().getValues();
+  const targetLandline = normalizeLandlineForMatch_(landline);
+
+  for (let i = data.length - 1; i >= 1; i--) {
+    const row = data[i];
+    if (isTechInspectionRow_(row)) continue;
+    const rowLandline = normalizeLandlineForMatch_(row[COL.LANDLINE - 1]);
+    if (rowLandline !== targetLandline) continue;
+    return {
+      sheet: sheet,
+      data: data,
+      row: i + 1,
+      index: i
+    };
+  }
+
+  return { sheet: sheet, data: data, row: -1, index: -1 };
+}
+
 function findLatestRowForCustomer_(landline, mobile) {
   const targetMobile = normalizeMobileForMatch_(mobile);
-  const latest = findLatestByLandline_(landline);
+  const latest = findLatestCustomerRowByLandline_(landline);
 
   if (latest.row === -1) {
     return {
@@ -407,7 +632,7 @@ function findLatestRowForCustomer_(landline, mobile) {
 }
 
 function getCustomerAccessError_(landline, mobile) {
-  const latest = findLatestByLandline_(landline);
+  const latest = findLatestCustomerRowByLandline_(landline);
 
   if (latest.row === -1) {
     return 'لم يتم العثور على اى تواصل لهذا الرقم الأرضي. تأكد من رقم التليفون الأرضي.';
@@ -526,12 +751,25 @@ function getLineKey_(landline) {
   return normalizeLandlineForMatch_(landline);
 }
 
+function isTechInspectionRow_(row) {
+  return String(row[COL.REASON - 1] || '').trim() === TECH_INSPECTION_REASON;
+}
+
+function extractTechInspectionNote_(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return '';
+  const m = text.match(/\[فحص فني\]\s*(.+)/);
+  if (m) return m[1].split('\n')[0].trim();
+  return text.split('\n')[0].trim();
+}
+
 /** أحدث صف لكل خط أرضي — للعرض في لوحة السنترال فقط */
 function getLatestRowByLine_(data) {
   const latest = {};
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
+    if (isTechInspectionRow_(row)) continue;
     latest[getLineKey_(row[COL.LANDLINE - 1])] = i + 1;
   }
   return latest;
@@ -556,6 +794,7 @@ function getTicketArchive_(landline, mobile, excludeRow) {
 
     const rowLandline = normalizeLandlineForMatch_(row[COL.LANDLINE - 1]);
     if (rowLandline !== targetLandline) continue;
+    if (isTechInspectionRow_(row)) continue;
 
     const lastUpdate = row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '';
     const notifications = parseNotifications_(row[COL.NOTIFICATION - 1], lastUpdate);
@@ -567,6 +806,7 @@ function getTicketArchive_(landline, mobile, excludeRow) {
       reason: String(row[COL.REASON - 1] || ''),
       status: String(row[COL.STATUS - 1] || STATUS_NEW),
       notifications: notifications,
+      techMessages: getMessagesForTicket_(rowNumber),
       lastNotification: notifications.length ? notifications[notifications.length - 1].text : ''
     });
   }
@@ -576,6 +816,64 @@ function getTicketArchive_(landline, mobile, excludeRow) {
   });
 
   return archive;
+}
+
+/** أرشيف الخط لصفحة مهام الفحص — يشمل الشكاوى السابقة ومهام الفحص بدون محادثة الفني */
+function getInspectionPageArchive_(landline, excludeRow) {
+  const data = getSheet_().getDataRange().getValues();
+  const targetLandline = normalizeLandlineForMatch_(landline);
+  const archive = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const rowNumber = i + 1;
+    if (rowNumber === excludeRow) continue;
+
+    const row = data[i];
+    if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
+
+    const rowLandline = normalizeLandlineForMatch_(row[COL.LANDLINE - 1]);
+    if (rowLandline !== targetLandline) continue;
+
+    const isInspection = isTechInspectionRow_(row);
+    const lastUpdate = row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '';
+    const notifications = parseNotifications_(row[COL.NOTIFICATION - 1], lastUpdate);
+
+    archive.push({
+      row: rowNumber,
+      date: row[COL.DATE - 1] ? formatDate_(row[COL.DATE - 1]) : '',
+      lastUpdate: lastUpdate,
+      reason: String(row[COL.REASON - 1] || ''),
+      status: String(row[COL.STATUS - 1] || STATUS_NEW),
+      notifications: notifications,
+      techMessages: isInspection ? [] : getMessagesForTicket_(rowNumber),
+      lastNotification: notifications.length ? notifications[notifications.length - 1].text : '',
+      isInspection: isInspection,
+      inspectionNote: isInspection ? extractTechInspectionNote_(row[COL.NOTIFICATION - 1]) : ''
+    });
+  }
+
+  archive.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return archive;
+}
+
+function countTicketArchive_(landline, excludeRow) {
+  const data = getSheet_().getDataRange().getValues();
+  const targetLandline = normalizeLandlineForMatch_(landline);
+  let count = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowNumber = i + 1;
+    if (rowNumber === excludeRow) continue;
+    const row = data[i];
+    if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
+    if (normalizeLandlineForMatch_(row[COL.LANDLINE - 1]) !== targetLandline) continue;
+    count++;
+  }
+
+  return count;
 }
 
 function formatNotificationLine_(text, when) {
@@ -611,10 +909,11 @@ function rowToObject_(row, rowNumber) {
   const lastUpdate = row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '';
   const notifications = parseNotifications_(row[COL.NOTIFICATION - 1], lastUpdate);
   const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+  const windowInfo = getReopenWindowInfo_(row);
 
   return {
     row: rowNumber || 0,
-    date: row[COL.DATE - 1] ? formatDate_(row[COL.DATE - 1]) : '',
+    date: windowInfo.complaintDate,
     landline: String(row[COL.LANDLINE - 1] || ''),
     reason: String(row[COL.REASON - 1] || ''),
     mobile: String(row[COL.MOBILE - 1] || ''),
@@ -622,6 +921,9 @@ function rowToObject_(row, rowNumber) {
     notifications: notifications,
     notification: notifications.length ? notifications[notifications.length - 1].text : '',
     lastUpdate: lastUpdate,
+    resolutionDate: windowInfo.resolutionDate,
+    reopenDeadline: windowInfo.reopenDeadline,
+    reopenWindowExpired: windowInfo.reopenWindowExpired,
     ratingFault: row[COL.RATING_FAULT - 1] || '',
     ratingTech: row[COL.RATING_TECH - 1] || '',
     comment: String(row[COL.COMMENT - 1] || ''),
@@ -636,6 +938,7 @@ function rowToObject_(row, rowNumber) {
       isRatingEligibleRow_(row) &&
       !row[COL.RATING_FAULT - 1] && !row[COL.RATING_TECH - 1],
     canReopen: canReopenRow_(row),
+    canSendMessage: canSendCustomerMessage_(row),
     isArchiveComplaint: isArchiveComplaintRow_(row),
     alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
     canOpenNewComplaint: isResolvedStatus_(status) && (
@@ -643,7 +946,12 @@ function rowToObject_(row, rowNumber) {
       isArchiveComplaintRow_(row)
     ),
     canSendNotification: canCentralSendNotification_(status, notifications),
-    mobileRegistered: !isEmptyMobile_(row[COL.MOBILE - 1])
+    mobileRegistered: !isEmptyMobile_(row[COL.MOBILE - 1]),
+    assignedTech: String(row[COL.ASSIGNED_TECH - 1] || ''),
+    custTechChannel: String(row[COL.CUST_TECH_CHANNEL - 1] || CHANNEL_CLOSED),
+    driveFolder: String(row[COL.DRIVE_FOLDER - 1] || ''),
+    isTechInspection: isTechInspectionRow_(row),
+    inspectionNote: isTechInspectionRow_(row) ? extractTechInspectionNote_(row[COL.NOTIFICATION - 1]) : ''
   };
 }
 
@@ -776,6 +1084,7 @@ function centralListTickets(payload) {
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
+    if (isTechInspectionRow_(row)) continue;
 
     const rowNumber = i + 1;
     if (!isLatestTicketForLine_(rowNumber, row, latestByLine)) continue;
@@ -801,7 +1110,8 @@ function centralListTickets(payload) {
       status: status,
       lastUpdate: lastUpdate,
       lastNotification: notifications.length ? notifications[notifications.length - 1].text : '',
-      alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1])
+      alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
+      assignedTech: String(row[COL.ASSIGNED_TECH - 1] || '')
     });
   }
 
@@ -820,6 +1130,7 @@ function centralGetTicket(payload) {
   const result = getTicketRow_(rowNumber);
   const ticket = rowToObject_(result.row, result.rowNumber);
   ticket.archive = getTicketArchive_(ticket.landline, ticket.mobile, rowNumber);
+  ticket.techMessages = getMessagesForTicket_(rowNumber);
   return ticket;
 }
 
@@ -830,6 +1141,8 @@ function centralUpdateTicket(payload) {
   const rowNumber = Number(payload.row);
   const status = String(payload.status || '').trim();
   const message = String(payload.message || '').trim();
+  const photoUrl = String(payload.photoUrl || '').trim().replace(/&amp;/g, '&');
+  const photoCaption = String(payload.photoCaption || 'صورة من الفني').trim();
   const result = getTicketRow_(rowNumber);
   const currentStatus = String(result.row[COL.STATUS - 1] || STATUS_NEW);
   const lastUpdate = result.row[COL.LAST_UPDATE - 1] ? formatDate_(result.row[COL.LAST_UPDATE - 1]) : '';
@@ -850,14 +1163,22 @@ function centralUpdateTicket(payload) {
     }
   }
 
-  if (message) {
-    const prefix = 'السنترال: ';
+  let notifLine = '';
+  if (message && photoUrl && photoUrl.indexOf('http') === 0) {
+    notifLine = 'السنترال: ' + message + ' ' + CUSTOMER_PHOTO_TAG + photoUrl + '|' + photoCaption;
+  } else if (message) {
+    notifLine = 'السنترال: ' + message;
+  } else if (photoUrl && photoUrl.indexOf('http') === 0) {
+    notifLine = 'السنترال: ' + CUSTOMER_PHOTO_TAG + photoUrl + '|' + photoCaption;
+  }
+
+  if (notifLine) {
     const existing = result.row[COL.NOTIFICATION - 1];
-    const updated = appendNotificationLine_(existing, prefix + message, now);
+    const updated = appendNotificationLine_(existing, notifLine, now);
     result.sheet.getRange(rowNumber, COL.NOTIFICATION).setValue(updated);
   }
 
-  if (!status && !message) {
+  if (!status && !notifLine) {
     throw new Error('لا يوجد شيء لحفظه');
   }
 
@@ -872,6 +1193,52 @@ function centralUpdateTicket(payload) {
   return {
     success: true,
     message: 'تم حفظ التحديث وإرساله للعميل',
+    ticket: updatedTicket
+  };
+}
+
+/** إرسال صورة من الفني إلى محادثة العميل */
+function centralForwardTechPhoto(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const rowNumber = Number(payload.row);
+  const photoUrl = String(payload.photoUrl || '').trim().replace(/&amp;/g, '&');
+  const caption = String(payload.caption || 'صورة من الفني').trim();
+
+  if (!photoUrl || photoUrl.indexOf('http') !== 0) {
+    throw new Error('رابط الصورة غير صالح');
+  }
+
+  const result = getTicketRow_(rowNumber);
+  const lastUpdate = result.row[COL.LAST_UPDATE - 1] ? formatDate_(result.row[COL.LAST_UPDATE - 1]) : '';
+  const currentNotifications = parseNotifications_(result.row[COL.NOTIFICATION - 1], lastUpdate);
+  const currentStatus = String(result.row[COL.STATUS - 1] || STATUS_NEW);
+
+  if (!canCentralSendNotification_(currentStatus, currentNotifications)) {
+    throw new Error('لا يمكن الإرسال — المحادثة منتهية حتى يرسل العميل رسالة جديدة');
+  }
+
+  const line = 'السنترال: ' + CUSTOMER_PHOTO_TAG + photoUrl + '|' + caption;
+  const now = new Date();
+  const updated = appendNotificationLine_(result.row[COL.NOTIFICATION - 1], line, now);
+  result.sheet.getRange(rowNumber, COL.NOTIFICATION).setValue(updated);
+  result.sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(now);
+
+  if (currentStatus === STATUS_NEW) {
+    result.sheet.getRange(rowNumber, COL.STATUS).setValue(STATUS_IN_PROGRESS);
+  }
+
+  const updatedTicket = rowToObject_(
+    result.sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0],
+    rowNumber
+  );
+  updatedTicket.archive = getTicketArchive_(updatedTicket.landline, updatedTicket.mobile, rowNumber);
+  updatedTicket.techMessages = getMessagesForTicket_(rowNumber);
+
+  return {
+    success: true,
+    message: 'تم إرسال الصورة للعميل',
     ticket: updatedTicket
   };
 }
@@ -913,11 +1280,92 @@ function isRatingEligibleRow_(row) {
   return notification.indexOf(RATING_ENABLED_MARKER) !== -1;
 }
 
+function parseNotificationDate_(dateStr) {
+  const m = String(dateStr || '').match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5]));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function findCentralCompletionNotification_(notifications) {
+  let lastMatch = null;
+  (notifications || []).forEach(function (n) {
+    const text = String(n.text || '');
+    if (text.indexOf('السنترال:') !== 0) return;
+    const body = text.replace(/^السنترال:\s*/, '');
+    if (body.indexOf('تم الانتهاء من طلبكم') !== -1 ||
+        body.indexOf('تم الحل') !== -1 ||
+        isCentralResolutionMessage_(text)) {
+      lastMatch = n;
+    }
+  });
+  return lastMatch;
+}
+
+function getCompletionDateFromRow_(row) {
+  const lastUpdate = row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '';
+  const notifications = parseNotifications_(row[COL.NOTIFICATION - 1], lastUpdate);
+  const completion = findCentralCompletionNotification_(notifications);
+  if (completion && completion.date) {
+    const parsed = parseNotificationDate_(completion.date);
+    if (parsed) return parsed;
+  }
+  if (row[COL.LAST_UPDATE - 1]) {
+    const d = row[COL.LAST_UPDATE - 1] instanceof Date
+      ? row[COL.LAST_UPDATE - 1]
+      : new Date(row[COL.LAST_UPDATE - 1]);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
+function isWithinReopenWindow_(row) {
+  if (!isResolvedStatus_(String(row[COL.STATUS - 1] || ''))) return true;
+  const completionDate = getCompletionDateFromRow_(row);
+  if (!completionDate) return true;
+  const diffDays = (Date.now() - completionDate.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays <= COMPLAINT_REOPEN_DAYS;
+}
+
+function getReopenWindowInfo_(row) {
+  const complaintDate = row[COL.DATE - 1] ? formatDate_(row[COL.DATE - 1]) : '';
+  let resolutionDate = '';
+  let reopenDeadline = '';
+  let reopenWindowExpired = false;
+
+  if (isResolvedStatus_(String(row[COL.STATUS - 1] || ''))) {
+    const completionDate = getCompletionDateFromRow_(row);
+    if (completionDate) {
+      resolutionDate = formatDate_(completionDate);
+      const deadline = new Date(completionDate.getTime());
+      deadline.setDate(deadline.getDate() + COMPLAINT_REOPEN_DAYS);
+      reopenDeadline = formatDate_(deadline);
+      reopenWindowExpired = !isWithinReopenWindow_(row);
+    }
+  }
+
+  return {
+    complaintDate: complaintDate,
+    resolutionDate: resolutionDate,
+    reopenDeadline: reopenDeadline,
+    reopenWindowExpired: reopenWindowExpired
+  };
+}
+
+function canSendCustomerMessage_(row) {
+  if (isTechInspectionRow_(row)) return false;
+  const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+  if (!isResolvedStatus_(status)) return true;
+  if (row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) return false;
+  return isWithinReopenWindow_(row);
+}
+
 function canReopenRow_(row) {
   const status = String(row[COL.STATUS - 1] || STATUS_NEW);
   if (!isResolvedStatus_(status)) return false;
   if (row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) return false;
-  return isRatingEligibleRow_(row);
+  if (!isRatingEligibleRow_(row)) return false;
+  return isWithinReopenWindow_(row);
 }
 
 function isArchiveComplaintRow_(row) {
@@ -936,7 +1384,7 @@ function centralAddRepairedLandline(payload) {
     throw new Error('تاريخ آخر تحديث يجب أن يكون بعد أو يساوي تاريخ الشكوى');
   }
 
-  const latest = findLatestByLandline_(landline);
+  const latest = findLatestCustomerRowByLandline_(landline);
   if (latest.row !== -1) {
     const status = String(latest.data[latest.index][COL.STATUS - 1] || '');
     if (!isResolvedStatus_(status)) {
@@ -1181,6 +1629,9 @@ function reopenTicket(payload) {
   }
 
   if (!canReopenRow_(result.data[result.index])) {
+    if (!isWithinReopenWindow_(result.data[result.index])) {
+      throw new Error('انتهت مدة إعادة فتح الشكوى (5 أيام من تاريخ إنهاء السنترال للطلب)');
+    }
     throw new Error('إعادة الفتح غير متاحة لهذا البلاغ');
   }
 
@@ -1306,7 +1757,9 @@ function buildFreshChatView_(ticket, row) {
   ticket.canRate = false;
   ticket.alreadyRated = false;
   ticket.canReopen = false;
+  ticket.canSendMessage = true;
   ticket.canOpenNewComplaint = false;
+  ticket.reopenWindowExpired = false;
   ticket.canSendNotification = true;
   ticket.ratingFault = '';
   ticket.ratingTech = '';
@@ -1329,7 +1782,7 @@ function startChat(payload) {
   const mobile = validateMobile_(payload.mobile);
   const deviceFp = validateDeviceFp_(payload.deviceFp, true);
 
-  const latest = findLatestByLandline_(landline);
+  const latest = findLatestCustomerRowByLandline_(landline);
 
   if (latest.row === -1) {
     const created = createChatRow_(landline, mobile, deviceFp);
@@ -1432,7 +1885,7 @@ function sendCustomerMessage(payload) {
   const result = findLatestRowForCustomer_(landline, mobile);
 
   if (result.row === -1) {
-    const latest = findLatestByLandline_(landline);
+    const latest = findLatestCustomerRowByLandline_(landline);
     if (latest.row !== -1) {
       throw new Error(getCustomerAccessError_(landline, mobile));
     }
@@ -1451,19 +1904,45 @@ function sendCustomerMessage(payload) {
 
     const currentStatus = String(rowData[COL.STATUS - 1] || STATUS_NEW);
     if (isResolvedStatus_(currentStatus)) {
-      const created = createChatRow_(landline, mobile, deviceFp, message);
-      const rowData = created.sheet.getRange(created.rowNumber, 1, 1, HEADERS.length).getValues()[0];
-      const ticket = rowToObject_(rowData, created.rowNumber);
-      const deviceInfo = bindOrVerifyDeviceFp_(created.sheet, created.rowNumber, rowData, deviceFp);
+      if (rowData[COL.RATING_FAULT - 1] || rowData[COL.RATING_TECH - 1]) {
+        const created = createChatRow_(landline, mobile, deviceFp, message);
+        const newRowData = created.sheet.getRange(created.rowNumber, 1, 1, HEADERS.length).getValues()[0];
+        const ticket = rowToObject_(newRowData, created.rowNumber);
+        const deviceInfo = bindOrVerifyDeviceFp_(created.sheet, created.rowNumber, newRowData, deviceFp);
+        ticket.deviceTrusted = deviceInfo.deviceTrusted;
+        ticket.deviceFpBound = deviceInfo.deviceFpBound;
+        ticket.deviceFp = deviceInfo.deviceFp || ticket.deviceFp;
+        ticket.isNewConversation = true;
+        return {
+          success: true,
+          message: 'تم فتح شكوى جديدة وإرسال رسالتك إلى السنترال.',
+          ticket: ticket,
+          isNewConversation: true
+        };
+      }
+      if (!canSendCustomerMessage_(rowData)) {
+        throw new Error('انتهت مدة إعادة فتح الشكوى (5 أيام من تاريخ إنهاء السنترال). يمكنك تقييم الخدمة، وبعد التقييم يمكنك فتح شكوى جديدة.');
+      }
+      const now = new Date();
+      const existing = sheet.getRange(rowNumber, COL.NOTIFICATION).getValue();
+      const updated = appendNotificationLine_(existing, CUSTOMER_MSG_PREFIX + message, now);
+      sheet.getRange(rowNumber, COL.NOTIFICATION).setValue(updated);
+      sheet.getRange(rowNumber, COL.STATUS).setValue(STATUS_REOPENED);
+      sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(now);
+
+      const ticket = rowToObject_(
+        sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0],
+        rowNumber
+      );
+      const deviceInfo = bindOrVerifyDeviceFp_(sheet, rowNumber, rowData, deviceFp);
       ticket.deviceTrusted = deviceInfo.deviceTrusted;
       ticket.deviceFpBound = deviceInfo.deviceFpBound;
       ticket.deviceFp = deviceInfo.deviceFp || ticket.deviceFp;
-      ticket.isNewConversation = true;
+
       return {
         success: true,
-        message: 'تم بدء محادثة جديدة وإرسال رسالتك إلى مسؤولي السنترال.',
-        ticket: ticket,
-        isNewConversation: true
+        message: 'تم إعادة فتح الشكوى وإرسال رسالتك إلى السنترال.',
+        ticket: ticket
       };
     }
   }
@@ -1529,6 +2008,1806 @@ function handleNotificationEdit_(e) {
   }
 }
 
+/* ============================================================
+ * نظام المهام الثلاثي: الفنيون والرسائل والتعيين
+ * ============================================================ */
+
+function getTechSheet_() {
+  const ss = getSpreadsheet_();
+  let sheet = ss.getSheetByName(TECH_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(TECH_SHEET_NAME);
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(TECH_HEADERS);
+    sheet.getRange(1, 1, 1, TECH_HEADERS.length).setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function getMessagesSheet_() {
+  const ss = getSpreadsheet_();
+  let sheet = ss.getSheetByName(MSG_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(MSG_SHEET_NAME);
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(MSG_HEADERS);
+    sheet.getRange(1, 1, 1, MSG_HEADERS.length).setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function techRowToObject_(row) {
+  return {
+    id: String(row[TECH_COL.ID - 1] || ''),
+    name: String(row[TECH_COL.NAME - 1] || ''),
+    phone: String(row[TECH_COL.PHONE - 1] || ''),
+    status: String(row[TECH_COL.STATUS - 1] || TECH_STATUS_AVAILABLE)
+  };
+}
+
+function findTechById_(techId) {
+  const sheet = getTechSheet_();
+  const data = sheet.getDataRange().getValues();
+  const target = String(techId || '').trim();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][TECH_COL.ID - 1] || '').trim() === target) {
+      return { sheet: sheet, data: data, row: i + 1, index: i, values: data[i] };
+    }
+  }
+  return { sheet: sheet, data: data, row: -1, index: -1, values: null };
+}
+
+function verifyTechAuth_(techId, pin) {
+  const found = findTechById_(techId);
+  if (found.row === -1) {
+    throw new Error('فني غير معروف');
+  }
+  const storedPin = String(found.values[TECH_COL.PIN - 1] || '');
+  if (String(pin || '') !== storedPin) {
+    throw new Error('رمز دخول الفني غير صحيح');
+  }
+  if (String(found.values[TECH_COL.STATUS - 1] || '') === TECH_STATUS_INACTIVE) {
+    throw new Error('هذا الحساب غير نشط. تواصل مع الإدارة.');
+  }
+  return found;
+}
+
+function generateTechId_(data) {
+  let max = 0;
+  for (let i = 1; i < data.length; i++) {
+    const id = String(data[i][TECH_COL.ID - 1] || '');
+    const m = id.match(/^T(\d+)$/);
+    if (m) {
+      max = Math.max(max, Number(m[1]));
+    }
+  }
+  return 'T' + (max + 1);
+}
+
+function parseAttachmentMeta_(raw) {
+  if (!raw) return null;
+  var s = String(raw).trim();
+  if (!s) return null;
+  if (s.charAt(0) === '{') {
+    try { return JSON.parse(s); } catch (err) { return { photoUrl: s }; }
+  }
+  if (s.indexOf('http') === 0) return { photoUrl: s };
+  return null;
+}
+
+function buildAttachmentJson_(photoUrl, location) {
+  var meta = {};
+  if (photoUrl) meta.photoUrl = photoUrl;
+  if (location && location.lat != null && location.lng != null) {
+    meta.location = {
+      lat: Number(location.lat),
+      lng: Number(location.lng),
+      accuracy: location.accuracy != null ? Number(location.accuracy) : null,
+      mapsUrl: 'https://www.google.com/maps?q=' + Number(location.lat) + ',' + Number(location.lng)
+    };
+  }
+  return Object.keys(meta).length ? JSON.stringify(meta) : '';
+}
+
+function getTechDriveRootFolder_() {
+  var storedId = PropertiesService.getScriptProperties().getProperty('TECH_DRIVE_ROOT_ID');
+  if (storedId) {
+    try { return DriveApp.getFolderById(storedId); } catch (err) {}
+  }
+  var folders = DriveApp.getFoldersByName(TECH_DRIVE_ROOT_NAME);
+  if (folders.hasNext()) {
+    var existing = folders.next();
+    PropertiesService.getScriptProperties().setProperty('TECH_DRIVE_ROOT_ID', existing.getId());
+    return existing;
+  }
+  var folder = DriveApp.createFolder(TECH_DRIVE_ROOT_NAME);
+  PropertiesService.getScriptProperties().setProperty('TECH_DRIVE_ROOT_ID', folder.getId());
+  return folder;
+}
+
+function getOrCreateTicketDriveFolder_(rowNumber) {
+  ensureHeaders_();
+  var result = getTicketRow_(rowNumber);
+  var existingId = String(result.row[COL.DRIVE_FOLDER - 1] || '').trim();
+  if (existingId) {
+    try { return DriveApp.getFolderById(existingId); } catch (err) {}
+  }
+  var landline = String(result.row[COL.LANDLINE - 1] || '').trim();
+  var root = getTechDriveRootFolder_();
+  var folder = root.createFolder('شكوى_' + rowNumber + '_' + landline);
+  result.sheet.getRange(rowNumber, COL.DRIVE_FOLDER).setValue(folder.getId());
+  return folder;
+}
+
+function uploadTechPhoto_(base64Data, mimeType, rowNumber, techId) {
+  if (!base64Data) return '';
+  var bytes = Utilities.base64Decode(base64Data);
+  if (bytes.length > MAX_PHOTO_BYTES) {
+    throw new Error('حجم الصورة كبير جداً (الحد الأقصى 5 ميغابايت)');
+  }
+  var mime = String(mimeType || 'image/jpeg').split(';')[0];
+  var ext = mime.indexOf('png') !== -1 ? 'png' : 'jpg';
+  var stamp = Utilities.formatDate(new Date(), 'Africa/Cairo', 'yyyyMMdd_HHmmss');
+  var fileName = 'tech_' + techId + '_' + stamp + '.' + ext;
+  var folder = getOrCreateTicketDriveFolder_(rowNumber);
+  var file = folder.createFile(Utilities.newBlob(bytes, mime, fileName));
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (err) {}
+  return 'https://drive.google.com/uc?export=view&id=' + file.getId();
+}
+
+function appendMessage_(ticketRow, senderType, senderId, recipientId, text, attachment) {
+  const sheet = getMessagesSheet_();
+  const now = new Date();
+  const msgId = 'M' + (sheet.getLastRow());
+  sheet.appendRow([
+    msgId,
+    Number(ticketRow) || '',
+    senderType || '',
+    senderId || '',
+    recipientId || '',
+    String(text || ''),
+    String(attachment || ''),
+    formatDate_(now)
+  ]);
+  return msgId;
+}
+
+function getMessagesForTicket_(ticketRow) {
+  const sheet = getMessagesSheet_();
+  const data = sheet.getDataRange().getValues();
+  const target = Number(ticketRow);
+  const messages = [];
+  for (let i = 1; i < data.length; i++) {
+    if (Number(data[i][MSG_COL.TICKET_ROW - 1]) !== target) continue;
+    messages.push({
+      id: String(data[i][MSG_COL.ID - 1] || ''),
+      ticketRow: Number(data[i][MSG_COL.TICKET_ROW - 1]) || 0,
+      senderType: String(data[i][MSG_COL.SENDER_TYPE - 1] || ''),
+      senderId: String(data[i][MSG_COL.SENDER_ID - 1] || ''),
+      recipientId: String(data[i][MSG_COL.RECIPIENT_ID - 1] || ''),
+      text: String(data[i][MSG_COL.TEXT - 1] || ''),
+      attachment: String(data[i][MSG_COL.ATTACHMENT - 1] || ''),
+      date: String(data[i][MSG_COL.DATE - 1] || '')
+    });
+  }
+  return messages;
+}
+
+/** قائمة الفنيين (للإدارة) — بدون كشف الـ PIN */
+function techList(payload) {
+  verifyCentralAuth_(payload.pin);
+  const sheet = getTechSheet_();
+  const data = sheet.getDataRange().getValues();
+  const technicians = [];
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][TECH_COL.ID - 1]) continue;
+    technicians.push(techRowToObject_(data[i]));
+  }
+  return { technicians: technicians, total: technicians.length };
+}
+
+/** إضافة فني جديد (الإدارة) */
+function techAdd(payload) {
+  verifyCentralAuth_(payload.pin);
+  const name = String(payload.name || '').trim();
+  const phone = String(payload.phone || '').trim();
+  const techPin = String(payload.techPin || '').trim();
+
+  if (name.length < 2) {
+    throw new Error('اسم الفني مطلوب');
+  }
+  if (techPin.length < 4) {
+    throw new Error('رمز دخول الفني يجب أن يكون 4 أرقام على الأقل');
+  }
+
+  const sheet = getTechSheet_();
+  const data = sheet.getDataRange().getValues();
+  const techId = generateTechId_(data);
+  sheet.appendRow([techId, name, phone, techPin, TECH_STATUS_AVAILABLE]);
+
+  return {
+    success: true,
+    message: 'تمت إضافة الفني بنجاح',
+    technician: { id: techId, name: name, phone: phone, status: TECH_STATUS_AVAILABLE }
+  };
+}
+
+/** تحديث حالة الفني — من الإدارة (pin) أو من الفني نفسه (techId+techPin) */
+function techUpdateStatus(payload) {
+  const status = String(payload.status || '').trim();
+  if (TECH_STATUSES.indexOf(status) === -1) {
+    throw new Error('حالة غير صحيحة');
+  }
+
+  let found;
+  if (payload.techId && payload.techPin) {
+    found = verifyTechAuth_(payload.techId, payload.techPin);
+  } else {
+    verifyCentralAuth_(payload.pin);
+    found = findTechById_(payload.techId);
+    if (found.row === -1) {
+      throw new Error('فني غير معروف');
+    }
+  }
+
+  found.sheet.getRange(found.row, TECH_COL.STATUS).setValue(status);
+  return { success: true, message: 'تم تحديث الحالة', status: status };
+}
+
+/** تعيين فني لمحادثة (الإدارة) — techId فارغ = إلغاء التعيين */
+function assignTechnician(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const rowNumber = Number(payload.row);
+  const techId = String(payload.techId || '').trim();
+  const result = getTicketRow_(rowNumber);
+
+  let techName = '';
+  if (techId) {
+    const found = findTechById_(techId);
+    if (found.row === -1) {
+      throw new Error('فني غير معروف');
+    }
+    techName = String(found.values[TECH_COL.NAME - 1] || '');
+  }
+
+  result.sheet.getRange(rowNumber, COL.ASSIGNED_TECH).setValue(techId);
+  result.sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(new Date());
+
+  if (techId) {
+    const landline = String(result.row[COL.LANDLINE - 1] || '');
+    appendMessage_(
+      rowNumber,
+      SENDER_CENTRAL,
+      RECIPIENT_CENTRAL,
+      techId,
+      'تم إسناد المهمة إليك — الخط الأرضي: ' + landline,
+      ''
+    );
+  }
+
+  return {
+    success: true,
+    message: techId ? ('تم إسناد المهمة للفني ' + techName) : 'تم إلغاء تعيين الفني',
+    assignedTech: techId,
+    assignedTechName: techName
+  };
+}
+
+/** دخول الفني بلوحته */
+function techLogin(payload) {
+  const found = verifyTechAuth_(payload.techId, payload.pin);
+  return {
+    success: true,
+    technician: techRowToObject_(found.values)
+  };
+}
+
+/** المهام المسندة لفني محدد فقط */
+function techListTasks(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+  ensureHeaders_();
+
+  const techId = String(payload.techId || '').trim();
+  const data = getSheet_().getDataRange().getValues();
+  const tasks = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (String(row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) continue;
+
+    const rowNumber = i + 1;
+    const lastUpdate = row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '';
+    const notifications = parseNotifications_(row[COL.NOTIFICATION - 1], lastUpdate);
+
+    tasks.push({
+      row: rowNumber,
+      date: row[COL.DATE - 1] ? formatDate_(row[COL.DATE - 1]) : '',
+      landline: String(row[COL.LANDLINE - 1] || ''),
+      mobile: String(row[COL.MOBILE - 1] || ''),
+      reason: String(row[COL.REASON - 1] || ''),
+      status: String(row[COL.STATUS - 1] || STATUS_NEW),
+      lastUpdate: lastUpdate,
+      lastNotification: notifications.length ? notifications[notifications.length - 1].text : '',
+      archiveCount: countTicketArchive_(String(row[COL.LANDLINE - 1] || ''), rowNumber),
+      isTechInspection: isTechInspectionRow_(row)
+    });
+  }
+
+  tasks.sort(function (a, b) { return b.row - a.row; });
+  return { tasks: tasks, total: tasks.length };
+}
+
+/** تفاصيل مهمة واحدة للفني + سجل المحادثة مع الإدارة */
+function techGetTask(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+  ensureHeaders_();
+
+  const rowNumber = Number(payload.row);
+  const techId = String(payload.techId || '').trim();
+  const result = getTicketRow_(rowNumber);
+
+  if (String(result.row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) {
+    throw new Error('هذه المهمة غير مسندة إليك');
+  }
+
+  const ticket = rowToObject_(result.row, rowNumber);
+  ticket.messages = getMessagesForTicket_(rowNumber);
+  ticket.archive = getTicketArchive_(ticket.landline, ticket.mobile, rowNumber);
+  return ticket;
+}
+
+/** رسالة من الفني إلى الإدارة (نص + صورة + موقع) */
+function techSendMessage(payload) {
+  const found = verifyTechAuth_(payload.techId, payload.pin);
+  ensureHeaders_();
+
+  const rowNumber = Number(payload.row);
+  const techId = String(payload.techId || '').trim();
+  let message = String(payload.message || '').trim();
+  const photoBase64 = String(payload.photoBase64 || '').trim();
+  const photoMimeType = String(payload.photoMimeType || 'image/jpeg').trim();
+  const location = payload.location || null;
+  const hasLocation = location && location.lat != null && location.lng != null;
+
+  if (!message && !photoBase64 && !hasLocation) {
+    throw new Error('اكتب رسالة أو أرفق صورة أو حدّد موقعك');
+  }
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    throw new Error('الرسالة طويلة جداً');
+  }
+
+  const result = getTicketRow_(rowNumber);
+  if (String(result.row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) {
+    throw new Error('هذه المهمة غير مسندة إليك');
+  }
+
+  let photoUrl = '';
+  if (photoBase64) {
+    photoUrl = uploadTechPhoto_(photoBase64, photoMimeType, rowNumber, techId);
+  }
+
+  let attachment = buildAttachmentJson_(photoUrl, hasLocation ? location : null);
+  if (!attachment && payload.attachment) {
+    attachment = String(payload.attachment || '');
+  }
+
+  if (!message && photoUrl && hasLocation) {
+    message = '📷 صورة و📍 موقع من الفني';
+  } else if (!message && photoUrl) {
+    message = '📷 صورة مرفقة من الفني';
+  } else if (!message && hasLocation) {
+    message = '📍 موقع الفني';
+  }
+
+  appendMessage_(rowNumber, SENDER_TECH, techId, RECIPIENT_CENTRAL, message, attachment);
+  result.sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(new Date());
+
+  return {
+    success: true,
+    message: 'تم إرسال رسالتك إلى الإدارة',
+    messages: getMessagesForTicket_(rowNumber)
+  };
+}
+
+/** رسالة من الإدارة إلى الفني (نص + صورة) */
+function centralSendTechMessage(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const rowNumber = Number(payload.row);
+  let message = String(payload.message || '').trim();
+  const photoBase64 = String(payload.photoBase64 || '').trim();
+  const photoMimeType = String(payload.photoMimeType || 'image/jpeg').trim();
+
+  if (!message && !photoBase64) {
+    throw new Error('اكتب رسالة أو أرفق صورة');
+  }
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    throw new Error('الرسالة طويلة جداً');
+  }
+
+  const result = getTicketRow_(rowNumber);
+  const techId = String(result.row[COL.ASSIGNED_TECH - 1] || '').trim();
+  if (!techId) {
+    throw new Error('لا يوجد فني مسند لهذه المحادثة');
+  }
+
+  let photoUrl = '';
+  if (photoBase64) {
+    photoUrl = uploadTechPhoto_(photoBase64, photoMimeType, rowNumber, 'central');
+  }
+
+  let attachment = buildAttachmentJson_(photoUrl, null);
+  if (!attachment && payload.attachment) {
+    attachment = String(payload.attachment || '');
+  }
+
+  if (!message && photoUrl) {
+    message = '📷 صورة من الإدارة';
+  }
+
+  appendMessage_(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, techId, message, attachment);
+  result.sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(new Date());
+
+  return {
+    success: true,
+    message: photoUrl ? 'تم إرسال الرسالة والصورة للفني' : 'تم إرسال رسالتك إلى الفني',
+    messages: getMessagesForTicket_(rowNumber)
+  };
+}
+
+/** إنشاء مهمة فحص فني مباشرة من السنترال */
+function centralCreateTechInspection(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const landline = validateLandline_(payload.landline);
+  const techId = String(payload.techId || '').trim();
+  const note = String(payload.note || '').trim();
+  const photoBase64 = String(payload.photoBase64 || '').trim();
+  const photoMimeType = String(payload.photoMimeType || 'image/jpeg').trim();
+
+  if (!techId) {
+    throw new Error('اختر الفني المسؤول عن الفحص');
+  }
+  if (!note && !photoBase64) {
+    throw new Error('اكتب تفاصيل طلب الفحص أو أرفق صورة');
+  }
+  if (note.length > MAX_MESSAGE_LENGTH) {
+    throw new Error('الوصف طويل جداً');
+  }
+
+  const found = findTechById_(techId);
+  if (found.row === -1) {
+    throw new Error('فني غير معروف');
+  }
+  const techName = String(found.values[TECH_COL.NAME - 1] || '');
+
+  const sheet = getSheet_();
+  const now = new Date();
+  const notifLine = appendNotificationLine_('', 'السنترال: [فحص فني] ' + (note || '📷 صورة مرفقة'), now);
+
+  sheet.appendRow([
+    now,
+    landline,
+    TECH_INSPECTION_REASON,
+    '',
+    STATUS_IN_PROGRESS,
+    notifLine,
+    now,
+    '',
+    '',
+    '',
+    '',
+    '',
+    RATING_FLAG_NO,
+    techId,
+    CHANNEL_CLOSED,
+    ''
+  ]);
+
+  const rowNumber = sheet.getLastRow();
+  let photoUrl = '';
+  if (photoBase64) {
+    photoUrl = uploadTechPhoto_(photoBase64, photoMimeType, rowNumber, 'central');
+  }
+  let msgText = 'طلب فحص من السنترال — الخط: ' + landline;
+  if (note) {
+    msgText += '\n' + note;
+  } else if (photoUrl) {
+    msgText += '\n📷 صورة مرفقة';
+  }
+  let attachment = '';
+  if (photoUrl) {
+    attachment = JSON.stringify({ photoUrl: photoUrl });
+  }
+  appendMessage_(
+    rowNumber,
+    SENDER_CENTRAL,
+    RECIPIENT_CENTRAL,
+    techId,
+    msgText,
+    attachment
+  );
+
+  const ticket = rowToObject_(
+    sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0],
+    rowNumber
+  );
+  ticket.techMessages = getMessagesForTicket_(rowNumber);
+  ticket.assignedTechName = techName;
+
+  return {
+    success: true,
+    message: 'تم إرسال مهمة الفحص للفني ' + techName,
+    ticket: ticket
+  };
+}
+
+/** قائمة مهام الفحص الفني */
+function centralListTechInspections(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const filter = String(payload.filter || 'active');
+  const data = getSheet_().getDataRange().getValues();
+  const tasks = [];
+  let activeCount = 0;
+  let closedCount = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!isTechInspectionRow_(row)) continue;
+
+    const rowNumber = i + 1;
+    const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+    const resolved = isResolvedStatus_(status);
+    if (resolved) {
+      closedCount++;
+    } else {
+      activeCount++;
+    }
+
+    if (filter === 'active' && resolved) continue;
+    if (filter === 'closed' && !resolved) continue;
+
+    tasks.push({
+      row: rowNumber,
+      date: row[COL.DATE - 1] ? formatDate_(row[COL.DATE - 1]) : '',
+      landline: String(row[COL.LANDLINE - 1] || ''),
+      status: status,
+      lastUpdate: row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '',
+      assignedTech: String(row[COL.ASSIGNED_TECH - 1] || ''),
+      note: extractTechInspectionNote_(row[COL.NOTIFICATION - 1])
+    });
+  }
+
+  tasks.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return {
+    tasks: tasks,
+    total: tasks.length,
+    activeCount: activeCount,
+    closedCount: closedCount
+  };
+}
+
+/** تفاصيل مهمة فحص فني */
+function centralGetTechInspection(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const rowNumber = Number(payload.row);
+  const result = getTicketRow_(rowNumber);
+  if (!isTechInspectionRow_(result.row)) {
+    throw new Error('هذه ليست مهمة فحص فني');
+  }
+
+  const ticket = rowToObject_(result.row, rowNumber);
+  ticket.techMessages = getMessagesForTicket_(rowNumber);
+  const techId = String(result.row[COL.ASSIGNED_TECH - 1] || '').trim();
+  if (techId) {
+    const found = findTechById_(techId);
+    if (found.row !== -1) {
+      ticket.assignedTechName = String(found.values[TECH_COL.NAME - 1] || '');
+    }
+  }
+  ticket.canCloseInspection = !isResolvedStatus_(ticket.status);
+  ticket.archive = getInspectionPageArchive_(ticket.landline, rowNumber);
+  ticket.archiveCount = ticket.archive.length;
+
+  return ticket;
+}
+
+/** إغلاق مهمة فحص فني من السنترال */
+function centralCloseTechInspection(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const rowNumber = Number(payload.row);
+  const note = String(payload.note || '').trim();
+  const result = getTicketRow_(rowNumber);
+
+  if (!isTechInspectionRow_(result.row)) {
+    throw new Error('هذه ليست مهمة فحص فني');
+  }
+  if (isResolvedStatus_(result.row[COL.STATUS - 1])) {
+    throw new Error('المهمة مغلقة مسبقاً');
+  }
+
+  const techId = String(result.row[COL.ASSIGNED_TECH - 1] || '').trim();
+  const now = new Date();
+  let closeMsg = 'تم إغلاق مهمة الفحص من السنترال';
+  if (note) {
+    closeMsg += ' — ' + note;
+  }
+
+  result.sheet.getRange(rowNumber, COL.STATUS).setValue(STATUS_RESOLVED);
+  result.sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(now);
+
+  const updated = appendNotificationLine_(result.row[COL.NOTIFICATION - 1], 'السنترال: ' + closeMsg, now);
+  result.sheet.getRange(rowNumber, COL.NOTIFICATION).setValue(updated);
+
+  if (techId) {
+    appendMessage_(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, techId, closeMsg, '');
+  }
+
+  const ticket = rowToObject_(
+    result.sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0],
+    rowNumber
+  );
+  ticket.techMessages = getMessagesForTicket_(rowNumber);
+  ticket.canCloseInspection = false;
+  ticket.archive = getInspectionPageArchive_(ticket.landline, rowNumber);
+  ticket.archiveCount = ticket.archive.length;
+
+  return {
+    success: true,
+    message: 'تم إغلاق مهمة الفحص',
+    ticket: ticket
+  };
+}
+
+function getFarshootDataSheet_() {
+  const ss = SpreadsheetApp.openById(FARSHOOT_DATA_SPREADSHEET_ID);
+  const byName = ss.getSheetByName(FARSHOOT_DATA_SHEET_NAME);
+  if (byName) {
+    return byName;
+  }
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getSheetId() === FARSHOOT_DATA_SHEET_GID) {
+      return sheets[i];
+    }
+  }
+  throw new Error('لم يتم العثور على تبويب «' + FARSHOOT_DATA_SHEET_NAME + '» في شيت فرشوط');
+}
+
+/** بحث رقم مسلسل في تبويب بيانات شيت فرشوط */
+function techSearchSerialData(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+  const serial = String(payload.serial || '').trim();
+  if (!serial) {
+    throw new Error('أدخل رقم المسلسل');
+  }
+
+  const sheet = getFarshootDataSheet_();
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) {
+    return { found: false, serial: serial };
+  }
+
+  const headers = data[0].map(function (h) { return String(h || '').trim(); });
+  let foundRow = null;
+  let rowIndex = -1;
+
+  for (let i = 1; i < data.length; i++) {
+    const cellVal = String(data[i][0] || '').trim();
+    if (cellVal === serial) {
+      foundRow = data[i];
+      rowIndex = i + 1;
+      break;
+    }
+  }
+
+  if (!foundRow) {
+    return { found: false, serial: serial };
+  }
+
+  const record = {};
+  for (let c = 0; c < headers.length; c++) {
+    if (headers[c]) {
+      record[headers[c]] = String(foundRow[c] || '').trim();
+    }
+  }
+
+  return {
+    found: true,
+    serial: serial,
+    row: rowIndex,
+    headers: headers.filter(function (h) { return h; }),
+    data: record
+  };
+}
+
+function getFarshootPreviewSheet_() {
+  const ss = SpreadsheetApp.openById(FARSHOOT_DATA_SPREADSHEET_ID);
+  const byName = ss.getSheetByName(FARSHOOT_PREVIEW_SHEET_NAME);
+  if (byName) {
+    return byName;
+  }
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getSheetId() === FARSHOOT_PREVIEW_SHEET_GID) {
+      return sheets[i];
+    }
+  }
+  throw new Error('لم يتم العثور على تبويب «' + FARSHOOT_PREVIEW_SHEET_NAME + '» في شيت فرشوط');
+}
+
+function ensurePreviewSheetHeaders_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(PREVIEW_SHEET_HEADERS);
+    sheet.getRange(1, 1, 1, PREVIEW_SHEET_HEADERS.length).setFontWeight('bold');
+    return;
+  }
+  const width = Math.max(sheet.getLastColumn(), PREVIEW_SHEET_HEADERS.length);
+  const firstRow = sheet.getRange(1, 1, 1, width).getValues()[0];
+  const needsHeaders = PREVIEW_SHEET_HEADERS.every(function (_header, index) {
+    return !firstRow[index];
+  });
+  if (needsHeaders) {
+    sheet.getRange(1, 1, 1, PREVIEW_SHEET_HEADERS.length).setValues([PREVIEW_SHEET_HEADERS]);
+    sheet.getRange(1, 1, 1, PREVIEW_SHEET_HEADERS.length).setFontWeight('bold');
+  }
+}
+
+function getPreviewDriveRootFolder_() {
+  var storedId = PropertiesService.getScriptProperties().getProperty('PREVIEW_DRIVE_ROOT_ID');
+  if (storedId) {
+    try { return DriveApp.getFolderById(storedId); } catch (err) {}
+  }
+  var folders = DriveApp.getFoldersByName(PREVIEW_DRIVE_ROOT_NAME);
+  if (folders.hasNext()) {
+    var existing = folders.next();
+    PropertiesService.getScriptProperties().setProperty('PREVIEW_DRIVE_ROOT_ID', existing.getId());
+    return existing;
+  }
+  var folder = DriveApp.createFolder(PREVIEW_DRIVE_ROOT_NAME);
+  PropertiesService.getScriptProperties().setProperty('PREVIEW_DRIVE_ROOT_ID', folder.getId());
+  return folder;
+}
+
+function uploadPreviewPhoto_(base64Data, mimeType, serial, techId) {
+  if (!base64Data) return '';
+  var bytes = Utilities.base64Decode(base64Data);
+  if (bytes.length > MAX_PHOTO_BYTES) {
+    throw new Error('حجم الصورة كبير جداً (الحد الأقصى 5 ميغابايت)');
+  }
+  var mime = String(mimeType || 'image/jpeg').split(';')[0];
+  var ext = mime.indexOf('png') !== -1 ? 'png' : 'jpg';
+  var stamp = Utilities.formatDate(new Date(), 'Africa/Cairo', 'yyyyMMdd_HHmmss');
+  var fileName = 'preview_' + techId + '_' + serial + '_' + stamp + '.' + ext;
+  var root = getPreviewDriveRootFolder_();
+  var folder = root.createFolder('معاينة_' + serial + '_' + stamp);
+  var file = folder.createFile(Utilities.newBlob(bytes, mime, fileName));
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (err) {}
+  return 'https://drive.google.com/file/d/' + file.getId() + '/view?usp=drivesdk';
+}
+
+function formatPreviewDateTime_(value) {
+  var d = value instanceof Date ? value : new Date(value);
+  return Utilities.formatDate(d, 'Africa/Cairo', 'dd/MM/yyyy hh:mm:ss a');
+}
+
+/** حفظ فحص تعذر معاينة في تبويب تعذر معاينة */
+function techSubmitPreviewInspection(payload) {
+  const found = verifyTechAuth_(payload.techId, payload.pin);
+  const serial = String(payload.serial || '').trim();
+  if (!serial) {
+    throw new Error('رقم المسلسل مطلوب');
+  }
+
+  const inspectionResult = String(payload.inspectionResult || '').trim();
+  if (PREVIEW_INSPECTION_RESULTS.indexOf(inspectionResult) === -1) {
+    throw new Error('اختر نتيجة الفحص من القائمة');
+  }
+
+  const photoBase64 = String(payload.photoBase64 || '').trim();
+  if (!photoBase64) {
+    throw new Error('يجب التقاط صورة للفحص');
+  }
+
+  const msanCabinet = String(payload.msanCabinet || '').trim();
+  if (!msanCabinet) {
+    throw new Error('كابينة MSAN مطلوبة');
+  }
+  const cableNumber = String(payload.cableNumber || '').trim();
+  if (!cableNumber) {
+    throw new Error('رقم الكابل مطلوب');
+  }
+  const cabinetNumber = String(payload.cabinetNumber || '').trim();
+  if (!cabinetNumber) {
+    throw new Error('رقم الكابينة مطلوب');
+  }
+  const boxNumber = String(payload.boxNumber || '').trim();
+  if (!boxNumber) {
+    throw new Error('رقم البكس مطلوب');
+  }
+  const notes = String(payload.notes || '').trim();
+  if (!notes) {
+    throw new Error('الملاحظات مطلوبة');
+  }
+
+  const location = payload.location || null;
+  if (!location || location.lat == null || location.lng == null) {
+    throw new Error('يجب تحديد الموقع قبل الإرسال — اضغط «تحديد موقعي»');
+  }
+
+  const techId = String(payload.techId || '').trim();
+  const techName = String(found.values[TECH_COL.NAME - 1] || '').trim();
+  const customerName = String(payload.customerName || '').trim();
+  const customerMobile = String(payload.customerMobile || '').trim();
+  const customerAddress = String(payload.customerAddress || '').trim();
+  const mapsUrl = 'https://www.google.com/maps?q=' + Number(location.lat) + ',' + Number(location.lng);
+  const photoUrl = uploadPreviewPhoto_(photoBase64, payload.photoMimeType, serial, techId);
+  const now = new Date();
+
+  const sheet = getFarshootPreviewSheet_();
+  ensurePreviewSheetHeaders_(sheet);
+  sheet.appendRow([
+    formatPreviewDateTime_(now),
+    serial,
+    techName,
+    customerMobile,
+    customerName,
+    customerAddress,
+    msanCabinet,
+    cableNumber,
+    cabinetNumber,
+    boxNumber,
+    notes,
+    inspectionResult,
+    mapsUrl,
+    photoUrl
+  ]);
+
+  return { success: true, message: 'تم حفظ فحص التعذر في الشيت بنجاح' };
+}
+
+function previewRowToRecord_(row, rowNumber) {
+  var dateVal = row[0];
+  var dateTime = dateVal instanceof Date
+    ? formatPreviewDateTime_(dateVal)
+    : String(dateVal || '').trim();
+  return {
+    row: rowNumber,
+    dateTime: dateTime,
+    serial: String(row[1] || '').trim(),
+    tech: String(row[2] || '').trim(),
+    mobile: String(row[3] || '').trim(),
+    customerName: String(row[4] || '').trim(),
+    address: String(row[5] || '').trim(),
+    msanCabinet: String(row[6] || '').trim(),
+    cableNumber: String(row[7] || '').trim(),
+    cabinetNumber: String(row[8] || '').trim(),
+    boxNumber: String(row[9] || '').trim(),
+    notes: String(row[10] || '').trim(),
+    action: String(row[11] || '').trim(),
+    locationUrl: String(row[12] || '').trim(),
+    photoUrl: String(row[13] || '').trim()
+  };
+}
+
+function isPreviewRowEmpty_(row) {
+  for (var i = 0; i < 14; i++) {
+    if (String(row[i] || '').trim()) return false;
+  }
+  return true;
+}
+
+/** قائمة سجلات تعذر المعاينة للسنترال */
+function centralGetPreviewInspections(payload) {
+  verifyCentralAuth_(payload.pin);
+  var sheet = getFarshootPreviewSheet_();
+  var data = sheet.getDataRange().getValues();
+  var records = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (isPreviewRowEmpty_(row)) continue;
+    records.push(previewRowToRecord_(row, i + 1));
+  }
+
+  records.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return {
+    records: records,
+    total: records.length,
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/' + FARSHOOT_DATA_SPREADSHEET_ID +
+      '/edit?gid=' + FARSHOOT_PREVIEW_SHEET_GID
+  };
+}
+
+function sheetCellToDateTime_(value) {
+  if (value instanceof Date) {
+    return formatPreviewDateTime_(value);
+  }
+  if (typeof value === 'number' && isFinite(value) && value > 20000) {
+    var epoch = new Date(1899, 11, 30);
+    return formatPreviewDateTime_(new Date(epoch.getTime() + value * 86400000));
+  }
+  var s = String(value || '').trim();
+  if (/^\d+(\.\d+)?$/.test(s) && parseFloat(s) > 20000) {
+    var epoch2 = new Date(1899, 11, 30);
+    return formatPreviewDateTime_(new Date(epoch2.getTime() + parseFloat(s) * 86400000));
+  }
+  return s;
+}
+
+function techNoteRowToRecord_(row, rowNumber) {
+  return {
+    row: rowNumber,
+    dateTime: sheetCellToDateTime_(row[0]),
+    landline: String(row[1] || '').trim(),
+    tech: String(row[2] || '').trim(),
+    reportType: String(row[3] || '').trim(),
+    notes: String(row[4] || '').trim(),
+    connectionType: String(row[5] || '').trim(),
+    cableNumber: String(row[6] || '').trim(),
+    cabinetNumber: String(row[7] || '').trim(),
+    boxNumber: String(row[8] || '').trim(),
+    locationUrl: String(row[9] || '').trim(),
+    photoUrl: String(row[10] || '').trim(),
+    action: String(row[11] || '').trim()
+  };
+}
+
+function isTechNoteRowEmpty_(row) {
+  for (var i = 0; i < 12; i++) {
+    if (String(row[i] || '').trim()) return false;
+  }
+  return true;
+}
+
+function normalizeArabicLabel_(text) {
+  return String(text || '').trim()
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function isGroundFaultReportType_(reportType) {
+  var normalized = normalizeArabicLabel_(reportType);
+  return normalized === 'عطل ارضي' || normalized.indexOf('عطل ارض') !== -1;
+}
+
+function isTransferredToNetworksAction_(action) {
+  return normalizeArabicLabel_(action).indexOf('تحويل للشبكات') !== -1;
+}
+
+function landlineDigitsForMatch_(value) {
+  return String(value || '').replace(/[^\d]/g, '');
+}
+
+function landlineMatchesSearch_(cellValue, targetLandline) {
+  var cell = String(cellValue || '').trim();
+  if (!cell) return false;
+  var targetNorm = normalizeLandlineForMatch_(targetLandline);
+  var cellNorm = normalizeLandlineForMatch_(cell);
+  if (targetNorm && cellNorm === targetNorm) return true;
+  var targetDigits = landlineDigitsForMatch_(targetLandline);
+  var cellDigits = landlineDigitsForMatch_(cell);
+  if (!targetDigits || targetDigits.length < 4) return false;
+  return cellDigits === targetDigits ||
+    (cellDigits.length >= 4 && targetDigits.endsWith(cellDigits)) ||
+    (cellDigits.length >= 4 && cellDigits.endsWith(targetDigits));
+}
+
+function landlineMatchesArchiveTicket_(cellValue, targetLandline) {
+  var cell = String(cellValue || '').trim();
+  if (!cell) return false;
+  var parts = cell.split(/[/,،|]/);
+  var i;
+  for (i = 0; i < parts.length; i++) {
+    if (landlineMatchesSearch_(parts[i].trim(), targetLandline)) return true;
+  }
+  return landlineMatchesSearch_(cell, targetLandline);
+}
+
+function getNetworkArchiveSheet_() {
+  var ss = getSpreadsheet_();
+  var byName = ss.getSheetByName(NETWORK_ARCHIVE_SHEET_NAME);
+  if (byName) {
+    return byName;
+  }
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].getSheetId() === NETWORK_ARCHIVE_SHEET_GID) {
+      return sheets[i];
+    }
+  }
+  throw new Error('لم يتم العثور على تبويب «' + NETWORK_ARCHIVE_SHEET_NAME + '» في الشيت');
+}
+
+function networkArchiveRowToRecord_(row, rowNumber) {
+  return {
+    row: rowNumber,
+    dateTime: sheetCellToDateTime_(row[0]),
+    welder: String(row[3] || '').trim(),
+    companion: String(row[4] || '').trim(),
+    workClassification: String(row[5] || '').trim(),
+    workType: String(row[6] || '').trim(),
+    materials: String(row[7] || '').trim(),
+    repairStatus: String(row[8] || '').trim(),
+    inspectionNotes: String(row[9] || '').trim(),
+    locationUrl: String(row[14] || '').trim(),
+    photoUrl: String(row[15] || '').trim()
+  };
+}
+
+function networkArchiveFullRowToRecord_(row, rowNumber) {
+  return {
+    row: rowNumber,
+    dateTime: sheetCellToDateTime_(row[0]),
+    ticketNumber: String(row[1] || '').trim(),
+    originalTech: String(row[2] || '').trim(),
+    welder: String(row[3] || '').trim(),
+    companion: String(row[4] || '').trim(),
+    workCategory: String(row[5] || '').trim(),
+    workType: String(row[6] || '').trim(),
+    materials: String(row[7] || '').trim(),
+    repairStatus: String(row[8] || '').trim(),
+    inspectionNotes: String(row[9] || '').trim(),
+    otherNotes: String(row[10] || '').trim(),
+    cableNumber: String(row[11] || '').trim(),
+    cabinetNumber: String(row[12] || '').trim(),
+    boxNumber: String(row[13] || '').trim(),
+    locationUrl: String(row[14] || '').trim(),
+    photoUrl: String(row[15] || '').trim()
+  };
+}
+
+function isNetworkArchiveRowEmpty_(row) {
+  for (var i = 0; i < 16; i++) {
+    if (String(row[i] || '').trim()) return false;
+  }
+  return true;
+}
+
+/** الإصلاحات الأرضية — أرشيف الشبكات أو فحص الشبكات للسنترال */
+function centralGetGroundRepairs(payload) {
+  verifyCentralAuth_(payload.pin);
+  var source = String(payload.source || 'archive').trim();
+  var useInspection = source === 'inspection';
+  var sheet = useInspection ? getNetworkInspectionSheet_() : getNetworkArchiveSheet_();
+  var data = sheet.getDataRange().getValues();
+  var records = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (isNetworkArchiveRowEmpty_(row)) continue;
+    records.push(networkArchiveFullRowToRecord_(row, i + 1));
+  }
+
+  records.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return {
+    records: records,
+    total: records.length,
+    source: useInspection ? 'inspection' : 'archive',
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+      '/edit?gid=' + (useInspection ? NETWORK_INSPECTION_SHEET_GID : NETWORK_ARCHIVE_SHEET_GID)
+  };
+}
+
+/** أرشيف إصلاحات الشبكات لرقم تليفون — تبويب ارشيف الشبكات */
+function netTechGetNetworkArchive(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+
+  var landline = String(payload.landline || '').trim();
+  if (!landline) {
+    throw new Error('رقم التليفون مطلوب');
+  }
+
+  var sheet = getNetworkArchiveSheet_();
+  var data = sheet.getDataRange().getValues();
+  var records = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!landlineMatchesArchiveTicket_(row[1], landline)) continue;
+    records.push(networkArchiveRowToRecord_(row, i + 1));
+  }
+
+  records.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return {
+    records: records,
+    total: records.length,
+    landline: landline,
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+      '/edit?gid=' + NETWORK_ARCHIVE_SHEET_GID
+  };
+}
+
+function networkInspectionRowToHistoryRecord_(row, rowNumber) {
+  return {
+    row: rowNumber,
+    dateTime: sheetCellToDateTime_(row[0]),
+    welder: String(row[3] || '').trim(),
+    companion: String(row[4] || '').trim(),
+    workClassification: String(row[5] || '').trim(),
+    workType: String(row[6] || '').trim(),
+    materials: String(row[7] || '').trim(),
+    repairStatus: String(row[8] || '').trim(),
+    inspectionNotes: String(row[9] || '').trim(),
+    locationUrl: String(row[14] || '').trim(),
+    photoUrl: String(row[15] || '').trim()
+  };
+}
+
+/** سجل فحوصات رقم تليفون — من شيت فحص الشبكات (تاب لم يُصلَح بعد) */
+function netTechGetNetworkInspectionHistory(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+
+  var landline = String(payload.landline || '').trim();
+  if (!landline) {
+    throw new Error('رقم التليفون مطلوب');
+  }
+
+  var sheet = getNetworkInspectionSheet_();
+  var data = sheet.getDataRange().getValues();
+  var records = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!landlineMatchesArchiveTicket_(row[1], landline)) continue;
+    records.push(networkInspectionRowToHistoryRecord_(row, i + 1));
+  }
+
+  records.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return {
+    records: records,
+    total: records.length,
+    landline: landline,
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+      '/edit?gid=' + NETWORK_INSPECTION_SHEET_GID
+  };
+}
+
+function farshootRowToRecord_(headers, row, rowNumber) {
+  var record = {};
+  for (var c = 0; c < headers.length; c++) {
+    if (headers[c]) {
+      record[headers[c]] = String(row[c] || '').trim();
+    }
+  }
+  return {
+    row: rowNumber,
+    headers: headers.filter(function (h) { return h; }),
+    data: record
+  };
+}
+
+function getFarshootLandlineSearchColumns_(headers) {
+  var priority = [];
+  var i;
+  for (i = 0; i < headers.length; i++) {
+    var header = String(headers[i] || '').trim();
+    if (!header) continue;
+    if (/تذكر|تليفون|أرض|ارض|مسلسل|line|phone/i.test(header)) {
+      priority.push(i);
+    }
+  }
+  if (priority.length) return priority;
+  var cols = [];
+  for (i = 0; i < headers.length; i++) {
+    if (headers[i]) cols.push(i);
+  }
+  return cols;
+}
+
+/** أعطال أرضية محوّلة للشبكات — لوحة فني الشبكات */
+function netTechGetGroundFaults(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+  var sheet = getTechNotesSheet_();
+  var data = sheet.getDataRange().getValues();
+  var records = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (isTechNoteRowEmpty_(row)) continue;
+    var rec = techNoteRowToRecord_(row, i + 1);
+    if (!isGroundFaultReportType_(rec.reportType)) continue;
+    if (!isTransferredToNetworksAction_(rec.action)) continue;
+    records.push(rec);
+  }
+
+  records.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return {
+    records: records,
+    total: records.length,
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+      '/edit?gid=' + TECH_NOTES_SHEET_GID
+  };
+}
+
+function networkInspectionRowToListRecord_(row, rowNumber) {
+  return {
+    row: rowNumber,
+    dateTime: sheetCellToDateTime_(row[0]),
+    ticketNumber: String(row[1] || '').trim(),
+    originalTech: String(row[2] || '').trim(),
+    welder: String(row[3] || '').trim(),
+    companion: String(row[4] || '').trim(),
+    workCategory: String(row[5] || '').trim(),
+    workType: String(row[6] || '').trim(),
+    materials: String(row[7] || '').trim(),
+    repairStatus: String(row[8] || '').trim(),
+    inspectionNotes: String(row[9] || '').trim(),
+    cableNumber: String(row[11] || '').trim(),
+    cabinetNumber: String(row[12] || '').trim(),
+    boxNumber: String(row[13] || '').trim(),
+    locationUrl: String(row[14] || '').trim(),
+    photoUrl: String(row[15] || '').trim(),
+    sourceDateTime: sheetCellToDateTime_(row[16])
+  };
+}
+
+function isUnrepairedNetworkInspectionStatus_(status) {
+  var normalized = normalizeArabicLabel_(status);
+  if (!normalized) return false;
+  return normalized.indexOf('جاري') !== -1 ||
+    normalized.indexOf('يصعب') !== -1 ||
+    normalized.indexOf('انتظار') !== -1;
+}
+
+function findOpenNetworkInspectionsForLandline_(landline) {
+  var targetLandline = normalizeLandlineForMatch_(landline);
+  if (!targetLandline) return [];
+  var sheet = getNetworkInspectionSheet_();
+  var data = sheet.getDataRange().getValues();
+  var matches = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var rowLandline = normalizeLandlineForMatch_(String(row[1] || '').trim());
+    if (!rowLandline || rowLandline !== targetLandline) continue;
+    if (!isUnrepairedNetworkInspectionStatus_(row[8])) continue;
+    matches.push({
+      row: i + 1,
+      repairStatus: String(row[8] || '').trim(),
+      dateTime: sheetCellToDateTime_(row[0])
+    });
+  }
+
+  matches.sort(function (a, b) {
+    return b.row - a.row;
+  });
+  return matches;
+}
+
+function assertNoOpenNetworkInspectionForLandline_(landline) {
+  var matches = findOpenNetworkInspectionsForLandline_(landline);
+  if (!matches.length) return;
+  var latest = matches[0];
+  throw new Error(
+    'رقم التليفون ' + landline + ' موجود في شيت فحص الشبكات كعطل مفتوح' +
+    (latest.repairStatus ? ' (حالة: ' + latest.repairStatus + ')' : '') +
+    '. يرجى التوجه إلى قسم «أعطال أرضية تم فحصها ولم يتم إصلاحها».'
+  );
+}
+
+/** أعطال أرضية مُفحوصة ولم يُصلَح بعد — من شيت فحص الشبكات */
+function netTechGetUnrepairedInspections(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+  var sheet = getNetworkInspectionSheet_();
+  var data = sheet.getDataRange().getValues();
+  var records = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!String(row[1] || '').trim() && !String(row[8] || '').trim()) continue;
+    if (!isUnrepairedNetworkInspectionStatus_(row[8])) continue;
+    records.push(networkInspectionRowToListRecord_(row, i + 1));
+  }
+
+  records.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return {
+    records: records,
+    total: records.length,
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+      '/edit?gid=' + NETWORK_INSPECTION_SHEET_GID
+  };
+}
+
+/** هل يوجد فحص شبكات مفتوح (لم يُصلَح) لنفس رقم التليفون؟ */
+function netTechCheckOpenNetworkInspection(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+  var landline = String(payload.landline || '').trim();
+  if (!landline) {
+    throw new Error('رقم التليفون مطلوب');
+  }
+  var matches = findOpenNetworkInspectionsForLandline_(landline);
+
+  return {
+    open: matches.length > 0,
+    landline: landline,
+    count: matches.length,
+    latest: matches.length ? matches[0] : null
+  };
+}
+
+/** بحث رقم تليفون/تذكرة في تبويب بيانات شيت فرشوط — فحص الشبكات */
+function techSearchLandlineData(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+  var landline = String(payload.landline || '').trim();
+  if (!landline) {
+    throw new Error('أدخل رقم التليفون');
+  }
+
+  var sheet = getFarshootDataSheet_();
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) {
+    return { found: false, landline: landline, matches: [], total: 0 };
+  }
+
+  var headers = data[0].map(function (h) { return String(h || '').trim(); });
+  var searchCols = getFarshootLandlineSearchColumns_(headers);
+  var matches = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var matched = false;
+    for (var c = 0; c < searchCols.length; c++) {
+      if (landlineMatchesSearch_(row[searchCols[c]], landline)) {
+        matched = true;
+        break;
+      }
+    }
+    if (matched) {
+      matches.push(farshootRowToRecord_(headers, row, i + 1));
+    }
+  }
+
+  return {
+    found: matches.length > 0,
+    landline: landline,
+    matches: matches,
+    total: matches.length
+  };
+}
+
+function getNetworkInspectionSheet_() {
+  var ss = getSpreadsheet_();
+  var byName = ss.getSheetByName(NETWORK_INSPECTION_SHEET_NAME);
+  if (byName) {
+    return byName;
+  }
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].getSheetId() === NETWORK_INSPECTION_SHEET_GID) {
+      return sheets[i];
+    }
+  }
+  throw new Error('لم يتم العثور على تبويب «' + NETWORK_INSPECTION_SHEET_NAME + '» في الشيت');
+}
+
+function ensureNetworkInspectionSheetHeaders_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(NETWORK_INSPECTION_SHEET_HEADERS);
+    sheet.getRange(1, 1, 1, NETWORK_INSPECTION_SHEET_HEADERS.length).setFontWeight('bold');
+    return;
+  }
+  var width = Math.max(sheet.getLastColumn(), NETWORK_INSPECTION_SHEET_HEADERS.length);
+  var firstRow = sheet.getRange(1, 1, 1, width).getValues()[0];
+  var needsHeaders = NETWORK_INSPECTION_SHEET_HEADERS.every(function (_header, index) {
+    return !firstRow[index];
+  });
+  if (needsHeaders) {
+    sheet.getRange(1, 1, 1, NETWORK_INSPECTION_SHEET_HEADERS.length).setValues([NETWORK_INSPECTION_SHEET_HEADERS]);
+    sheet.getRange(1, 1, 1, NETWORK_INSPECTION_SHEET_HEADERS.length).setFontWeight('bold');
+  }
+}
+
+function getNetworkInspectionDriveRootFolder_() {
+  var storedId = PropertiesService.getScriptProperties().getProperty('NETWORK_INSPECTION_DRIVE_ROOT_ID');
+  if (storedId) {
+    try { return DriveApp.getFolderById(storedId); } catch (err) {}
+  }
+  var folders = DriveApp.getFoldersByName(NETWORK_INSPECTION_DRIVE_ROOT_NAME);
+  if (folders.hasNext()) {
+    var existing = folders.next();
+    PropertiesService.getScriptProperties().setProperty('NETWORK_INSPECTION_DRIVE_ROOT_ID', existing.getId());
+    return existing;
+  }
+  var folder = DriveApp.createFolder(NETWORK_INSPECTION_DRIVE_ROOT_NAME);
+  PropertiesService.getScriptProperties().setProperty('NETWORK_INSPECTION_DRIVE_ROOT_ID', folder.getId());
+  return folder;
+}
+
+function uploadNetworkInspectionPhoto_(base64Data, mimeType, landline, techId) {
+  if (!base64Data) return '';
+  var bytes = Utilities.base64Decode(base64Data);
+  if (bytes.length > MAX_PHOTO_BYTES) {
+    throw new Error('حجم الصورة كبير جداً (الحد الأقصى 5 ميغابايت)');
+  }
+  var mime = String(mimeType || 'image/jpeg').split(';')[0];
+  var ext = mime.indexOf('png') !== -1 ? 'png' : 'jpg';
+  var stamp = Utilities.formatDate(new Date(), 'Africa/Cairo', 'yyyyMMdd_HHmmss');
+  var safeLine = String(landline || '').replace(/[^\d]/g, '') || 'line';
+  var fileName = 'net_' + techId + '_' + safeLine + '_' + stamp + '.' + ext;
+  var root = getNetworkInspectionDriveRootFolder_();
+  var folder = root.createFolder('فحص_' + safeLine + '_' + stamp);
+  var file = folder.createFile(Utilities.newBlob(bytes, mime, fileName));
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (err) {}
+  return 'https://drive.google.com/file/d/' + file.getId() + '/view?usp=drivesdk';
+}
+
+function deriveNetworkWorkType_(connectionType) {
+  var t = String(connectionType || '').trim().toLowerCase();
+  if (t === 'ftth') return 'أعمال شبكة فيبر';
+  if (t === 'msan') return 'أعمال شبكة نحاس';
+  return String(connectionType || '').trim();
+}
+
+function normalizeNetworkWorkClassification_(value) {
+  var raw = normalizeArabicLabel_(value);
+  for (var i = 0; i < NETWORK_WORK_CLASSIFICATIONS.length; i++) {
+    if (normalizeArabicLabel_(NETWORK_WORK_CLASSIFICATIONS[i]) === raw) {
+      return NETWORK_WORK_CLASSIFICATIONS[i];
+    }
+  }
+  return '';
+}
+
+function normalizeNetworkRepairStatus_(value) {
+  var raw = normalizeArabicLabel_(value);
+  for (var i = 0; i < NETWORK_REPAIR_STATUSES.length; i++) {
+    if (normalizeArabicLabel_(NETWORK_REPAIR_STATUSES[i]) === raw) {
+      return NETWORK_REPAIR_STATUSES[i];
+    }
+  }
+  return '';
+}
+
+function findGroundFaultSourceRecord_(sourceRow, landline, sourceDateTime) {
+  var sheet = getTechNotesSheet_();
+  var data = sheet.getDataRange().getValues();
+  var rowNum = Number(sourceRow);
+
+  if (rowNum >= 2 && rowNum <= data.length) {
+    var byRow = data[rowNum - 1];
+    if (!isTechNoteRowEmpty_(byRow)) {
+      var recByRow = techNoteRowToRecord_(byRow, rowNum);
+      if (isGroundFaultReportType_(recByRow.reportType) &&
+          isTransferredToNetworksAction_(recByRow.action) &&
+          recByRow.landline === landline) {
+        return recByRow;
+      }
+    }
+  }
+
+  var targetDateTime = String(sourceDateTime || '').trim();
+  if (!targetDateTime) return null;
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (isTechNoteRowEmpty_(row)) continue;
+    var rec = techNoteRowToRecord_(row, i + 1);
+    if (!isGroundFaultReportType_(rec.reportType)) continue;
+    if (!isTransferredToNetworksAction_(rec.action)) continue;
+    if (rec.landline !== landline) continue;
+    if (rec.dateTime === targetDateTime) return rec;
+  }
+
+  return null;
+}
+
+/** حفظ فحص عطل أرضي في تبويب فحص الشبكات */
+function netTechSubmitNetworkInspection(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+
+  var landline = String(payload.landline || '').trim();
+  if (!landline) {
+    throw new Error('رقم التليفون مطلوب');
+  }
+
+  var sourceDateTime = String(payload.sourceDateTime || '').trim();
+  var sourceRow = Number(payload.sourceRow || 0);
+  if (!sourceDateTime && !sourceRow) {
+    throw new Error('يجب اختيار سجل العطل من الجدول (الرقم مع التاريخ والوقت)');
+  }
+
+  var sourceRecord = findGroundFaultSourceRecord_(sourceRow, landline, sourceDateTime);
+  if (!sourceRecord) {
+    throw new Error('تعذر ربط الفحص بسجل العطل المحدد — حدّث الجدول واختر السجل من جديد');
+  }
+  sourceDateTime = sourceRecord.dateTime || sourceDateTime;
+
+  var fromUnrepairedTab = payload.fromUnrepairedTab === true || String(payload.fromUnrepairedTab || '') === 'true';
+  if (!fromUnrepairedTab) {
+    assertNoOpenNetworkInspectionForLandline_(landline);
+  }
+
+  var welderName = String(payload.welderName || '').trim();
+  if (!welderName) {
+    throw new Error('اللحاميين القائمين بالعمل مطلوبون');
+  }
+
+  var workClassification = normalizeNetworkWorkClassification_(payload.workClassification);
+  if (!workClassification) {
+    throw new Error('اختر تصنيف الأعمال من القائمة');
+  }
+
+  var repairStatus = normalizeNetworkRepairStatus_(payload.repairStatus);
+  if (!repairStatus) {
+    throw new Error('اختر حالة الإصلاح من القائمة');
+  }
+
+  var photoBase64 = String(payload.photoBase64 || '').trim();
+  if (!photoBase64) {
+    throw new Error('يجب التقاط صورة للفحص');
+  }
+
+  var location = payload.location || null;
+  if (!location || location.lat == null || location.lng == null) {
+    throw new Error('يجب التقاط الصورة مع الموقع — اضغط «التقاط صورة مع الموقع»');
+  }
+  var mapsUrl = 'https://www.google.com/maps?q=' + Number(location.lat) + ',' + Number(location.lng);
+
+  var techId = String(payload.techId || '').trim();
+  var originalTech = String(payload.originalTech || sourceRecord.tech || '').trim();
+  var companionWorker = String(payload.companionWorker || '').trim();
+  var materialsUsed = String(payload.materialsUsed || '').trim();
+  var reportAckName = String(payload.reportAckName || '').trim();
+  var inspectionNotes = String(payload.inspectionNotes || '').trim();
+  var cableNumber = String(payload.cableNumber || sourceRecord.cableNumber || '').trim();
+  var cabinetNumber = String(payload.cabinetNumber || sourceRecord.cabinetNumber || '').trim();
+  var boxNumber = String(payload.boxNumber || sourceRecord.boxNumber || '').trim();
+  var workType = deriveNetworkWorkType_(payload.connectionType || sourceRecord.connectionType);
+  var photoUrl = uploadNetworkInspectionPhoto_(photoBase64, payload.photoMimeType, landline, techId);
+  var now = new Date();
+
+  var sheet = getNetworkInspectionSheet_();
+  ensureNetworkInspectionSheetHeaders_(sheet);
+  sheet.appendRow([
+    formatPreviewDateTime_(now),
+    landline,
+    originalTech,
+    welderName,
+    companionWorker,
+    workClassification,
+    workType,
+    materialsUsed,
+    repairStatus,
+    inspectionNotes,
+    reportAckName,
+    cableNumber,
+    cabinetNumber,
+    boxNumber,
+    mapsUrl,
+    photoUrl,
+    sourceDateTime
+  ]);
+
+  return {
+    success: true,
+    message: 'تم حفظ فحص العطل الأرضي في شيت فحص الشبكات بنجاح'
+  };
+}
+
+/** قائمة إبلاغات الفنيين للسنترال */
+function centralGetTechnicianNotes(payload) {
+  verifyCentralAuth_(payload.pin);
+  var sheet = getTechNotesSheet_();
+  var data = sheet.getDataRange().getValues();
+  var records = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (isTechNoteRowEmpty_(row)) continue;
+    records.push(techNoteRowToRecord_(row, i + 1));
+  }
+
+  records.sort(function (a, b) {
+    return b.row - a.row;
+  });
+
+  return {
+    records: records,
+    total: records.length,
+    sheetUrl: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+      '/edit?gid=' + TECH_NOTES_SHEET_GID
+  };
+}
+
+function getTechNotesSheet_() {
+  const ss = getSpreadsheet_();
+  const byName = ss.getSheetByName(TECH_NOTES_SHEET_NAME);
+  if (byName) {
+    return byName;
+  }
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getSheetId() === TECH_NOTES_SHEET_GID) {
+      return sheets[i];
+    }
+  }
+  throw new Error('لم يتم العثور على تبويب «' + TECH_NOTES_SHEET_NAME + '» في الشيت');
+}
+
+function ensureTechNotesSheetHeaders_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(TECH_NOTES_SHEET_HEADERS);
+    sheet.getRange(1, 1, 1, TECH_NOTES_SHEET_HEADERS.length).setFontWeight('bold');
+    return;
+  }
+  const width = Math.max(sheet.getLastColumn(), TECH_NOTES_SHEET_HEADERS.length);
+  const firstRow = sheet.getRange(1, 1, 1, width).getValues()[0];
+  const needsHeaders = TECH_NOTES_SHEET_HEADERS.every(function (_header, index) {
+    return !firstRow[index];
+  });
+  if (needsHeaders) {
+    sheet.getRange(1, 1, 1, TECH_NOTES_SHEET_HEADERS.length).setValues([TECH_NOTES_SHEET_HEADERS]);
+    sheet.getRange(1, 1, 1, TECH_NOTES_SHEET_HEADERS.length).setFontWeight('bold');
+  }
+}
+
+function getTechNotesDriveRootFolder_() {
+  var storedId = PropertiesService.getScriptProperties().getProperty('TECH_NOTES_DRIVE_ROOT_ID');
+  if (storedId) {
+    try { return DriveApp.getFolderById(storedId); } catch (err) {}
+  }
+  var folders = DriveApp.getFoldersByName(TECH_NOTES_DRIVE_ROOT_NAME);
+  if (folders.hasNext()) {
+    var existing = folders.next();
+    PropertiesService.getScriptProperties().setProperty('TECH_NOTES_DRIVE_ROOT_ID', existing.getId());
+    return existing;
+  }
+  var folder = DriveApp.createFolder(TECH_NOTES_DRIVE_ROOT_NAME);
+  PropertiesService.getScriptProperties().setProperty('TECH_NOTES_DRIVE_ROOT_ID', folder.getId());
+  return folder;
+}
+
+function uploadTechNotePhoto_(base64Data, mimeType, landline, techId) {
+  if (!base64Data) return '';
+  var bytes = Utilities.base64Decode(base64Data);
+  if (bytes.length > MAX_PHOTO_BYTES) {
+    throw new Error('حجم الصورة كبير جداً (الحد الأقصى 5 ميغابايت)');
+  }
+  var mime = String(mimeType || 'image/jpeg').split(';')[0];
+  var ext = mime.indexOf('png') !== -1 ? 'png' : 'jpg';
+  var stamp = Utilities.formatDate(new Date(), 'Africa/Cairo', 'yyyyMMdd_HHmmss');
+  var safeLine = String(landline || '').replace(/[^\d]/g, '') || 'line';
+  var fileName = 'note_' + techId + '_' + safeLine + '_' + stamp + '.' + ext;
+  var root = getTechNotesDriveRootFolder_();
+  var folder = root.createFolder('ملاحظة_' + safeLine + '_' + stamp);
+  var file = folder.createFile(Utilities.newBlob(bytes, mime, fileName));
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (err) {}
+  return 'https://drive.google.com/file/d/' + file.getId() + '/view?usp=drivesdk';
+}
+
+function validateTechNoteLandlineOrLines_(reportType, value) {
+  const type = String(reportType || '').trim();
+  const raw = String(value || '').trim();
+  if (type === 'اعمال صيانة') {
+    const n = parseInt(raw, 10);
+    if (!raw || !/^\d+$/.test(raw) || n < 1) {
+      throw new Error('أدخل عدد الخطوط (رقم صحيح موجب)');
+    }
+    return String(n);
+  }
+  return validateLandline_(raw);
+}
+
+/** حفظ إبلاغ فني في تبويب ملاحظات الفنيين */
+function techSubmitTechnicianNote(payload) {
+  const found = verifyTechAuth_(payload.techId, payload.pin);
+
+  const reportType = String(payload.reportType || '').trim();
+  if (TECH_NOTE_REPORT_TYPES.indexOf(reportType) === -1) {
+    throw new Error('اختر نوع الإبلاغ من القائمة');
+  }
+
+  const landline = validateTechNoteLandlineOrLines_(reportType, payload.landline);
+
+  const actionTaken = String(payload.actionTaken || '').trim();
+  if (TECH_NOTE_ACTIONS.indexOf(actionTaken) === -1) {
+    throw new Error('اختر الإجراء المتخذ من القائمة');
+  }
+
+  const notes = String(payload.notes || '').trim();
+  if (!notes) {
+    throw new Error('الملاحظات مطلوبة');
+  }
+
+  const cableNumber = String(payload.cableNumber || '').trim();
+  if (!cableNumber) {
+    throw new Error('رقم الكابل مطلوب');
+  }
+  const cabinetNumber = String(payload.cabinetNumber || '').trim();
+  if (!cabinetNumber) {
+    throw new Error('رقم الكابينة مطلوب');
+  }
+  const boxNumber = String(payload.boxNumber || '').trim();
+  if (!boxNumber) {
+    throw new Error('رقم البكس مطلوب');
+  }
+
+  const connectionType = String(payload.connectionType || '').trim().toLowerCase();
+  if (TECH_NOTE_CONNECTION_TYPES.indexOf(connectionType) === -1) {
+    throw new Error('اختر النوع (msan أو ftth) من القائمة');
+  }
+
+  const photoBase64 = String(payload.photoBase64 || '').trim();
+  if (!photoBase64) {
+    throw new Error('يجب التقاط صورة للإبلاغ');
+  }
+
+  const location = payload.location || null;
+  if (!location || location.lat == null || location.lng == null) {
+    throw new Error('يجب التقاط الصورة مع الموقع — اضغط «التقاط صورة مع الموقع»');
+  }
+
+  const techId = String(payload.techId || '').trim();
+  const techName = String(found.values[TECH_COL.NAME - 1] || '').trim();
+  const mapsUrl = 'https://www.google.com/maps?q=' + Number(location.lat) + ',' + Number(location.lng);
+  const photoUrl = uploadTechNotePhoto_(photoBase64, payload.photoMimeType, landline, techId);
+  const now = new Date();
+
+  const sheet = getTechNotesSheet_();
+  ensureTechNotesSheetHeaders_(sheet);
+  sheet.appendRow([
+    formatPreviewDateTime_(now),
+    landline,
+    techName,
+    reportType,
+    notes,
+    connectionType,
+    cableNumber,
+    cabinetNumber,
+    boxNumber,
+    mapsUrl,
+    photoUrl,
+    actionTaken
+  ]);
+
+  return { success: true, message: 'تم حفظ الإبلاغ في شيت ملاحظات الفنيين بنجاح' };
+}
+
 /**
  * تشغيل مرة واحدة من المحرر لمنح الصلاحيات وإعداد عناوين الأعمدة.
  * اختر هذه الدالة من القائمة ثم Run.
@@ -1540,6 +3819,9 @@ function setupSheet() {
     ensureHeaders_();
     const sheet = getSheet_();
     Logger.log('تم إعداد صفحة: ' + sheet.getName());
+    getTechSheet_();
+    getMessagesSheet_();
+    Logger.log('تم إعداد تبويبي الفنيين والرسائل');
     Logger.log('تم إعداد الشيت بنجاح');
   } catch (err) {
     Logger.log('خطأ: ' + (err.message || err));

@@ -6,7 +6,9 @@ const publicDir = path.join(root, 'public');
 
 const copies = [
   ['apps-script/Index.html', 'public/index.html'],
-  ['apps-script/Central.html', 'public/central.html']
+  ['apps-script/Central.html', 'public/central.html'],
+  ['apps-script/Technician.html', 'public/technician.html'],
+  ['apps-script/NetworkTechnician.html', 'public/network-technician.html']
 ];
 
 copies.forEach(function ([src, dest]) {

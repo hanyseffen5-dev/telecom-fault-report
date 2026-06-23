@@ -1,0 +1,2546 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>لوحة فني الشبكات — سنترال فرشوط</title>
+  <style>
+    :root {
+      --primary: #0277bd;
+      --primary-dark: #01579b;
+      --primary-light: #e1f5fe;
+      --success: #2e7d32;
+      --success-bg: #e8f5e9;
+      --warning: #f57c00;
+      --warning-bg: #fff3e0;
+      --danger: #c62828;
+      --danger-bg: #ffebee;
+      --bg: #eceff1;
+      --card: #ffffff;
+      --text: #1a2332;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 14px;
+      --shadow: 0 4px 20px rgba(2, 119, 189, 0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: linear-gradient(160deg, #b3e5fc 0%, var(--bg) 50%, #f5f5f5 100%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .app { max-width: 820px; margin: 0 auto; padding: 20px 16px 40px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--primary), #0288d1);
+      border-radius: 18px; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px; font-size: 30px;
+      box-shadow: 0 8px 24px rgba(2, 119, 189, 0.25);
+    }
+    .header h1 { font-size: 1.4rem; font-weight: 700; color: var(--primary-dark); }
+    .header p { font-size: 0.9rem; color: var(--muted); margin-top: 4px; }
+    .card { background: var(--card); border-radius: var(--radius); padding: 22px 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+    .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 16px; color: var(--primary-dark); }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 1rem; font-family: inherit; background: #fafbfc;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
+    textarea { resize: vertical; min-height: 80px; direction: rtl; }
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), #7e57c2); color: #fff; }
+    .btn-outline { background: #fff; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-sm { padding: 9px 14px; font-size: 0.85rem; width: auto; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .hidden { display: none !important; }
+    .alert { display: none; padding: 12px 14px; border-radius: 10px; font-size: 0.88rem; margin-bottom: 14px; }
+    .alert.show { display: block; }
+    .alert-error { background: var(--danger-bg); color: var(--danger); }
+    .alert-success { background: var(--success-bg); color: var(--success); }
+    .toolbar { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 16px; align-items: center; }
+    .toolbar .who { margin-left: auto; font-weight: 700; color: var(--primary-dark); }
+    .loader { text-align: center; padding: 24px; color: var(--muted); }
+    .spinner {
+      width: 28px; height: 28px; border: 3px solid var(--primary-light);
+      border-top-color: var(--primary); border-radius: 50%;
+      margin: 0 auto 10px; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { text-align: center; padding: 30px; color: var(--muted); }
+    .badge { font-size: 0.74rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .badge-new { background: #e3f2fd; color: #1565c0; }
+    .badge-progress { background: var(--warning-bg); color: var(--warning); }
+    .badge-reopened { background: #fce4ec; color: #c2185b; }
+    .badge-resolved { background: var(--success-bg); color: var(--success); }
+    .task-card {
+      background: #fff; border: 1.5px solid var(--border); border-right: 4px solid var(--primary);
+      border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer;
+    }
+    .task-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .task-phone { font-weight: 700; }
+    .task-meta { display: flex; gap: 14px; font-size: 0.8rem; color: var(--muted); margin-top: 6px; flex-wrap: wrap; }
+    .task-preview { font-size: 0.84rem; color: var(--text); margin-top: 8px; background: #f8fafc; padding: 8px 10px; border-radius: 8px; }
+    .task-inspection-badge {
+      display: inline-block; font-size: 0.72rem; font-weight: 800;
+      background: #ede7f6; color: #5e35b1; padding: 2px 8px; border-radius: 999px; margin-right: 6px;
+    }
+    .inspection-banner {
+      background: #ede7f6; border: 2px solid #b39ddb; border-radius: 12px;
+      padding: 12px 14px; font-size: 0.88rem; font-weight: 700; color: #4527a0; margin-bottom: 12px;
+    }
+    .inspection-info.hidden, .customer-section.hidden { display: none !important; }
+    .ltr { direction: ltr; unicode-bidi: embed; display: inline-block; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .detail-item { background: #f8fafc; padding: 10px 12px; border-radius: 10px; }
+    .detail-item .lbl { font-size: 0.74rem; color: var(--muted); }
+    .detail-item .val { font-weight: 700; font-size: 0.9rem; }
+    .chat-thread { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; padding: 6px; background: #f5f6fa; border-radius: 10px; }
+    .chat-thread-empty { text-align: center; color: var(--muted); padding: 18px; font-size: 0.85rem; }
+    .c-row { display: flex; }
+    .c-row.me { justify-content: flex-start; }
+    .c-row.them { justify-content: flex-end; }
+    .c-row.system { justify-content: center; }
+    .c-bubble { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 0.88rem; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .c-row.me .c-bubble { background: #e3f2fd; }
+    .c-row.them .c-bubble { background: var(--primary-light); }
+    .c-row.system .c-bubble { background: #fff8e1; font-size: 0.8rem; color: var(--muted); }
+    .c-tag { display: block; font-size: 0.7rem; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+    .c-date { display: block; font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+    .section-label { font-size: 0.85rem; font-weight: 700; color: var(--primary-dark); margin: 16px 0 8px; }
+    .attach-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .attach-bar-below { margin-top: 8px; margin-bottom: 10px; }
+    .attach-preview {
+      background: #f8fafc; border: 1.5px dashed var(--border); border-radius: 10px;
+      padding: 12px; margin-bottom: 12px;
+    }
+    .attach-preview.hidden { display: none; }
+    .attach-preview img {
+      max-width: 100%; max-height: 220px; border-radius: 10px; display: block; margin-bottom: 8px;
+    }
+    .loc-chip {
+      display: inline-flex; align-items: center; gap: 6px; background: #e8f5e9;
+      color: var(--success); padding: 8px 12px; border-radius: 10px; font-size: 0.84rem; font-weight: 600;
+    }
+    .loc-chip a { color: #1565c0; text-decoration: none; }
+    .attach-clear { margin-top: 8px; font-size: 0.78rem; color: var(--danger); cursor: pointer; background: none; border: none; font-family: inherit; }
+    .msg-photo {
+      max-width: 220px; max-height: 180px; width: auto; height: auto;
+      object-fit: contain; border-radius: 8px; margin-top: 6px; display: block; background: #fff;
+    }
+    .msg-photo-link { display: inline-block; margin-top: 4px; font-size: 0.82rem; font-weight: 700; color: #1565c0; }
+    .msg-loc { display: inline-block; margin-top: 6px; font-size: 0.8rem; }
+    .msg-loc a { color: #1565c0; font-weight: 700; text-decoration: none; }
+    .camera-modal {
+      position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .camera-modal.hidden { display: none !important; }
+    .camera-box {
+      width: 100%; max-width: 480px; background: #111; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .camera-box video {
+      width: 100%; display: block; background: #000; max-height: 65vh; object-fit: cover;
+    }
+    .camera-actions {
+      display: flex; gap: 10px; padding: 14px; background: #1a1a1a;
+    }
+    .camera-actions .btn { flex: 1; }
+    .camera-hint {
+      color: #ccc; font-size: 0.82rem; text-align: center; margin-top: 12px; max-width: 420px;
+    }
+    .footer { text-align: center; font-size: 0.78rem; color: var(--muted); margin-top: 20px; }
+    .archive-btn {
+      background: #fff; border: 1.5px solid var(--border); color: var(--primary-dark);
+      padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+    .archive-btn.has-archive { border-color: var(--primary); background: var(--primary-light); }
+    .archive-list { display: flex; flex-direction: column; gap: 10px; }
+    .archive-item {
+      background: #f8fafc; border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; cursor: pointer;
+    }
+    .archive-item:hover { background: var(--primary-light); }
+    .archive-date { font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); direction: ltr; text-align: right; }
+    .archive-meta { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    .archive-detail { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .archive-chat-thread {
+      display: flex; flex-direction: column; gap: 8px; max-height: 260px;
+      overflow-y: auto; padding: 8px; background: #f5f6fa; border-radius: 10px; margin-top: 8px;
+    }
+    .archive-section-title { font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-top: 12px; margin-bottom: 4px; }
+    .task-archive-badge { font-size: 0.74rem; color: var(--primary-dark); background: var(--primary-light); padding: 2px 8px; border-radius: 12px; margin-top: 6px; display: inline-block; }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;
+    }
+    .modal-overlay.hidden { display: none !important; }
+    .modal {
+      background: var(--card); border-radius: var(--radius); padding: 22px 20px;
+      max-width: 680px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .modal-header h3 { font-size: 1rem; color: var(--primary-dark); }
+    .modal-close {
+      background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--muted); font-family: inherit;
+    }
+    .error-modal-icon { font-size: 2rem; text-align: center; margin-bottom: 10px; }
+    .error-modal-list { margin: 0; padding-right: 20px; line-height: 1.85; color: var(--text); }
+    .error-modal-list li { margin-bottom: 6px; }
+    .error-modal-list strong { color: var(--danger); }
+    .error-modal-actions { margin-top: 18px; }
+    .field-error-flash {
+      animation: fieldFlash 1.2s ease;
+      border-color: var(--danger) !important;
+      box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.15);
+    }
+    @keyframes fieldFlash {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.15); }
+      50% { box-shadow: 0 0 0 5px rgba(198, 40, 40, 0.28); }
+    }
+    .chat-photo {
+      max-width: 220px; max-height: 180px; width: auto; height: auto;
+      object-fit: contain; border-radius: 8px; margin-top: 6px; display: block; background: #fff;
+    }
+    .chat-photo-link { display: inline-block; margin-top: 4px; font-size: 0.82rem; font-weight: 700; color: #1565c0; }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      background: var(--card);
+      padding: 6px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), #0288d1);
+      color: #fff;
+    }
+    .tab-btn.tab-btn-long {
+      font-size: 0.76rem;
+      line-height: 1.35;
+      padding: 10px 8px;
+    }
+    .serial-result-card {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1.5px solid var(--border);
+    }
+    .serial-result-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 12px;
+    }
+    .inspection-form-card {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1.5px solid var(--border);
+    }
+    .inspection-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 600px) {
+      .inspection-form-grid { grid-template-columns: 1fr; }
+    }
+    .gf-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-top: 8px;
+    }
+    .gf-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      min-width: 980px;
+    }
+    .gf-data-table th,
+    .gf-data-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+      vertical-align: top;
+    }
+    .gf-data-table th {
+      position: sticky;
+      top: 0;
+      background: #f5f7fb;
+      font-weight: 700;
+      z-index: 1;
+    }
+    .gf-data-table tr:hover td { background: #fafbff; }
+    .gf-data-table .cell-notes {
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .gf-link-btn {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .gf-link-btn:hover { background: #b3e5fc; }
+    .gf-landline-btn {
+      color: var(--primary-dark);
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      font-size: inherit;
+    }
+    .gf-landline-btn:hover { color: #01579b; }
+    .gf-toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .gf-count-label { font-size: 0.82rem; color: var(--muted); }
+    .gf-inspection-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .gf-inspection-head .card-title { margin-bottom: 0; flex: 1; min-width: 200px; }
+    .ni-archive-modal {
+      max-width: min(96vw, 1200px);
+      width: 100%;
+      max-height: 90vh;
+      overflow: auto;
+    }
+    .ni-archive-count {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .gf-inspection-context {
+      background: linear-gradient(160deg, #e8eef5 0%, #f0f4f8 100%);
+      border: 1.5px solid #b8c5d6;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .gf-inspection-context .gf-section-label {
+      color: #37474f;
+    }
+    .gf-inspection-context .detail-item {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid #d8e0ea;
+    }
+    .gf-inspection-entry {
+      background: linear-gradient(160deg, #f1f8f2 0%, #fafdfa 100%);
+      border: 1.5px solid #81c784;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .gf-inspection-entry .gf-section-label {
+      color: #2e7d32;
+    }
+    .gf-inspection-entry input,
+    .gf-inspection-entry select,
+    .gf-inspection-entry textarea {
+      background: #fff;
+      border-color: #c8e6c9;
+    }
+    .gf-inspection-entry input:focus,
+    .gf-inspection-entry select:focus,
+    .gf-inspection-entry textarea:focus {
+      border-color: var(--success);
+      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.12);
+    }
+    .ni-welder-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1.5px solid #c8e6c9;
+      border-radius: 10px;
+      background: #fff;
+    }
+    .ni-welder-base {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #ede7f6;
+      color: #4527a0;
+      font-weight: 700;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .ni-welder-base.hidden { display: none; }
+    .ni-welder-wrap input {
+      flex: 1;
+      min-width: 140px;
+      border: none !important;
+      padding: 8px 4px !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    .gf-section-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: 0.01em;
+    }
+    .gf-section-label::before {
+      content: '';
+      width: 4px;
+      height: 1.1em;
+      border-radius: 4px;
+      background: currentColor;
+      opacity: 0.55;
+    }
+    .network-match-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: #fafbfc;
+    }
+    .network-match-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+    }
+    @media (max-width: 600px) {
+      input, select, textarea { font-size: 16px; }
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script src="config.js?v=4"></script>
+  <script src="api-bridge.js?v=4"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-icon">🌐</div>
+      <h1>لوحة فني الشبكات</h1>
+      <p>مهامك وإبلاغات الأعطال الأرضية — سنترال فرشوط</p>
+    </header>
+
+    <!-- تسجيل الدخول -->
+    <section id="login-section" class="card">
+      <div class="card-title">🔐 دخول فني الشبكات</div>
+      <div id="login-alert" class="alert"></div>
+      <div class="form-group">
+        <label for="tech-id-input">معرّف الفني</label>
+        <input type="text" id="tech-id-input" placeholder="مثال: T1" dir="ltr" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="pin-input">رمز الدخول</label>
+        <input type="password" id="pin-input" placeholder="أدخل رمز الدخول" autocomplete="current-password" />
+      </div>
+      <button type="button" class="btn btn-primary" id="login-btn">دخول</button>
+      <p style="margin-top:12px;font-size:0.78rem;color:var(--muted);text-align:center">
+        احصل على معرّفك ورمز دخولك من إدارة السنترال
+      </p>
+    </section>
+
+    <!-- قائمة المهام -->
+    <section id="tasks-section" class="hidden">
+      <div class="toolbar">
+        <span class="who" id="who-label"></span>
+        <select id="status-select" class="btn-sm" style="border:1.5px solid var(--border);border-radius:10px">
+          <option value="متاح">متاح</option>
+          <option value="مشغول">مشغول</option>
+          <option value="غير نشط">غير نشط</option>
+        </select>
+        <button type="button" class="btn btn-outline btn-sm" id="refresh-btn">تحديث</button>
+        <button type="button" class="btn btn-outline btn-sm" id="logout-btn">خروج</button>
+      </div>
+      <div class="tabs">
+        <button type="button" class="tab-btn active" data-tab="tasks">📋 مهامي</button>
+        <button type="button" class="tab-btn" data-tab="ground-fault">⚡ أعطال أرضية</button>
+        <button type="button" class="tab-btn tab-btn-long" data-tab="unrepaired-inspection">🔍 أعطال أرضية تم فحصها ولم يتم إصلاحها</button>
+      </div>
+      <div id="main-tasks-panel">
+      <div class="card">
+        <div class="card-title">📋 مهامي</div>
+        <div id="tasks-alert" class="alert"></div>
+        <div id="tasks-loader" class="loader hidden"><div class="spinner"></div> جاري التحميل...</div>
+        <div id="task-list"></div>
+        <div id="tasks-empty" class="empty-state hidden">لا توجد مهام مسندة إليك حالياً</div>
+      </div>
+      </div>
+      <div id="ground-fault-panel" class="hidden">
+        <div class="card">
+          <div class="card-title">📋 أعطال أرضية محوّلة للشبكات</div>
+          <p style="font-size:0.82rem;color:var(--muted);margin:-8px 0 12px">
+            من شيت ملاحظات الفنيين — نوع البلاغ: عطل أرضي والإجراء: تحويل للشبكات
+          </p>
+          <div class="gf-toolbar">
+            <button type="button" class="btn btn-outline btn-sm" id="gf-refresh-btn">تحديث</button>
+            <span class="gf-count-label" id="gf-count-label"></span>
+          </div>
+          <div id="gf-alert" class="alert"></div>
+          <div id="gf-loader" class="loader hidden"><div class="spinner"></div> جاري تحميل الأعطال...</div>
+          <div id="gf-table-wrap" class="gf-table-wrap hidden">
+            <table class="gf-data-table" id="gf-data-table">
+              <thead>
+                <tr>
+                  <th>التاريخ والوقت</th>
+                  <th>رقم التليفون</th>
+                  <th>الفني</th>
+                  <th>الملاحظة</th>
+                  <th>النوع</th>
+                  <th>رقم الكابل</th>
+                  <th>رقم الكابينة</th>
+                  <th>رقم البكس</th>
+                  <th>الموقع</th>
+                  <th>الصورة</th>
+                </tr>
+              </thead>
+              <tbody id="gf-table-body"></tbody>
+            </table>
+          </div>
+          <div id="gf-empty" class="empty-state hidden">لا توجد أعطال أرضية محوّلة للشبكات حالياً</div>
+        </div>
+      </div>
+      <div id="unrepaired-inspection-panel" class="hidden">
+        <div class="card">
+          <div class="card-title">🔍 أعطال أرضية تم فحصها ولم يتم إصلاحها</div>
+          <p style="font-size:0.82rem;color:var(--muted);margin:-8px 0 12px">
+            من شيت فحص الشبكات — حالات: جاري الإصلاح، يصعب الإصلاح، في انتظار المهمات
+          </p>
+          <div class="gf-toolbar">
+            <button type="button" class="btn btn-outline btn-sm" id="uir-refresh-btn">تحديث</button>
+            <span class="gf-count-label" id="uir-count-label"></span>
+          </div>
+          <div id="uir-alert" class="alert"></div>
+          <div id="uir-loader" class="loader hidden"><div class="spinner"></div> جاري تحميل الأعطال...</div>
+          <div id="uir-table-wrap" class="gf-table-wrap hidden">
+            <table class="gf-data-table" id="uir-data-table">
+              <thead>
+                <tr>
+                  <th>التاريخ والوقت</th>
+                  <th>رقم التذكرة</th>
+                  <th>اللحام القائم بالفحص</th>
+                  <th>العامل المرافق</th>
+                  <th>تصنيف الأعمال</th>
+                  <th>نوع الأعمال</th>
+                  <th>المهمات المستخدمة/المطلوبة</th>
+                  <th>حالة الإصلاح</th>
+                  <th>ملاحظات الفحص</th>
+                  <th>الموقع</th>
+                  <th>الصورة</th>
+                </tr>
+              </thead>
+              <tbody id="uir-table-body"></tbody>
+            </table>
+          </div>
+          <div id="uir-empty" class="empty-state hidden">لا توجد أعطال مُفحوصة ولم يُصلَح بعد حالياً</div>
+        </div>
+      </div>
+      <div id="gf-inspection-panel" class="card hidden">
+        <div class="gf-inspection-head">
+          <div class="card-title" id="gf-inspection-title">فحص العطل الأرضي</div>
+          <button type="button" class="archive-btn" id="ni-archive-btn" title="عرض الإصلاحات السابقة من أرشيف الشبكات">📁 أرشيف الإصلاحات</button>
+        </div>
+        <div id="ni-alert" class="alert"></div>
+        <div class="gf-inspection-context">
+          <div class="gf-section-label">📋 بيانات البلاغ — للعرض فقط</div>
+          <div class="detail-grid" id="ni-context-grid">
+            <div class="detail-item"><div class="lbl">تاريخ ووقت البلاغ</div><div class="val" id="ni-source-datetime">—</div></div>
+            <div class="detail-item"><div class="lbl">الفني الأصلي</div><div class="val" id="ni-original-tech">—</div></div>
+            <div class="detail-item"><div class="lbl">النوع</div><div class="val ltr" id="ni-connection-type">—</div></div>
+            <div class="detail-item"><div class="lbl">رقم الكابل</div><div class="val ltr" id="ni-cable">—</div></div>
+            <div class="detail-item"><div class="lbl">رقم الكابينة</div><div class="val ltr" id="ni-cabinet">—</div></div>
+            <div class="detail-item"><div class="lbl">رقم البكس</div><div class="val ltr" id="ni-box">—</div></div>
+            <div class="detail-item"><div class="lbl">ملاحظة البلاغ</div><div class="val" id="ni-source-notes">—</div></div>
+          </div>
+        </div>
+        <div class="gf-inspection-entry">
+          <div class="gf-section-label">✏️ تسجيل بيانات الفحص</div>
+        <div class="inspection-form-grid">
+          <div class="form-group">
+            <label for="ni-welder-extra">اللحاميين القائمين بالعمل *</label>
+            <div class="ni-welder-wrap">
+              <span id="ni-welder-base" class="ni-welder-base hidden" aria-label="اللحام الأساسي"></span>
+              <input type="text" id="ni-welder-extra" placeholder="أضف اسم لحام آخر (اختياري)..." autocomplete="off" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="ni-companion">العامل المرافق</label>
+            <input type="text" id="ni-companion" placeholder="اسم العامل المرافق (إن وجد)" />
+          </div>
+        </div>
+        <div class="inspection-form-grid">
+          <div class="form-group">
+            <label for="ni-work-class">تصنيف الأعمال *</label>
+            <select id="ni-work-class" required>
+              <option value="">— اختر تصنيف الأعمال —</option>
+              <option value="رفع كفاءة">رفع كفاءة</option>
+              <option value="سرقات وإتلافات">سرقات وإتلافات</option>
+              <option value="صيانة علاجية">صيانة علاجية</option>
+              <option value="فك تعذرات">فك تعذرات</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ni-repair-status">حالة الإصلاح *</label>
+            <select id="ni-repair-status" required>
+              <option value="">— اختر حالة الإصلاح —</option>
+              <option value="إصلاح مؤقت">إصلاح مؤقت</option>
+              <option value="إصلاح دائم">إصلاح دائم</option>
+              <option value="جاري الإصلاح">جاري الإصلاح</option>
+              <option value="يصعب الإصلاح">يصعب الإصلاح</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="ni-report-ack">رقم المحضر / إقرار باسم</label>
+          <input type="text" id="ni-report-ack" placeholder="رقم المحضر أو اسم الإقرار" />
+        </div>
+        <div class="form-group">
+          <label for="ni-materials">المهمات المستخدمة</label>
+          <textarea id="ni-materials" placeholder="اكتب المهمات المستخدمة أو المطلوبة..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="ni-inspection-notes">ملاحظات الفحص</label>
+          <textarea id="ni-inspection-notes" placeholder="اكتب ملاحظات الفحص..."></textarea>
+        </div>
+        <input type="file" id="ni-photo-input" accept="image/*" capture="environment" class="hidden" />
+        <div class="attach-bar attach-bar-below">
+          <button type="button" class="btn btn-outline btn-sm" id="ni-camera-btn">📷 التقاط صورة مع الموقع</button>
+        </div>
+        <p style="font-size:0.78rem;color:var(--muted);margin:0 0 10px">
+          زر الكاميرا يلتقط الصورة والموقع معاً. اسمح للمتصفح بالكاميرا والموقع عند الطلب.
+        </p>
+        <div id="ni-attach-preview" class="attach-preview hidden"></div>
+        <button type="button" class="btn btn-primary" id="ni-submit-btn">✅ إرسال فحص العطل إلى شيت فحص الشبكات</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- تفاصيل المهمة -->
+    <section id="detail-section" class="hidden">
+      <div class="card">
+        <div class="toolbar">
+          <button type="button" class="btn btn-outline btn-sm" id="back-btn">← رجوع للمهام</button>
+          <button type="button" class="archive-btn" id="archive-btn">📁 أرشيف الشكاوى السابقة</button>
+        </div>
+        <div id="detail-alert" class="alert"></div>
+        <div id="detail-content"></div>
+
+        <div id="inspection-info" class="inspection-info hidden">
+          <div class="inspection-banner">🔍 مهمة فحص من السنترال — لا توجد محادثة عميل</div>
+          <p id="inspection-note-text" style="font-size:0.88rem;color:var(--muted);margin:0 0 12px"></p>
+        </div>
+
+        <div id="customer-section" class="customer-section">
+        <div class="section-label">💬 محادثة العميل مع الإدارة (للاطلاع)</div>
+        <div id="customer-thread" class="chat-thread"></div>
+        </div>
+
+        <div class="section-label" id="admin-section-label">🛠️ محادثتك مع الإدارة</div>
+        <div id="admin-thread" class="chat-thread"></div>
+        <input type="file" id="photo-input" accept="image/*" capture="environment" class="hidden" />
+        <div class="form-group" style="margin-top:12px">
+          <textarea id="message-input" placeholder="اكتب رسالتك للإدارة (اختياري مع الصورة)..."></textarea>
+        </div>
+        <div class="attach-bar attach-bar-below">
+          <button type="button" class="btn btn-outline btn-sm" id="camera-btn">📷 التقاط صورة</button>
+          <button type="button" class="btn btn-outline btn-sm hidden" id="location-btn" aria-hidden="true">📍 موقعي الحالي</button>
+        </div>
+        <div id="attach-preview" class="attach-preview hidden"></div>
+        <button type="button" class="btn btn-primary" id="send-btn">إرسال للإدارة</button>
+      </div>
+    </section>
+
+    <footer class="footer">لوحة فني الشبكات · سنترال فرشوط · الإصدار 1.0</footer>
+  </div>
+
+  <!-- نافذة الكاميرا المباشرة -->
+  <div id="camera-modal" class="camera-modal hidden" aria-hidden="true">
+    <div class="camera-box">
+      <video id="camera-video" autoplay playsinline muted></video>
+      <div class="camera-actions">
+        <button type="button" class="btn btn-outline btn-sm" id="camera-cancel-btn" style="background:#333;color:#fff;border-color:#555">إلغاء</button>
+        <button type="button" class="btn btn-primary btn-sm" id="camera-capture-btn">📸 التقاط</button>
+      </div>
+    </div>
+    <p class="camera-hint">اسمح للمتصفح باستخدام الكاميرا. على الموبايل: استخدم Chrome أو Safari.</p>
+  </div>
+  <canvas id="camera-canvas" class="hidden"></canvas>
+
+  <div id="ni-archive-modal" class="modal-overlay hidden">
+    <div class="modal ni-archive-modal" role="dialog" aria-labelledby="ni-archive-modal-title">
+      <div class="modal-header">
+        <h3 id="ni-archive-modal-title">📁 أرشيف إصلاحات الشبكات</h3>
+        <button type="button" class="modal-close" id="ni-archive-close-btn">إغلاق</button>
+      </div>
+      <div id="ni-archive-alert" class="alert"></div>
+      <div id="ni-archive-count" class="ni-archive-count"></div>
+      <div id="ni-archive-loader" class="loader hidden"><div class="spinner"></div> جاري تحميل الأرشيف...</div>
+      <div id="ni-archive-table-wrap" class="gf-table-wrap hidden">
+        <table class="gf-data-table" id="ni-archive-table">
+          <thead>
+            <tr>
+              <th>التاريخ والوقت</th>
+              <th>اللحام القائم بالفحص</th>
+              <th>العامل المرافق</th>
+              <th>تصنيف الأعمال</th>
+              <th>نوع الأعمال</th>
+              <th>المهمات المستخدمة/المطلوبة</th>
+              <th>حالة الإصلاح</th>
+              <th>ملاحظات الفحص</th>
+              <th>رابط الموقع</th>
+              <th>رابط الصورة</th>
+            </tr>
+          </thead>
+          <tbody id="ni-archive-tbody"></tbody>
+        </table>
+      </div>
+      <div id="ni-archive-empty" class="empty-state hidden">لا توجد سجلات سابقة لهذا الرقم</div>
+    </div>
+  </div>
+
+  <div id="archive-modal" class="modal-overlay hidden">
+    <div class="modal" role="dialog" aria-labelledby="archive-modal-title">
+      <div class="modal-header">
+        <h3 id="archive-modal-title">📁 أرشيف شكاوى الخط</h3>
+        <button type="button" class="modal-close" id="archive-close-btn">إغلاق</button>
+      </div>
+      <div id="archive-modal-body"></div>
+    </div>
+  </div>
+
+  <div id="preview-error-modal" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal" role="alertdialog" aria-labelledby="preview-error-title">
+      <div class="error-modal-icon">⚠️</div>
+      <h3 id="preview-error-title" style="text-align:center;color:var(--danger);margin-bottom:12px;font-size:1rem">تعذّر الإرسال</h3>
+      <p style="font-size:0.88rem;color:var(--muted);text-align:center;margin-bottom:12px">راجع الحقول التالية وأكملها:</p>
+      <ul id="preview-error-list" class="error-modal-list"></ul>
+      <div class="error-modal-actions">
+        <button type="button" class="btn btn-primary" id="preview-error-close-btn">حسناً — سأصحّح البيانات</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="open-inspection-modal" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal" role="alertdialog" aria-labelledby="open-inspection-title">
+      <div class="error-modal-icon">⚠️</div>
+      <h3 id="open-inspection-title" style="text-align:center;color:var(--danger);margin-bottom:12px;font-size:1rem">العطل مازال مفتوح</h3>
+      <p id="open-inspection-text" style="font-size:0.9rem;color:var(--text);text-align:center;line-height:1.75;margin-bottom:8px"></p>
+      <div class="error-modal-actions" style="display:flex;gap:10px;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" id="open-inspection-go-btn" style="flex:1">🔍 الانتقال لقسم «تم فحصها ولم يتم إصلاحها»</button>
+        <button type="button" class="btn btn-outline" id="open-inspection-close-btn" style="flex:1">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var TECH_KEY = 'net_tech_session';
+    var session = { id: '', pin: '', name: '', status: '' };
+    var currentTask = null;
+    var refreshTimer = null;
+    var pendingPhoto = null;
+    var pendingLocation = null;
+    var cameraStream = null;
+    var cameraFacing = 'environment';
+    var activeMainTab = 'tasks';
+    var currentSerialRecord = null;
+    var previewPendingPhoto = null;
+    var previewPendingLocation = null;
+    var cameraTarget = 'detail';
+    var groundFaultRecords = [];
+    var unrepairedInspectionRecords = [];
+    var selectedGroundFault = null;
+    var networkInspectionPhoto = null;
+    var networkInspectionLocation = null;
+    var welderBaseName = '';
+    var inspectionPanelSource = 'ground-fault';
+
+    function setWelderBaseName(name) {
+      welderBaseName = String(name || '').trim();
+      var baseEl = $('ni-welder-base');
+      baseEl.textContent = welderBaseName || '—';
+      baseEl.classList.toggle('hidden', !welderBaseName);
+    }
+
+    function getWelderFullName() {
+      var base = welderBaseName.trim();
+      var extra = $('ni-welder-extra').value.trim();
+      if (!base) return extra;
+      if (!extra) return base;
+      return base + ' و ' + extra;
+    }
+
+    function initWelderField() {
+      setWelderBaseName(session.name || '');
+      $('ni-welder-extra').value = '';
+    }
+
+    function updateInspectionArchiveUi() {
+      var fromUnrepaired = inspectionPanelSource === 'unrepaired-inspection';
+      var archiveBtn = $('ni-archive-btn');
+      if (archiveBtn) {
+        archiveBtn.title = fromUnrepaired
+          ? 'عرض سجل الفحوصات السابقة من شيت فحص الشبكات'
+          : 'عرض الإصلاحات السابقة من أرشيف الشبكات';
+        archiveBtn.textContent = fromUnrepaired ? '📁 سجل فحص الشبكات' : '📁 أرشيف الإصلاحات';
+      }
+      $('ni-archive-empty').textContent = fromUnrepaired
+        ? 'لا توجد سجلات فحص سابقة لهذا الرقم في شيت فحص الشبكات'
+        : 'لا توجد إصلاحات سابقة لهذا الرقم في أرشيف الشبكات';
+    }
+
+    function renderNetworkArchiveTable(records) {
+      var tbody = $('ni-archive-tbody');
+      var wrap = $('ni-archive-table-wrap');
+      var empty = $('ni-archive-empty');
+      var countEl = $('ni-archive-count');
+      countEl.textContent = records.length ? ('عرض ' + records.length + ' إصلاح سابق') : '';
+      if (!records.length) {
+        tbody.innerHTML = '';
+        wrap.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      wrap.classList.remove('hidden');
+      tbody.innerHTML = records.map(function (rec) {
+        return '<tr>' +
+          '<td>' + escapeHtml(rec.dateTime || '—') + '</td>' +
+          '<td>' + escapeHtml(rec.welder || '—') + '</td>' +
+          '<td>' + escapeHtml(rec.companion || '—') + '</td>' +
+          '<td>' + escapeHtml(rec.workClassification || '—') + '</td>' +
+          '<td>' + escapeHtml(rec.workType || '—') + '</td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.materials || '') + '">' + escapeHtml(rec.materials || '—') + '</td>' +
+          '<td>' + escapeHtml(rec.repairStatus || '—') + '</td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.inspectionNotes || '') + '">' + escapeHtml(rec.inspectionNotes || '—') + '</td>' +
+          '<td>' + renderGfLink(rec.locationUrl, '📍 موقع') + '</td>' +
+          '<td>' + renderGfLink(rec.photoUrl, '🖼️ صورة') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function closeNetworkArchiveModal() {
+      $('ni-archive-modal').classList.add('hidden');
+    }
+
+    function inspectionHistoryFromCache(landline) {
+      return unrepairedInspectionRecords.filter(function (rec) {
+        return rec.ticketNumber === landline;
+      }).map(function (rec) {
+        return {
+          dateTime: rec.dateTime,
+          welder: rec.welder,
+          companion: rec.companion,
+          workClassification: rec.workCategory,
+          workType: rec.workType,
+          materials: rec.materials,
+          repairStatus: rec.repairStatus,
+          inspectionNotes: rec.inspectionNotes,
+          locationUrl: rec.locationUrl,
+          photoUrl: rec.photoUrl
+        };
+      });
+    }
+
+    function isUnknownFunctionErrorMessage(message) {
+      var msg = String(message || '');
+      return msg.indexOf('غير معروف') !== -1 || msg.indexOf('غير موجود') !== -1;
+    }
+
+    function openNetworkArchiveModal() {
+      if (!selectedGroundFault || !selectedGroundFault.landline) {
+        showAlert(getActiveTasksAlertId(), 'اختر سجل عطل من الجدول أولاً', 'error');
+        return;
+      }
+      var landline = selectedGroundFault.landline;
+      var fromUnrepaired = inspectionPanelSource === 'unrepaired-inspection';
+      $('ni-archive-modal-title').textContent = fromUnrepaired
+        ? '📁 سجل فحص الشبكات — ' + landline
+        : '📁 أرشيف إصلاحات الشبكات — ' + landline;
+      $('ni-archive-modal').classList.remove('hidden');
+      hideAlert('ni-archive-alert');
+      $('ni-archive-loader').classList.remove('hidden');
+      $('ni-archive-table-wrap').classList.add('hidden');
+      $('ni-archive-empty').classList.add('hidden');
+      $('ni-archive-count').textContent = '';
+      $('ni-archive-tbody').innerHTML = '';
+
+      var onArchiveLoaded = function (data) {
+        $('ni-archive-loader').classList.add('hidden');
+        renderNetworkArchiveTable(data.records || []);
+      };
+      var onArchiveError = function (err) {
+        var msg = err && err.message ? err.message : '';
+        if (fromUnrepaired && isUnknownFunctionErrorMessage(msg)) {
+          var cached = inspectionHistoryFromCache(landline);
+          if (cached.length) {
+            onArchiveLoaded({ records: cached });
+            return;
+          }
+        }
+        $('ni-archive-loader').classList.add('hidden');
+        showAlert('ni-archive-alert', msg || 'تعذر تحميل السجل', 'error');
+      };
+      var archivePayload = { techId: session.id, pin: session.pin, landline: landline };
+
+      if (fromUnrepaired) {
+        google.script.run
+          .withSuccessHandler(onArchiveLoaded)
+          .withFailureHandler(onArchiveError)
+          .netTechGetNetworkInspectionHistory(archivePayload);
+      } else {
+        google.script.run
+          .withSuccessHandler(onArchiveLoaded)
+          .withFailureHandler(onArchiveError)
+          .netTechGetNetworkArchive(archivePayload);
+      }
+    }
+
+    function renderGfLink(url, label) {
+      if (!url) return '—';
+      return '<a class="gf-link-btn" href="' + escapeHtml(url) + '" target="_blank" rel="noopener">' +
+        escapeHtml(label) + ' ↗</a>';
+    }
+
+    function renderGroundFaultTable(records) {
+      var tbody = $('gf-table-body');
+      var wrap = $('gf-table-wrap');
+      var empty = $('gf-empty');
+      var countLabel = $('gf-count-label');
+      countLabel.textContent = records.length ? ('عرض ' + records.length + ' سجل') : '';
+      if (!records.length) {
+        tbody.innerHTML = '';
+        wrap.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      wrap.classList.remove('hidden');
+      tbody.innerHTML = records.map(function (rec) {
+        return '<tr>' +
+          '<td>' + escapeHtml(rec.dateTime) + '</td>' +
+          '<td dir="ltr"><button type="button" class="gf-landline-btn" data-landline="' +
+            escapeHtml(rec.landline) + '" data-date-time="' + escapeHtml(rec.dateTime) +
+            '" data-row="' + rec.row + '" title="فحص العطل الأرضي">☎ ' + escapeHtml(rec.landline) + '</button></td>' +
+          '<td>' + escapeHtml(rec.tech) + '</td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.notes) + '">' + escapeHtml(rec.notes) + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.connectionType || '—') + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.cableNumber || '—') + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.cabinetNumber || '—') + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.boxNumber || '—') + '</td>' +
+          '<td>' + renderGfLink(rec.locationUrl, '📍 موقع') + '</td>' +
+          '<td>' + renderGfLink(rec.photoUrl, '🖼️ صورة') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function loadGroundFaults() {
+      if (!session.id || !session.pin) return;
+      $('gf-loader').classList.remove('hidden');
+      hideAlert('gf-alert');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          $('gf-loader').classList.add('hidden');
+          groundFaultRecords = data.records || [];
+          renderGroundFaultTable(groundFaultRecords);
+        })
+        .withFailureHandler(function (err) {
+          $('gf-loader').classList.add('hidden');
+          showAlert('gf-alert', err.message || 'تعذر تحميل الأعطال الأرضية', 'error');
+        })
+        .netTechGetGroundFaults({ techId: session.id, pin: session.pin });
+    }
+
+    function renderUnrepairedInspectionTable(records) {
+      var tbody = $('uir-table-body');
+      var wrap = $('uir-table-wrap');
+      var empty = $('uir-empty');
+      var countLabel = $('uir-count-label');
+      countLabel.textContent = records.length ? ('عرض ' + records.length + ' سجل') : '';
+      if (!records.length) {
+        tbody.innerHTML = '';
+        wrap.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      wrap.classList.remove('hidden');
+      tbody.innerHTML = records.map(function (rec) {
+        return '<tr>' +
+          '<td>' + escapeHtml(rec.dateTime) + '</td>' +
+          '<td dir="ltr"><button type="button" class="gf-landline-btn" data-ticket="' +
+            escapeHtml(rec.ticketNumber) + '" data-source-datetime="' + escapeHtml(rec.sourceDateTime || '') +
+            '" data-row="' + rec.row + '" title="فحص العطل الأرضي">☎ ' + escapeHtml(rec.ticketNumber || '—') + '</button></td>' +
+          '<td>' + escapeHtml(rec.welder || '—') + '</td>' +
+          '<td>' + escapeHtml(rec.companion || '—') + '</td>' +
+          '<td>' + escapeHtml(rec.workCategory || '—') + '</td>' +
+          '<td dir="ltr">' + escapeHtml(rec.workType || '—') + '</td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.materials) + '">' + escapeHtml(rec.materials || '—') + '</td>' +
+          '<td>' + escapeHtml(rec.repairStatus || '—') + '</td>' +
+          '<td class="cell-notes" title="' + escapeHtml(rec.inspectionNotes) + '">' + escapeHtml(rec.inspectionNotes || '—') + '</td>' +
+          '<td>' + renderGfLink(rec.locationUrl, '📍 موقع') + '</td>' +
+          '<td>' + renderGfLink(rec.photoUrl, '🖼️ صورة') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function loadUnrepairedInspections() {
+      if (!session.id || !session.pin) return;
+      $('uir-loader').classList.remove('hidden');
+      hideAlert('uir-alert');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          $('uir-loader').classList.add('hidden');
+          unrepairedInspectionRecords = data.records || [];
+          renderUnrepairedInspectionTable(unrepairedInspectionRecords);
+        })
+        .withFailureHandler(function (err) {
+          $('uir-loader').classList.add('hidden');
+          showAlert('uir-alert', err.message || 'تعذر تحميل الأعطال', 'error');
+        })
+        .netTechGetUnrepairedInspections({ techId: session.id, pin: session.pin });
+    }
+
+    function getActiveTasksAlertId() {
+      return activeMainTab === 'unrepaired-inspection' ? 'uir-alert' : 'gf-alert';
+    }
+
+    function findGroundFaultRecord(landline, dateTime, row) {
+      var i;
+      if (row) {
+        for (i = 0; i < groundFaultRecords.length; i++) {
+          if (String(groundFaultRecords[i].row) === String(row)) {
+            return groundFaultRecords[i];
+          }
+        }
+      }
+      if (landline && dateTime) {
+        for (i = 0; i < groundFaultRecords.length; i++) {
+          if (groundFaultRecords[i].landline === landline && groundFaultRecords[i].dateTime === dateTime) {
+            return groundFaultRecords[i];
+          }
+        }
+      }
+      return null;
+    }
+
+    function findUnrepairedInspectionRecord(ticketNumber, row) {
+      var i;
+      if (row) {
+        for (i = 0; i < unrepairedInspectionRecords.length; i++) {
+          if (String(unrepairedInspectionRecords[i].row) === String(row)) {
+            return unrepairedInspectionRecords[i];
+          }
+        }
+      }
+      if (ticketNumber) {
+        for (i = 0; i < unrepairedInspectionRecords.length; i++) {
+          if (unrepairedInspectionRecords[i].ticketNumber === ticketNumber) {
+            return unrepairedInspectionRecords[i];
+          }
+        }
+      }
+      return null;
+    }
+
+    function showGroundFaultInspectionPanel(rec, source) {
+      inspectionPanelSource = source || activeMainTab || 'ground-fault';
+      selectedGroundFault = rec;
+      resetNetworkInspectionForm();
+      updateInspectionArchiveUi();
+      $('gf-inspection-title').textContent = 'فحص العطل الأرضي — ' + rec.landline +
+        (rec.dateTime ? ' — ' + rec.dateTime : '');
+      $('ni-source-datetime').textContent = rec.dateTime || '—';
+      $('ni-original-tech').textContent = rec.tech || '—';
+      $('ni-connection-type').textContent = rec.connectionType || '—';
+      $('ni-cable').textContent = rec.cableNumber || '—';
+      $('ni-cabinet').textContent = rec.cabinetNumber || '—';
+      $('ni-box').textContent = rec.boxNumber || '—';
+      $('ni-source-notes').textContent = rec.notes || '—';
+      initWelderField();
+      $('gf-inspection-panel').classList.remove('hidden');
+      hideAlert('ni-alert');
+      $('gf-inspection-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openGroundFaultInspection(landline, dateTime, row) {
+      var rec = findGroundFaultRecord(landline, dateTime, row);
+      if (!rec) {
+        showAlert(getActiveTasksAlertId(), 'تعذر تحديد سجل العطل — حدّث الجدول واختر السجل من جديد', 'error');
+        return;
+      }
+      if (!session.id || !session.pin) return;
+      google.script.run
+        .withSuccessHandler(function (check) {
+          if (check && check.open) {
+            showOpenInspectionModal(rec.landline, check.latest && check.latest.repairStatus);
+            return;
+          }
+          showGroundFaultInspectionPanel(rec, 'ground-fault');
+        })
+        .withFailureHandler(function (err) {
+          showAlert(getActiveTasksAlertId(), (err && err.message) ||
+            'تعذر التحقق من شيت فحص الشبكات — حدّث الصفحة وحاول مرة أخرى', 'error');
+        })
+        .netTechCheckOpenNetworkInspection({
+          techId: session.id,
+          pin: session.pin,
+          landline: rec.landline
+        });
+    }
+
+    function showOpenInspectionModal(landline, repairStatus) {
+      var statusText = repairStatus ? (' — حالة الإصلاح: ' + repairStatus) : '';
+      $('open-inspection-text').innerHTML =
+        'رقم التليفون <strong dir="ltr">' + escapeHtml(landline) + '</strong> موجود في شيت فحص الشبكات' +
+        escapeHtml(statusText) + '.<br><br>' +
+        'العطل مازال <strong>مفتوحاً</strong> ولم يتم إصلاحه بعد.<br>' +
+        'يرجى التوجه إلى قسم <strong>«أعطال أرضية تم فحصها ولم يتم إصلاحها»</strong> لمتابعة العمل.';
+      $('open-inspection-modal').classList.remove('hidden');
+      $('open-inspection-modal').setAttribute('aria-hidden', 'false');
+    }
+
+    function closeOpenInspectionModal() {
+      $('open-inspection-modal').classList.add('hidden');
+      $('open-inspection-modal').setAttribute('aria-hidden', 'true');
+    }
+
+    function openUnrepairedInspection(ticketNumber, sourceDateTime, inspectionRow) {
+      var alertId = getActiveTasksAlertId();
+      var uirRec = findUnrepairedInspectionRecord(ticketNumber, inspectionRow);
+      if (!uirRec) {
+        showAlert(alertId, 'تعذر تحديد سجل الفحص — حدّث الجدول واختر السجل من جديد', 'error');
+        return;
+      }
+
+      function tryOpenPanel() {
+        var gfRec = findGroundFaultRecord(ticketNumber, sourceDateTime || uirRec.sourceDateTime, null);
+        if (gfRec) {
+          showGroundFaultInspectionPanel(gfRec, 'unrepaired-inspection');
+          return;
+        }
+        var sourceDateTimeValue = sourceDateTime || uirRec.sourceDateTime;
+        if (!sourceDateTimeValue) {
+          showAlert(alertId, 'لا يوجد تاريخ بلاغ مربوط — جرّب من تاب أعطال أرضية', 'error');
+          return;
+        }
+        showGroundFaultInspectionPanel({
+          row: 0,
+          dateTime: sourceDateTimeValue,
+          landline: uirRec.ticketNumber,
+          tech: uirRec.originalTech || '',
+          notes: '',
+          connectionType: uirRec.workType || '',
+          cableNumber: uirRec.cableNumber || '',
+          cabinetNumber: uirRec.cabinetNumber || '',
+          boxNumber: uirRec.boxNumber || ''
+        }, 'unrepaired-inspection');
+      }
+
+      if (groundFaultRecords.length) {
+        tryOpenPanel();
+        return;
+      }
+      google.script.run
+        .withSuccessHandler(function (data) {
+          groundFaultRecords = data.records || [];
+          tryOpenPanel();
+        })
+        .withFailureHandler(function (err) {
+          showAlert(alertId, err.message || 'تعذر تحميل بيانات البلاغ الأصلي', 'error');
+        })
+        .netTechGetGroundFaults({ techId: session.id, pin: session.pin });
+    }
+
+    function getPhotoLocationCtx(target) {
+      if (target === 'preview') {
+        return {
+          alertId: 'preview-alert',
+          cameraBtnId: 'preview-camera-btn',
+          getPhoto: function () { return previewPendingPhoto; },
+          setPhoto: function (p) { previewPendingPhoto = p; },
+          getLocation: function () { return previewPendingLocation; },
+          setLocation: function (l) { previewPendingLocation = l; },
+          render: renderPreviewAttachPreview,
+          clear: clearPreviewAttachments,
+          useErrorModal: true
+        };
+      }
+      if (target === 'network') {
+        return {
+          alertId: 'ni-alert',
+          cameraBtnId: 'ni-camera-btn',
+          getPhoto: function () { return networkInspectionPhoto; },
+          setPhoto: function (p) { networkInspectionPhoto = p; },
+          getLocation: function () { return networkInspectionLocation; },
+          setLocation: function (l) { networkInspectionLocation = l; },
+          render: renderNetworkInspectionPreview,
+          clear: clearNetworkInspectionAttachments,
+          useErrorModal: true
+        };
+      }
+      return {
+        alertId: 'detail-alert',
+        cameraBtnId: 'camera-btn',
+        getPhoto: function () { return pendingPhoto; },
+        setPhoto: function (p) { pendingPhoto = p; },
+        getLocation: function () { return pendingLocation; },
+        setLocation: function (l) { pendingLocation = l; },
+        render: renderAttachPreview,
+        clear: function () { pendingPhoto = null; pendingLocation = null; renderAttachPreview(); },
+        useErrorModal: false
+      };
+    }
+
+    function showFormErrorModal(items) {
+      if (!items || !items.length) return;
+      var list = $('preview-error-list');
+      list.innerHTML = items.map(function (item) {
+        return '<li><strong>' + escapeHtml(item.field) + '</strong>: ' + escapeHtml(item.message || 'هذا الحقل مطلوب') + '</li>';
+      }).join('');
+      $('preview-error-modal').classList.remove('hidden');
+      $('preview-error-modal').setAttribute('aria-hidden', 'false');
+      if (items[0].elId) flashField(items[0].elId);
+    }
+
+    function isMobileDevice() {
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+    }
+
+    function stopCameraStream() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(function (t) { t.stop(); });
+        cameraStream = null;
+      }
+      var video = $('camera-video');
+      if (video) video.srcObject = null;
+    }
+
+    function closeCameraModal() {
+      stopCameraStream();
+      $('camera-modal').classList.add('hidden');
+      $('camera-modal').setAttribute('aria-hidden', 'true');
+    }
+
+    var PHOTO_TARGET_BYTES = 4 * 1024 * 1024;
+
+    function estimateBase64Bytes(b64) {
+      return Math.floor(b64.length * 3 / 4);
+    }
+
+    function compressCanvasToPhoto(canvas, cb) {
+      var maxDim = 1280;
+      var srcW = canvas.width;
+      var srcH = canvas.height;
+      var w = srcW;
+      var h = srcH;
+
+      function scaleToMaxDim() {
+        if (w <= maxDim && h <= maxDim) return;
+        if (w >= h) {
+          h = Math.round(h * maxDim / w);
+          w = maxDim;
+        } else {
+          w = Math.round(w * maxDim / h);
+          h = maxDim;
+        }
+      }
+
+      scaleToMaxDim();
+
+      function render(quality) {
+        var out = document.createElement('canvas');
+        out.width = w;
+        out.height = h;
+        out.getContext('2d').drawImage(canvas, 0, 0, w, h);
+        return out.toDataURL('image/jpeg', quality);
+      }
+
+      var quality = 0.82;
+      var dataUrl = render(quality);
+      var b64 = dataUrl.split(',')[1];
+
+      while (estimateBase64Bytes(b64) > PHOTO_TARGET_BYTES) {
+        if (quality > 0.4) {
+          quality = Math.max(0.4, quality - 0.1);
+        } else if (maxDim > 640) {
+          maxDim = Math.max(640, Math.round(maxDim * 0.8));
+          w = srcW;
+          h = srcH;
+          scaleToMaxDim();
+          quality = 0.75;
+        } else {
+          break;
+        }
+        dataUrl = render(quality);
+        b64 = dataUrl.split(',')[1];
+      }
+
+      cb({
+        base64: b64,
+        mimeType: 'image/jpeg',
+        previewUrl: dataUrl
+      });
+    }
+
+    function applyCompressedCanvas(canvas, cb) {
+      compressCanvasToPhoto(canvas, cb);
+    }
+
+    function activeAlertId() {
+      if (cameraTarget === 'preview') return 'preview-alert';
+      if (cameraTarget === 'network') return 'ni-alert';
+      return 'detail-alert';
+    }
+
+    function openFilePickerFallback() {
+      var input = cameraTarget === 'preview' ? $('preview-photo-input')
+        : cameraTarget === 'network' ? $('ni-photo-input')
+        : $('photo-input');
+      input.removeAttribute('capture');
+      if (isMobileDevice()) input.setAttribute('capture', 'environment');
+      input.click();
+    }
+
+    function startLiveCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        openFilePickerFallback();
+        return;
+      }
+
+      stopCameraStream();
+      cameraFacing = isMobileDevice() ? 'environment' : 'user';
+      $('camera-modal').classList.remove('hidden');
+      $('camera-modal').setAttribute('aria-hidden', 'false');
+
+      function tryStream(facing) {
+        var videoOpts = facing
+          ? { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } }
+          : { width: { ideal: 1280 }, height: { ideal: 720 } };
+        return navigator.mediaDevices.getUserMedia({ video: videoOpts, audio: false });
+      }
+
+      tryStream(isMobileDevice() ? cameraFacing : null)
+        .catch(function () { return tryStream('user'); })
+        .catch(function () { return tryStream(null); })
+        .then(function (stream) {
+          cameraStream = stream;
+          $('camera-video').srcObject = stream;
+        })
+        .catch(function () {
+          closeCameraModal();
+          showAlert(activeAlertId(), 'تعذر فتح الكاميرا — اسمح بالكاميرا من المتصفح أو اختر صورة من الملفات', 'error');
+          openFilePickerFallback();
+        });
+    }
+
+    function geolocationErrorMessage(err) {
+      if (!err) return 'تعذر تحديد الموقع';
+      if (err.code === 1) {
+        return 'تم رفض إذن الموقع — اضغط 🔒 بجانب العنوان → الموقع → «السماح» ثم أعد «التقاط صورة مع الموقع»';
+      }
+      if (err.code === 2) return 'الموقع غير متاح — فعّل GPS أو Wi‑Fi ثم حاول مرة أخرى';
+      if (err.code === 3) return 'انتهت مهلة تحديد الموقع — حاول «التقاط صورة مع الموقع» مرة أخرى';
+      return err.message || 'تعذر تحديد الموقع';
+    }
+
+    function tryGetCurrentPosition(options) {
+      return new Promise(function (resolve, reject) {
+        if (!navigator.geolocation) {
+          reject({ code: 0, message: 'المتصفح لا يدعم تحديد الموقع' });
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
+      });
+    }
+
+    function fetchPreviewLocation() {
+      var attempts = [
+        { enableHighAccuracy: false, timeout: 25000, maximumAge: 300000 },
+        { enableHighAccuracy: true, timeout: 45000, maximumAge: 0 }
+      ];
+      var chain = Promise.reject({ code: 0 });
+      attempts.forEach(function (opts) {
+        chain = chain.catch(function () { return tryGetCurrentPosition(opts); });
+      });
+      return chain.then(function (pos) {
+        return {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy
+        };
+      });
+    }
+
+    function capturePhotoWithLocation(canvas, ctx, onSuccess, onFail) {
+      applyCompressedCanvas(canvas, function (photo) {
+        ctx.setPhoto(photo);
+        fetchPreviewLocation()
+          .then(function (loc) {
+            ctx.setLocation(loc);
+            ctx.render();
+            hideAlert(ctx.alertId);
+            if (onSuccess) onSuccess();
+          })
+          .catch(function (err) {
+            ctx.render();
+            var item = {
+              field: 'الصورة والموقع',
+              message: 'تم حفظ الصورة لكن ' + geolocationErrorMessage(err),
+              elId: ctx.cameraBtnId
+            };
+            if (ctx.useErrorModal) showFormErrorModal([item]);
+            else showAlert(ctx.alertId, item.message, 'error');
+            if (onFail) onFail(err);
+          });
+      });
+    }
+
+    function capturePreviewPhotoWithLocation(canvas, onSuccess, onFail) {
+      capturePhotoWithLocation(canvas, getPhotoLocationCtx('preview'), onSuccess, onFail);
+    }
+
+    function startPreviewCamera() {
+      cameraTarget = 'preview';
+      startLiveCamera();
+    }
+
+    function startNetworkInspectionCamera() {
+      cameraTarget = 'network';
+      startLiveCamera();
+    }
+
+    function captureFromCamera() {
+      var video = $('camera-video');
+      if (!video.videoWidth) {
+        if (cameraTarget === 'preview' || cameraTarget === 'network') {
+          var ctx = getPhotoLocationCtx(cameraTarget);
+          showFormErrorModal([{ field: 'الكاميرا', message: 'انتظر حتى تظهر الكاميرا', elId: ctx.cameraBtnId }]);
+        } else {
+          showAlert('detail-alert', 'انتظر حتى تظهر الكاميرا', 'error');
+        }
+        return;
+      }
+      var canvas = $('camera-canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      if (cameraTarget === 'preview' || cameraTarget === 'network') {
+        var photoCtx = getPhotoLocationCtx(cameraTarget);
+        var captureBtn = $('camera-capture-btn');
+        captureBtn.disabled = true;
+        captureBtn.textContent = 'جاري الحفظ...';
+        capturePhotoWithLocation(canvas, photoCtx, function () {
+          captureBtn.disabled = false;
+          captureBtn.textContent = '📸 التقاط';
+          closeCameraModal();
+        }, function () {
+          captureBtn.disabled = false;
+          captureBtn.textContent = '📸 التقاط';
+        });
+        return;
+      }
+      applyCompressedCanvas(canvas, function (data) {
+        pendingPhoto = data;
+        renderAttachPreview();
+        hideAlert('detail-alert');
+        closeCameraModal();
+      });
+    }
+
+    function $(id) { return document.getElementById(id); }
+    function showAlert(id, msg, type) { var el = $(id); el.textContent = msg; el.className = 'alert show alert-' + type; }
+    function hideAlert(id) { $(id).className = 'alert'; }
+
+    function closePreviewErrorModal() {
+      $('preview-error-modal').classList.add('hidden');
+      $('preview-error-modal').setAttribute('aria-hidden', 'true');
+    }
+
+    function flashField(elId) {
+      var el = $(elId);
+      if (!el) return;
+      el.classList.remove('field-error-flash');
+      void el.offsetWidth;
+      el.classList.add('field-error-flash');
+      setTimeout(function () { el.classList.remove('field-error-flash'); }, 1400);
+      try { el.focus(); } catch (_e) {}
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function showPreviewErrorModal(items) {
+      showFormErrorModal(items);
+    }
+
+    function mapServerPreviewError(message) {
+      var msg = String(message || '').trim();
+      var rules = [
+        { match: 'MSAN', field: 'كابينة MSAN', elId: 'msan-input' },
+        { match: 'الكابل', field: 'رقم الكابل', elId: 'cable-input' },
+        { match: 'الكابينة', field: 'رقم الكابينة', elId: 'cabinet-input' },
+        { match: 'البكس', field: 'رقم البكس', elId: 'box-input' },
+        { match: 'الملاحظات', field: 'الملاحظات', elId: 'inspection-notes' },
+        { match: 'نتيجة الفحص', field: 'نتيجة الفحص', elId: 'inspection-result' },
+        { match: 'صورة', field: 'الصورة والموقع', elId: 'preview-camera-btn' },
+        { match: 'الموقع', field: 'الصورة والموقع', elId: 'preview-camera-btn' },
+        { match: 'GPS', field: 'الصورة والموقع', elId: 'preview-camera-btn' }
+      ];
+      for (var i = 0; i < rules.length; i++) {
+        if (msg.indexOf(rules[i].match) !== -1) {
+          return [{ field: rules[i].field, message: msg, elId: rules[i].elId }];
+        }
+      }
+      return [{ field: 'الإرسال', message: msg || 'حدث خطأ أثناء الحفظ', elId: 'preview-submit-btn' }];
+    }
+
+    function collectPreviewInspectionErrors() {
+      var errors = [];
+      if (!$('msan-input').value.trim()) {
+        errors.push({ field: 'كابينة MSAN', message: 'أدخل كابينة MSAN', elId: 'msan-input' });
+      }
+      if (!$('cable-input').value.trim()) {
+        errors.push({ field: 'رقم الكابل', message: 'أدخل رقم الكابل', elId: 'cable-input' });
+      }
+      if (!$('cabinet-input').value.trim()) {
+        errors.push({ field: 'رقم الكابينة', message: 'أدخل رقم الكابينة', elId: 'cabinet-input' });
+      }
+      if (!$('box-input').value.trim()) {
+        errors.push({ field: 'رقم البكس', message: 'أدخل رقم البكس', elId: 'box-input' });
+      }
+      if (!$('inspection-notes').value.trim()) {
+        errors.push({ field: 'الملاحظات', message: 'أدخل الملاحظات', elId: 'inspection-notes' });
+      }
+      if (!$('inspection-result').value.trim()) {
+        errors.push({ field: 'نتيجة الفحص', message: 'اختر نتيجة الفحص من القائمة', elId: 'inspection-result' });
+      }
+      if (!previewPendingPhoto && !previewPendingLocation) {
+        errors.push({ field: 'الصورة والموقع', message: 'اضغط «التقاط صورة مع الموقع» واسمح للكاميرا والموقع', elId: 'preview-camera-btn' });
+      } else if (!previewPendingPhoto) {
+        errors.push({ field: 'الصورة', message: 'التقط صورة مع الموقع', elId: 'preview-camera-btn' });
+      } else if (!previewPendingLocation) {
+        errors.push({ field: 'الموقع', message: 'أعد «التقاط صورة مع الموقع» لالتقاط الإحداثيات', elId: 'preview-camera-btn' });
+      }
+      return errors;
+    }
+    function escapeHtml(t) { return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escapeAttr(t) {
+      return String(t || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    }
+    function normalizePhotoUrl(url) {
+      return String(url || '').trim().replace(/&amp;/gi, '&');
+    }
+    function extractDriveFileId(url) {
+      var s = normalizePhotoUrl(url);
+      var m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/) || s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      return m ? m[1] : '';
+    }
+
+    function parseAttachment(raw) {
+      if (!raw) return null;
+      var s = String(raw).trim();
+      if (!s) return null;
+      if (s.charAt(0) === '{') {
+        try { return JSON.parse(s); } catch (e) { return { photoUrl: s }; }
+      }
+      if (s.indexOf('http') === 0) return { photoUrl: s };
+      return null;
+    }
+
+    function driveImageUrl(url) {
+      var s = normalizePhotoUrl(url);
+      var id = extractDriveFileId(s);
+      if (id) return 'https://lh3.googleusercontent.com/d/' + id + '=w400-rw';
+      return s;
+    }
+
+    function parseCustomerPhotoBody(text) {
+      var t = String(text || '').trim();
+      var m = t.match(/\[صورة\]([^\|]+)(?:\|([\s\S]*))?/);
+      if (!m) return null;
+      return { photoUrl: normalizePhotoUrl(m[1]), caption: (m[2] || '').trim() };
+    }
+
+    function customerMessageBodyHtml(text) {
+      var photo = parseCustomerPhotoBody(text);
+      var textPart = photo
+        ? String(text || '').replace(/\[صورة\][^\|]+(?:\|[\s\S]*)?/, '').trim()
+        : String(text || '');
+      if (!photo) return escapeHtml(text);
+      var viewUrl = photo.photoUrl;
+      var thumb = driveImageUrl(viewUrl);
+      var html = '';
+      if (textPart) html += escapeHtml(textPart);
+      html += (textPart ? '<br/>' : '') +
+        '<a href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">' +
+        '<img class="chat-photo" referrerpolicy="no-referrer" src="' + escapeAttr(thumb) + '" alt="صورة" loading="lazy" /></a>' +
+        '<a class="chat-photo-link" href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">📷 فتح الصورة</a>';
+      return html;
+    }
+
+    function attachmentHtml(raw) {
+      var meta = parseAttachment(raw);
+      if (!meta) return '';
+      var html = '';
+      if (meta.photoUrl) {
+        var viewUrl = normalizePhotoUrl(meta.photoUrl);
+        var thumb = driveImageUrl(viewUrl);
+        html += '<a href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">' +
+          '<img class="msg-photo" referrerpolicy="no-referrer" src="' + escapeAttr(thumb) + '" alt="صورة مرفقة" loading="lazy" /></a>' +
+          '<a class="msg-photo-link" href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">📷 عرض الصورة</a>';
+      }
+      if (meta.location && meta.location.lat != null) {
+        var mapsUrl = meta.location.mapsUrl || ('https://www.google.com/maps?q=' + meta.location.lat + ',' + meta.location.lng);
+        html += '<div class="msg-loc">📍 <a href="' + escapeHtml(mapsUrl) + '" target="_blank" rel="noopener">عرض الموقع على الخريطة</a>';
+        if (meta.location.accuracy) html += ' <span style="color:var(--muted)">(±' + Math.round(meta.location.accuracy) + 'م)</span>';
+        html += '</div>';
+      }
+      return html;
+    }
+
+    function clearAttachments() {
+      pendingPhoto = null;
+      pendingLocation = null;
+      $('photo-input').value = '';
+      renderAttachPreview();
+    }
+
+    function renderAttachPreview() {
+      var box = $('attach-preview');
+      if (!pendingPhoto && !pendingLocation) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+      }
+      box.classList.remove('hidden');
+      var html = '';
+      if (pendingPhoto) {
+        html += '<img src="' + pendingPhoto.previewUrl + '" alt="معاينة الصورة" />';
+      }
+      if (pendingLocation) {
+        var mapsUrl = 'https://www.google.com/maps?q=' + pendingLocation.lat + ',' + pendingLocation.lng;
+        html += '<div class="loc-chip">📍 الموقع جاهز — ' +
+          '<a href="' + mapsUrl + '" target="_blank" rel="noopener">معاينة</a>' +
+          ' <span class="ltr">(' + pendingLocation.lat.toFixed(5) + ', ' + pendingLocation.lng.toFixed(5) + ')</span></div>';
+      }
+      html += '<button type="button" class="attach-clear" id="attach-clear-btn">✕ إزالة المرفقات</button>';
+      box.innerHTML = html;
+      var clearBtn = $('attach-clear-btn');
+      if (clearBtn) clearBtn.addEventListener('click', clearAttachments);
+    }
+
+    function compressImage(file, cb) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var img = new Image();
+        img.onload = function () {
+          var canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext('2d').drawImage(img, 0, 0);
+          compressCanvasToPhoto(canvas, cb);
+        };
+        img.onerror = function () { showAlert('detail-alert', 'تعذر قراءة الصورة', 'error'); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function () { showAlert('detail-alert', 'تعذر فتح الملف', 'error'); };
+      reader.readAsDataURL(file);
+    }
+
+    function captureLocation() {
+      if (!navigator.geolocation) {
+        showAlert('detail-alert', 'المتصفح لا يدعم تحديد الموقع', 'error');
+        return;
+      }
+      var btn = $('location-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري تحديد الموقع...';
+      navigator.geolocation.getCurrentPosition(
+        function (pos) {
+          pendingLocation = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy
+          };
+          renderAttachPreview();
+          btn.disabled = false;
+          btn.textContent = '📍 موقعي الحالي';
+          hideAlert('detail-alert');
+        },
+        function (err) {
+          btn.disabled = false;
+          btn.textContent = '📍 موقعي الحالي';
+          var msg = 'تعذر تحديد الموقع';
+          if (err.code === 1) msg = 'رفضت إذن الموقع — فعّله من إعدادات المتصفح';
+          else if (err.code === 3) msg = 'انتهت مهلة تحديد الموقع — حاول مرة أخرى';
+          showAlert('detail-alert', msg, 'error');
+        },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
+      );
+    }
+
+    function saveSession() { sessionStorage.setItem(TECH_KEY, JSON.stringify(session)); }
+    function loadSession() {
+      try { return JSON.parse(sessionStorage.getItem(TECH_KEY) || 'null'); } catch (e) { return null; }
+    }
+    function clearSession() { sessionStorage.removeItem(TECH_KEY); session = { id: '', pin: '', name: '', status: '' }; }
+
+    function showSection(name) {
+      $('login-section').classList.toggle('hidden', name !== 'login');
+      $('tasks-section').classList.toggle('hidden', name !== 'tasks' && name !== 'ground-fault' && name !== 'unrepaired-inspection');
+      $('detail-section').classList.toggle('hidden', name !== 'detail');
+      if (name === 'tasks' || name === 'ground-fault' || name === 'unrepaired-inspection') {
+        switchMainTab(name === 'tasks' ? 'tasks' : name);
+      }
+    }
+
+    function switchMainTab(tab) {
+      activeMainTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+      });
+      $('main-tasks-panel').classList.toggle('hidden', tab !== 'tasks');
+      $('ground-fault-panel').classList.toggle('hidden', tab !== 'ground-fault');
+      $('unrepaired-inspection-panel').classList.toggle('hidden', tab !== 'unrepaired-inspection');
+      $('gf-inspection-panel').classList.add('hidden');
+      selectedGroundFault = null;
+      inspectionPanelSource = 'ground-fault';
+      $('refresh-btn').classList.toggle('hidden', tab !== 'tasks');
+      if (tab === 'ground-fault') loadGroundFaults();
+      if (tab === 'unrepaired-inspection') loadUnrepairedInspections();
+    }
+
+    function renderSerialResult(result) {
+      $('serial-result').classList.add('hidden');
+      $('serial-not-found').classList.add('hidden');
+      $('inspection-form').classList.add('hidden');
+      currentSerialRecord = null;
+      resetInspectionForm();
+      if (!result || !result.found) {
+        $('serial-not-found').classList.remove('hidden');
+        return;
+      }
+      currentSerialRecord = result;
+      var grid = $('serial-result-grid');
+      var headers = result.headers || Object.keys(result.data || {});
+      grid.innerHTML = headers.map(function (key) {
+        var val = (result.data && result.data[key]) || '';
+        var isSerial = key.indexOf('مسلسل') !== -1;
+        return '<div class="detail-item">' +
+          '<div class="lbl">' + escapeHtml(key) + '</div>' +
+          '<div class="val' + (isSerial ? ' ltr' : '') + '">' + escapeHtml(val || '—') + '</div>' +
+          '</div>';
+      }).join('');
+      $('serial-result').classList.remove('hidden');
+    }
+
+    function pickSerialField(record, keys) {
+      if (!record || !record.data) return '';
+      var data = record.data;
+      var i;
+      for (i = 0; i < keys.length; i++) {
+        if (data[keys[i]]) return data[keys[i]];
+      }
+      for (var k in data) {
+        if (!Object.prototype.hasOwnProperty.call(data, k)) continue;
+        for (i = 0; i < keys.length; i++) {
+          if (k.indexOf(keys[i]) !== -1) return data[k];
+        }
+      }
+      return '';
+    }
+
+    function resetInspectionForm() {
+      $('msan-input').value = '';
+      $('cable-input').value = '';
+      $('cabinet-input').value = '';
+      $('box-input').value = '';
+      $('inspection-notes').value = '';
+      $('inspection-result').value = '';
+      previewPendingPhoto = null;
+      previewPendingLocation = null;
+      $('preview-photo-input').value = '';
+      var camBtn = $('preview-camera-btn');
+      if (camBtn) {
+        camBtn.disabled = false;
+        camBtn.textContent = '📷 التقاط صورة مع الموقع';
+      }
+      renderPreviewAttachPreview();
+    }
+
+    function clearPreviewAttachments() {
+      previewPendingPhoto = null;
+      previewPendingLocation = null;
+      $('preview-photo-input').value = '';
+      renderPreviewAttachPreview();
+    }
+
+    function renderPreviewAttachPreview() {
+      var box = $('preview-attach-preview');
+      if (!previewPendingPhoto && !previewPendingLocation) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+      }
+      box.classList.remove('hidden');
+      var html = '';
+      if (previewPendingPhoto) {
+        html += '<img src="' + previewPendingPhoto.previewUrl + '" alt="معاينة صورة الفحص" />';
+      }
+      if (previewPendingLocation) {
+        var mapsUrl = 'https://www.google.com/maps?q=' + previewPendingLocation.lat + ',' + previewPendingLocation.lng;
+        html += '<div class="loc-chip">📍 الموقع جاهز — ' +
+          '<a href="' + mapsUrl + '" target="_blank" rel="noopener">معاينة</a>' +
+          ' <span class="ltr">(' + previewPendingLocation.lat.toFixed(5) + ', ' + previewPendingLocation.lng.toFixed(5) + ')</span></div>';
+      }
+      html += '<button type="button" class="attach-clear" id="preview-attach-clear-btn">✕ إزالة الصورة والموقع</button>';
+      box.innerHTML = html;
+      var clearBtn = $('preview-attach-clear-btn');
+      if (clearBtn) clearBtn.addEventListener('click', clearPreviewAttachments);
+    }
+
+    function resetNetworkInspectionForm() {
+      $('ni-welder-extra').value = '';
+      $('ni-companion').value = '';
+      $('ni-work-class').value = '';
+      $('ni-repair-status').value = '';
+      $('ni-report-ack').value = '';
+      $('ni-materials').value = '';
+      $('ni-inspection-notes').value = '';
+      networkInspectionPhoto = null;
+      networkInspectionLocation = null;
+      $('ni-photo-input').value = '';
+      var camBtn = $('ni-camera-btn');
+      if (camBtn) {
+        camBtn.disabled = false;
+        camBtn.textContent = '📷 التقاط صورة مع الموقع';
+      }
+      renderNetworkInspectionPreview();
+    }
+
+    function clearNetworkInspectionAttachments() {
+      networkInspectionPhoto = null;
+      networkInspectionLocation = null;
+      $('ni-photo-input').value = '';
+      renderNetworkInspectionPreview();
+    }
+
+    function renderNetworkInspectionPreview() {
+      var box = $('ni-attach-preview');
+      if (!networkInspectionPhoto && !networkInspectionLocation) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+      }
+      box.classList.remove('hidden');
+      var html = '';
+      if (networkInspectionPhoto) {
+        html += '<img src="' + networkInspectionPhoto.previewUrl + '" alt="معاينة صورة الفحص" />';
+      }
+      if (networkInspectionLocation) {
+        var mapsUrl = 'https://www.google.com/maps?q=' + networkInspectionLocation.lat + ',' + networkInspectionLocation.lng;
+        html += '<div class="loc-chip">📍 الموقع جاهز — ' +
+          '<a href="' + mapsUrl + '" target="_blank" rel="noopener">معاينة</a>' +
+          ' <span class="ltr">(' + networkInspectionLocation.lat.toFixed(5) + ', ' + networkInspectionLocation.lng.toFixed(5) + ')</span></div>';
+      }
+      html += '<button type="button" class="attach-clear" id="ni-attach-clear-btn">✕ إزالة الصورة والموقع</button>';
+      box.innerHTML = html;
+      var clearBtn = $('ni-attach-clear-btn');
+      if (clearBtn) clearBtn.addEventListener('click', clearNetworkInspectionAttachments);
+    }
+
+    function collectNetworkInspectionErrors() {
+      var errors = [];
+      if (!selectedGroundFault || !selectedGroundFault.landline || !selectedGroundFault.dateTime) {
+        errors.push({ field: 'رقم التليفون', message: 'اختر سجلاً من الجدول (الرقم مع التاريخ والوقت) أولاً', elId: 'gf-table-body' });
+      }
+      if (!welderBaseName.trim()) {
+        errors.push({
+          field: 'اللحاميين القائمين بالعمل',
+          message: 'اسم اللحام الأساسي غير متاح — سجّل الدخول مجدداً',
+          elId: 'ni-welder-extra'
+        });
+      }
+      if (!$('ni-work-class').value.trim()) {
+        errors.push({ field: 'تصنيف الأعمال', message: 'اختر تصنيف الأعمال', elId: 'ni-work-class' });
+      }
+      if (!$('ni-repair-status').value.trim()) {
+        errors.push({ field: 'حالة الإصلاح', message: 'اختر حالة الإصلاح', elId: 'ni-repair-status' });
+      }
+      if (!networkInspectionPhoto && !networkInspectionLocation) {
+        errors.push({ field: 'الصورة والموقع', message: 'اضغط «التقاط صورة مع الموقع» واسمح للكاميرا والموقع', elId: 'ni-camera-btn' });
+      } else if (!networkInspectionPhoto) {
+        errors.push({ field: 'الصورة', message: 'التقط صورة مع الموقع', elId: 'ni-camera-btn' });
+      } else if (!networkInspectionLocation) {
+        errors.push({ field: 'الموقع', message: 'أعد «التقاط صورة مع الموقع» لالتقاط الإحداثيات', elId: 'ni-camera-btn' });
+      }
+      return errors;
+    }
+
+    function mapServerNetworkInspectionError(message) {
+      var msg = String(message || '').trim();
+      var rules = [
+        { match: 'اللحام', field: 'اللحاميين القائمين بالعمل', elId: 'ni-welder-extra' },
+        { match: 'تصنيف', field: 'تصنيف الأعمال', elId: 'ni-work-class' },
+        { match: 'حالة', field: 'حالة الإصلاح', elId: 'ni-repair-status' },
+        { match: 'صورة', field: 'الصورة والموقع', elId: 'ni-camera-btn' },
+        { match: 'الموقع', field: 'الصورة والموقع', elId: 'ni-camera-btn' },
+        { match: 'التليفون', field: 'رقم التليفون', elId: 'gf-table-body' }
+      ];
+      for (var i = 0; i < rules.length; i++) {
+        if (msg.indexOf(rules[i].match) !== -1) {
+          return [{ field: rules[i].field, message: msg, elId: rules[i].elId }];
+        }
+      }
+      return [{ field: 'الإرسال', message: msg || 'حدث خطأ أثناء الحفظ', elId: 'ni-submit-btn' }];
+    }
+
+    function isOpenInspectionErrorMessage(message) {
+      var msg = String(message || '');
+      return msg.indexOf('مفتوح') !== -1 || msg.indexOf('فحص الشبكات') !== -1;
+    }
+
+    function submitNetworkInspection() {
+      var errors = collectNetworkInspectionErrors();
+      if (errors.length) {
+        showFormErrorModal(errors);
+        return;
+      }
+
+      var btn = $('ni-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري الإرسال...';
+      hideAlert('ni-alert');
+
+      var rec = selectedGroundFault || {};
+      var payload = {
+        techId: session.id,
+        pin: session.pin,
+        landline: rec.landline,
+        sourceDateTime: rec.dateTime || '',
+        sourceRow: rec.row || 0,
+        originalTech: rec.tech || '',
+        welderName: getWelderFullName(),
+        companionWorker: $('ni-companion').value.trim(),
+        workClassification: $('ni-work-class').value.trim(),
+        materialsUsed: $('ni-materials').value.trim(),
+        reportAckName: $('ni-report-ack').value.trim(),
+        repairStatus: $('ni-repair-status').value.trim(),
+        inspectionNotes: $('ni-inspection-notes').value.trim(),
+        cableNumber: rec.cableNumber || '',
+        cabinetNumber: rec.cabinetNumber || '',
+        boxNumber: rec.boxNumber || '',
+        connectionType: rec.connectionType || '',
+        photoBase64: networkInspectionPhoto.base64,
+        photoMimeType: networkInspectionPhoto.mimeType,
+        location: networkInspectionLocation,
+        fromUnrepairedTab: inspectionPanelSource === 'unrepaired-inspection'
+      };
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          btn.textContent = '✅ إرسال فحص العطل إلى شيت فحص الشبكات';
+          showAlert('ni-alert', result.message, 'success');
+          resetNetworkInspectionForm();
+          if (inspectionPanelSource === 'unrepaired-inspection') {
+            loadUnrepairedInspections();
+          }
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = '✅ إرسال فحص العطل إلى شيت فحص الشبكات';
+          var msg = err && err.message ? err.message : '';
+          if (isOpenInspectionErrorMessage(msg)) {
+            showOpenInspectionModal(rec.landline || '', '');
+            return;
+          }
+          showFormErrorModal(mapServerNetworkInspectionError(msg));
+        })
+        .netTechSubmitNetworkInspection(payload);
+    }
+
+    function showInspectionForm() {
+      if (!currentSerialRecord || !currentSerialRecord.found) {
+        showAlert('preview-alert', 'ابحث عن مسلسل أولاً', 'error');
+        return;
+      }
+      resetInspectionForm();
+      $('inspection-form').classList.remove('hidden');
+      $('inspection-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function submitPreviewInspection() {
+      if (!currentSerialRecord || !currentSerialRecord.found) {
+        showPreviewErrorModal([{ field: 'رقم المسلسل', message: 'ابحث عن مسلسل أولاً', elId: 'serial-input' }]);
+        return;
+      }
+
+      var errors = collectPreviewInspectionErrors();
+      if (errors.length) {
+        showPreviewErrorModal(errors);
+        return;
+      }
+
+      var btn = $('preview-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري الإرسال...';
+      hideAlert('preview-alert');
+
+      var payload = {
+        techId: session.id,
+        pin: session.pin,
+        serial: currentSerialRecord.serial,
+        customerName: pickSerialField(currentSerialRecord, ['الإسم', 'الاسم', 'اسم']),
+        customerMobile: pickSerialField(currentSerialRecord, ['الموبايل', 'المحمول', 'موبايل']),
+        customerAddress: pickSerialField(currentSerialRecord, ['العنوان']),
+        msanCabinet: $('msan-input').value.trim(),
+        cableNumber: $('cable-input').value.trim(),
+        cabinetNumber: $('cabinet-input').value.trim(),
+        boxNumber: $('box-input').value.trim(),
+        notes: $('inspection-notes').value.trim(),
+        inspectionResult: $('inspection-result').value.trim(),
+        photoBase64: previewPendingPhoto.base64,
+        photoMimeType: previewPendingPhoto.mimeType,
+        location: previewPendingLocation
+      };
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          btn.textContent = '✅ إرسال الفحص إلى الشيت';
+          showAlert('preview-alert', result.message || 'تم حفظ الفحص بنجاح', 'success');
+          resetInspectionForm();
+          $('inspection-form').classList.add('hidden');
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = '✅ إرسال الفحص إلى الشيت';
+          showPreviewErrorModal(mapServerPreviewError(err.message || 'حدث خطأ أثناء الحفظ'));
+        })
+        .techSubmitPreviewInspection(payload);
+    }
+
+    function searchSerialData() {
+      var serial = $('serial-input').value.trim();
+      if (!serial) {
+        showAlert('preview-alert', 'أدخل رقم المسلسل', 'error');
+        return;
+      }
+      hideAlert('preview-alert');
+      $('serial-result').classList.add('hidden');
+      $('serial-not-found').classList.add('hidden');
+      $('inspection-form').classList.add('hidden');
+      currentSerialRecord = null;
+      resetInspectionForm();
+      var btn = $('serial-search-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري البحث...';
+      $('serial-loader').classList.remove('hidden');
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          btn.textContent = '🔍 بحث';
+          $('serial-loader').classList.add('hidden');
+          renderSerialResult(result);
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = '🔍 بحث';
+          $('serial-loader').classList.add('hidden');
+          showAlert('preview-alert', err.message || 'حدث خطأ أثناء البحث', 'error');
+        })
+        .techSearchSerialData({ techId: session.id, pin: session.pin, serial: serial });
+    }
+
+    function statusBadge(status) {
+      var cls = 'badge-new';
+      if (status === 'قيد المعالجة') cls = 'badge-progress';
+      if (status === 'إعادة فتح') cls = 'badge-reopened';
+      if (status === 'تم الحل' || status === 'تم الاصلاح' || status === 'تم الإصلاح') cls = 'badge-resolved';
+      return '<span class="badge ' + cls + '">' + escapeHtml(status) + '</span>';
+    }
+
+    function newestFirst(list) {
+      return (list && list.length) ? list.slice().reverse() : [];
+    }
+
+    function classifyMsg(text) {
+      var t = String(text || '').trim();
+      if (t.indexOf('العميل:') === 0) return { who: 'me', tag: '👤 العميل', text: t.replace(/^العميل:\s*/, '') };
+      if (t.indexOf('السنترال:') === 0) return { who: 'them', tag: '🏢 السنترال', text: t.replace(/^السنترال:\s*/, '') };
+      return { who: 'system', tag: '', text: t };
+    }
+
+    function renderCustomerThread(notifications) {
+      var el = $('customer-thread');
+      notifications = newestFirst(notifications);
+      if (!notifications || !notifications.length) {
+        el.innerHTML = '<div class="chat-thread-empty">لا توجد رسائل في محادثة العميل</div>';
+        return;
+      }
+      el.innerHTML = notifications.map(function (n) {
+        var c = classifyMsg(n.text);
+        if (c.who === 'system') {
+          return '<div class="c-row system"><div class="c-bubble">ℹ️ ' + escapeHtml(c.text) +
+            (n.date ? '<span class="c-date">' + escapeHtml(n.date) + '</span>' : '') + '</div></div>';
+        }
+        return '<div class="c-row ' + c.who + '"><div class="c-bubble">' +
+          '<span class="c-tag">' + c.tag + '</span>' + customerMessageBodyHtml(c.text) +
+          (n.date ? '<span class="c-date">' + escapeHtml(n.date) + '</span>' : '') + '</div></div>';
+      }).join('');
+      el.scrollTop = 0;
+    }
+
+    function renderAdminThread(messages) {
+      var el = $('admin-thread');
+      messages = newestFirst(messages);
+      if (!messages || !messages.length) {
+        el.innerHTML = '<div class="chat-thread-empty">لا توجد رسائل مع الإدارة بعد</div>';
+        return;
+      }
+      el.innerHTML = messages.map(function (m) {
+        var mine = m.senderType === 'فني';
+        var who = mine ? '🛠️ أنت' : '🏢 الإدارة';
+        var extras = attachmentHtml(m.attachment);
+        return '<div class="c-row ' + (mine ? 'them' : 'me') + '"><div class="c-bubble">' +
+          '<span class="c-tag">' + who + '</span>' +
+          (m.text ? escapeHtml(m.text) : '') +
+          extras +
+          (m.date ? '<span class="c-date">' + escapeHtml(m.date) + '</span>' : '') + '</div></div>';
+      }).join('');
+      el.scrollTop = 0;
+    }
+
+    function renderArchiveCustomerChat(notifications) {
+      notifications = newestFirst(notifications);
+      if (!notifications || !notifications.length) {
+        return '<div class="chat-thread-empty" style="padding:12px;font-size:0.82rem">لا توجد رسائل</div>';
+      }
+      return '<div class="archive-chat-thread">' + notifications.map(function (n) {
+        var c = classifyMsg(n.text);
+        if (c.who === 'system') {
+          return '<div class="c-row system"><div class="c-bubble">ℹ️ ' + escapeHtml(c.text) +
+            (n.date ? '<span class="c-date">' + escapeHtml(n.date) + '</span>' : '') + '</div></div>';
+        }
+        return '<div class="c-row ' + c.who + '"><div class="c-bubble">' +
+          '<span class="c-tag">' + c.tag + '</span>' + customerMessageBodyHtml(c.text) +
+          (n.date ? '<span class="c-date">' + escapeHtml(n.date) + '</span>' : '') + '</div></div>';
+      }).join('') + '</div>';
+    }
+
+    function renderArchiveTechChat(messages) {
+      messages = newestFirst(messages);
+      if (!messages || !messages.length) {
+        return '<div class="chat-thread-empty" style="padding:12px;font-size:0.82rem">لا توجد رسائل مع الإدارة</div>';
+      }
+      return '<div class="archive-chat-thread">' + messages.map(function (m) {
+        var mine = m.senderType === 'فني';
+        var who = mine ? '🛠️ الفني' : '🏢 الإدارة';
+        return '<div class="c-row ' + (mine ? 'them' : 'me') + '"><div class="c-bubble">' +
+          '<span class="c-tag">' + who + '</span>' +
+          (m.text ? escapeHtml(m.text) : '') +
+          attachmentHtml(m.attachment) +
+          (m.date ? '<span class="c-date">' + escapeHtml(m.date) + '</span>' : '') +
+          '</div></div>';
+      }).join('') + '</div>';
+    }
+
+    function renderArchiveModal(archive, landline) {
+      var body = $('archive-modal-body');
+      if (!archive || !archive.length) {
+        body.innerHTML = '<div class="empty-state" style="padding:24px">لا يوجد أرشيف سابق للخط ' + escapeHtml(landline || '') + '</div>';
+        return;
+      }
+      body.innerHTML = '<div class="archive-list">' + archive.map(function (item, idx) {
+        return '<div class="archive-item" data-idx="' + idx + '">' +
+          '<div class="archive-date">📅 ' + escapeHtml(item.date) + '</div>' +
+          '<div class="archive-meta">' + statusBadge(item.status) +
+            ' · ' + escapeHtml(item.reason) +
+            (item.lastUpdate ? ' · آخر تحديث: ' + escapeHtml(item.lastUpdate) : '') +
+          '</div>' +
+          '<div class="archive-detail hidden" id="archive-detail-' + idx + '">' +
+            '<div class="archive-section-title">💬 محادثة العميل والسنترال</div>' +
+            renderArchiveCustomerChat(item.notifications) +
+            '<div class="archive-section-title">🛠️ محادثة الفني والإدارة</div>' +
+            renderArchiveTechChat(item.techMessages) +
+          '</div></div>';
+      }).join('') + '</div>';
+      body.querySelectorAll('.archive-item').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var detail = document.getElementById('archive-detail-' + el.dataset.idx);
+          if (!detail) return;
+          var wasHidden = detail.classList.contains('hidden');
+          body.querySelectorAll('.archive-detail').forEach(function (d) { d.classList.add('hidden'); });
+          if (wasHidden) detail.classList.remove('hidden');
+        });
+      });
+    }
+
+    function updateArchiveButton(ticket) {
+      var btn = $('archive-btn');
+      if (!btn) return;
+      var count = (ticket.archive && ticket.archive.length) || 0;
+      btn.classList.toggle('has-archive', count > 0);
+      btn.textContent = count > 0
+        ? '📁 أرشيف الشكاوى السابقة (' + count + ')'
+        : '📁 أرشيف الشكاوى السابقة';
+      btn.title = count > 0 ? 'اضغط لعرض ' + count + ' شكوى سابقة' : 'لا يوجد أرشيف سابق';
+    }
+
+    function openArchiveModal() {
+      if (!currentTask) return;
+      $('archive-modal-title').textContent = '📁 أرشيف شكاوى الخط — ' + (currentTask.landline || '');
+      renderArchiveModal(currentTask.archive || [], currentTask.landline);
+      $('archive-modal').classList.remove('hidden');
+    }
+
+    function closeArchiveModal() {
+      $('archive-modal').classList.add('hidden');
+    }
+
+    function renderTaskList(tasks) {
+      var list = $('task-list');
+      var empty = $('tasks-empty');
+      if (!tasks.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      list.innerHTML = tasks.map(function (t) {
+        var preview = t.lastNotification
+          ? '<div class="task-preview">' + escapeHtml(t.lastNotification) + '</div>' : '';
+        var archiveBadge = t.archiveCount > 0
+          ? '<span class="task-archive-badge">📁 ' + t.archiveCount + ' شكوى سابقة</span>' : '';
+        var inspectionBadge = t.isTechInspection
+          ? '<span class="task-inspection-badge">🔍 فحص من السنترال</span>' : '';
+        return '<div class="task-card" data-row="' + t.row + '">' +
+          '<div class="task-top"><div class="task-phone">☎ <span class="ltr">' + escapeHtml(t.landline) + '</span> ' + inspectionBadge + '</div>' +
+            statusBadge(t.status) + '</div>' +
+          '<div class="task-meta"><span>📱 <span class="ltr">' + escapeHtml(t.mobile || (t.isTechInspection ? '—' : '')) + '</span></span>' +
+            '<span>🕐 ' + escapeHtml(t.lastUpdate || t.date) + '</span></div>' +
+          archiveBadge +
+          preview +
+        '</div>';
+      }).join('');
+      list.querySelectorAll('.task-card').forEach(function (card) {
+        card.addEventListener('click', function () { openTask(Number(card.dataset.row)); });
+      });
+    }
+
+    function loadTasks() {
+      $('tasks-loader').classList.remove('hidden');
+      hideAlert('tasks-alert');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          $('tasks-loader').classList.add('hidden');
+          renderTaskList(data.tasks || []);
+        })
+        .withFailureHandler(function (err) {
+          $('tasks-loader').classList.add('hidden');
+          showAlert('tasks-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .techListTasks({ techId: session.id, pin: session.pin });
+    }
+
+    function renderDetail(ticket) {
+      currentTask = ticket;
+      var isInspection = !!ticket.isTechInspection;
+      $('customer-section').classList.toggle('hidden', isInspection);
+      $('inspection-info').classList.toggle('hidden', !isInspection);
+      $('archive-btn').classList.toggle('hidden', isInspection);
+      if (isInspection) {
+        $('inspection-note-text').textContent = ticket.inspectionNote || 'طلب فحص من السنترال';
+      }
+      $('detail-content').innerHTML =
+        '<div class="detail-grid">' +
+          '<div class="detail-item"><div class="lbl">رقم الخط الأرضي</div><div class="val ltr">' + escapeHtml(ticket.landline) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">رقم الموبايل</div><div class="val ltr">' + escapeHtml(isInspection ? '—' : ticket.mobile) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">' + (isInspection ? 'نوع المهمة' : 'سبب التواصل') + '</div><div class="val">' +
+            (isInspection ? '🔍 فحص من السنترال' : escapeHtml(ticket.reason)) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">حالة المحادثة</div><div class="val">' + statusBadge(ticket.status) + '</div></div>' +
+        '</div>';
+      if (!isInspection) {
+        renderCustomerThread(ticket.notifications);
+      }
+      renderAdminThread(ticket.messages);
+      $('admin-section-label').textContent = isInspection
+        ? '🛠️ محادثتك مع السنترال — يمكنك إرسال صورة أو موقع'
+        : '🛠️ محادثتك مع الإدارة';
+      updateArchiveButton(ticket);
+      $('message-input').value = '';
+      clearAttachments();
+      hideAlert('detail-alert');
+      var resolved = ticket.status === 'تم الحل' || ticket.status === 'تم الاصلاح' || ticket.status === 'تم الإصلاح';
+      $('send-btn').disabled = resolved;
+      $('send-btn').style.opacity = resolved ? '0.5' : '';
+      $('camera-btn').disabled = resolved;
+      $('location-btn').disabled = resolved;
+    }
+
+    function openTask(row) {
+      showSection('detail');
+      $('detail-content').innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+      google.script.run
+        .withSuccessHandler(function (ticket) { renderDetail(ticket); })
+        .withFailureHandler(function (err) { showAlert('detail-alert', err.message || 'حدث خطأ', 'error'); })
+        .techGetTask({ techId: session.id, pin: session.pin, row: row });
+    }
+
+    function sendMessage() {
+      if (!currentTask) return;
+      var resolved = currentTask.status === 'تم الحل' || currentTask.status === 'تم الاصلاح' || currentTask.status === 'تم الإصلاح';
+      if (resolved) {
+        showAlert('detail-alert', 'المهمة مغلقة — لا يمكن إرسال رسائل', 'error');
+        return;
+      }
+      var input = $('message-input');
+      var message = input.value.trim();
+      if (!message && !pendingPhoto && !pendingLocation) {
+        showAlert('detail-alert', 'اكتب رسالة أو أرفق صورة أو حدّد موقعك', 'error');
+        return;
+      }
+      var btn = $('send-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري الإرسال...';
+
+      var payload = {
+        techId: session.id,
+        pin: session.pin,
+        row: currentTask.row,
+        message: message
+      };
+      if (pendingPhoto) {
+        payload.photoBase64 = pendingPhoto.base64;
+        payload.photoMimeType = pendingPhoto.mimeType;
+      }
+      if (pendingLocation) {
+        payload.location = pendingLocation;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          btn.textContent = 'إرسال للإدارة';
+          input.value = '';
+          clearAttachments();
+          renderAdminThread(result.messages);
+          hideAlert('detail-alert');
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'إرسال للإدارة';
+          showAlert('detail-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .techSendMessage(payload);
+    }
+
+    function updateOwnStatus(status) {
+      google.script.run
+        .withSuccessHandler(function () { session.status = status; saveSession(); })
+        .withFailureHandler(function (err) { showAlert('tasks-alert', err.message || 'حدث خطأ', 'error'); })
+        .techUpdateStatus({ techId: session.id, techPin: session.pin, status: status });
+    }
+
+    function enterApp() {
+      $('who-label').textContent = '🌐 ' + session.name + ' (' + session.id + ')';
+      $('status-select').value = session.status || 'متاح';
+      showSection('tasks');
+      loadTasks();
+      startAutoRefresh();
+    }
+
+    function tryLogin(techId, pin) {
+      var btn = $('login-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري التحقق...';
+      google.script.run
+        .withSuccessHandler(function (data) {
+          btn.disabled = false;
+          btn.textContent = 'دخول';
+          session = { id: data.technician.id, pin: pin, name: data.technician.name, status: data.technician.status };
+          saveSession();
+          enterApp();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'دخول';
+          showAlert('login-alert', err.message || 'بيانات غير صحيحة', 'error');
+        })
+        .techLogin({ techId: techId, pin: pin });
+    }
+
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      refreshTimer = setInterval(function () {
+        if (!$('tasks-section').classList.contains('hidden') && activeMainTab === 'tasks') loadTasks();
+        else if (!$('tasks-section').classList.contains('hidden') && activeMainTab === 'ground-fault') loadGroundFaults();
+        else if (!$('tasks-section').classList.contains('hidden') && activeMainTab === 'unrepaired-inspection') loadUnrepairedInspections();
+        else if (!$('detail-section').classList.contains('hidden') && currentTask) openTask(currentTask.row);
+      }, 25000);
+    }
+    function stopAutoRefresh() { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } }
+
+    $('login-btn').addEventListener('click', function () {
+      var techId = $('tech-id-input').value.trim();
+      var pin = $('pin-input').value.trim();
+      if (!techId || !pin) { showAlert('login-alert', 'أدخل المعرّف ورمز الدخول', 'error'); return; }
+      hideAlert('login-alert');
+      tryLogin(techId, pin);
+    });
+    $('pin-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('login-btn').click(); });
+    $('refresh-btn').addEventListener('click', loadTasks);
+    $('logout-btn').addEventListener('click', function () {
+      stopAutoRefresh(); clearSession(); showSection('login');
+      $('tech-id-input').value = ''; $('pin-input').value = '';
+    });
+    $('back-btn').addEventListener('click', function () { closeCameraModal(); closeArchiveModal(); showSection('tasks'); currentTask = null; loadTasks(); });
+    $('archive-btn').addEventListener('click', openArchiveModal);
+    $('archive-close-btn').addEventListener('click', closeArchiveModal);
+    $('archive-modal').addEventListener('click', function (e) {
+      if (e.target === $('archive-modal')) closeArchiveModal();
+    });
+    $('send-btn').addEventListener('click', sendMessage);
+    $('camera-btn').addEventListener('click', function () { cameraTarget = 'detail'; startLiveCamera(); });
+    $('camera-cancel-btn').addEventListener('click', closeCameraModal);
+    $('camera-capture-btn').addEventListener('click', captureFromCamera);
+    $('photo-input').addEventListener('change', function () {
+      var file = $('photo-input').files && $('photo-input').files[0];
+      if (!file) return;
+      compressImage(file, function (data) {
+        pendingPhoto = data;
+        renderAttachPreview();
+        hideAlert('detail-alert');
+      });
+    });
+    $('location-btn').addEventListener('click', captureLocation);
+    $('status-select').addEventListener('change', function () { updateOwnStatus($('status-select').value); });
+    document.querySelectorAll('.tab-btn').forEach(function (b) {
+      b.addEventListener('click', function () {
+        switchMainTab(b.getAttribute('data-tab'));
+      });
+    });
+    $('gf-refresh-btn').addEventListener('click', loadGroundFaults);
+    $('uir-refresh-btn').addEventListener('click', loadUnrepairedInspections);
+    $('gf-table-body').addEventListener('click', function (e) {
+      var btn = e.target.closest('.gf-landline-btn');
+      if (!btn) return;
+      openGroundFaultInspection(
+        btn.getAttribute('data-landline'),
+        btn.getAttribute('data-date-time'),
+        btn.getAttribute('data-row')
+      );
+    });
+    $('uir-table-body').addEventListener('click', function (e) {
+      var btn = e.target.closest('.gf-landline-btn');
+      if (!btn) return;
+      openUnrepairedInspection(
+        btn.getAttribute('data-ticket'),
+        btn.getAttribute('data-source-datetime'),
+        btn.getAttribute('data-row')
+      );
+    });
+    $('ni-photo-input').addEventListener('change', function () {
+      var file = $('ni-photo-input').files && $('ni-photo-input').files[0];
+      if (!file) return;
+      compressImageForPhotoLocation(file, 'network');
+    });
+    $('preview-error-close-btn').addEventListener('click', closePreviewErrorModal);
+    $('preview-error-modal').addEventListener('click', function (e) {
+      if (e.target === $('preview-error-modal')) closePreviewErrorModal();
+    });
+    $('open-inspection-close-btn').addEventListener('click', closeOpenInspectionModal);
+    $('open-inspection-go-btn').addEventListener('click', function () {
+      closeOpenInspectionModal();
+      switchMainTab('unrepaired-inspection');
+    });
+    $('open-inspection-modal').addEventListener('click', function (e) {
+      if (e.target === $('open-inspection-modal')) closeOpenInspectionModal();
+    });
+    $('ni-camera-btn').addEventListener('click', startNetworkInspectionCamera);
+    $('ni-submit-btn').addEventListener('click', submitNetworkInspection);
+    $('ni-archive-btn').addEventListener('click', openNetworkArchiveModal);
+    $('ni-archive-close-btn').addEventListener('click', closeNetworkArchiveModal);
+    $('ni-archive-modal').addEventListener('click', function (e) {
+      if (e.target === $('ni-archive-modal')) closeNetworkArchiveModal();
+    });
+
+    function compressImageForPhotoLocation(file, target) {
+      var ctx = getPhotoLocationCtx(target);
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var img = new Image();
+        img.onload = function () {
+          var canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext('2d').drawImage(img, 0, 0);
+          capturePhotoWithLocation(canvas, ctx);
+        };
+        img.onerror = function () {
+          showFormErrorModal([{ field: 'الصورة', message: 'تعذر قراءة الصورة', elId: ctx.cameraBtnId }]);
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = function () {
+        showFormErrorModal([{ field: 'الصورة', message: 'تعذر فتح الملف', elId: ctx.cameraBtnId }]);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function compressImageForPreview(file) {
+      compressImageForPhotoLocation(file, 'preview');
+    }
+
+    var saved = loadSession();
+    if (saved && saved.id && saved.pin) {
+      session = saved;
+      enterApp();
+    } else {
+      showSection('login');
+    }
+  </script>
+</body>
+</html>

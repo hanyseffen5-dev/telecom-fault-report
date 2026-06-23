@@ -31,14 +31,16 @@ const rootDir = path.join(__dirname, '..');
 const publicDir = path.join(rootDir, 'public');
 const indexPath = path.join(rootDir, 'apps-script', 'Index.html');
 const centralPath = path.join(rootDir, 'apps-script', 'Central.html');
+const techPath = path.join(rootDir, 'apps-script', 'Technician.html');
+const networkTechPath = path.join(rootDir, 'apps-script', 'NetworkTechnician.html');
 
-app.use(express.json());
+// الصور تُرسل base64 — الحد الافتراضي (100kb) يسبب PayloadTooLargeError
+app.use(express.json({ limit: '12mb' }));
 
 app.get('/config.js', function (_req, res) {
   res.set('Cache-Control', 'no-store');
-  res.type('application/javascript').send(
-    "window.APP_CONFIG = { appsScriptUrl: 'https://script.google.com/macros/s/AKfycby4RwyaQVZyHw6zbdL4Wt7AF6KhU81-c2ZfLb1GV-6_jT2t0s36PblwileU4VTINsLNuQ/exec' };\n"
-  );
+  // محلياً: المتصفح يتصل بـ /api/* والخادم يوجّه إلى Apps Script أو Google Sheet
+  res.type('application/javascript').send("window.APP_CONFIG = { appsScriptUrl: '' };\n");
 });
 
 app.use(express.static(publicDir, { index: false }));
@@ -53,6 +55,14 @@ app.get('/', function (_req, res) {
 
 app.get('/central', function (_req, res) {
   serveHtml(centralPath, res);
+});
+
+app.get('/tech', function (_req, res) {
+  serveHtml(techPath, res);
+});
+
+app.get('/network-tech', function (_req, res) {
+  serveHtml(networkTechPath, res);
 });
 
 async function handleApi(fnName, req, res) {
@@ -70,22 +80,9 @@ async function handleApi(fnName, req, res) {
   }
 }
 
-const apiRoutes = [
-  'submitReport',
-  'getStatus',
-  'startChat',
-  'getConversation',
-  'sendCustomerMessage',
-  'submitRating',
-  'reopenTicket',
-  'submitNewComplaint',
-  'changeCustomerMobile',
-  'centralListTickets',
-  'centralGetTicket',
-  'centralUpdateTicket',
-  'centralAddRepairedLandline',
-  'centralListRatedTickets'
-];
+const apiRoutes = Object.keys(api).filter(function (key) {
+  return typeof api[key] === 'function' && key !== 'getBackendMode';
+});
 
 apiRoutes.forEach(function (route) {
   app.post('/api/' + route, function (req, res) {
@@ -97,6 +94,8 @@ app.listen(PORT, async function () {
   const mode = api.getBackendMode();
   console.log('محادثة العميل: http://localhost:' + PORT);
   console.log('لوحة السنترال: http://localhost:' + PORT + '/central');
+  console.log('لوحة الفني: http://localhost:' + PORT + '/tech');
+  console.log('لوحة فني الشبكات: http://localhost:' + PORT + '/network-tech');
 
   if (mode === 'apps-script') {
     console.log('الحفظ عبر: Apps Script Web App');

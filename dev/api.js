@@ -42,6 +42,25 @@ function useAppsScriptProxy() {
   return Boolean(process.env.APPS_SCRIPT_URL);
 }
 
+function isUnknownFunctionError(err) {
+  const msg = String(err && err.message || '');
+  return msg.indexOf('غير معروف') !== -1 || msg.indexOf('غير موجود') !== -1;
+}
+
+async function proxyToAppsScriptWithSheetsFallback(fnName, payload, sheetsFn) {
+  if (!useAppsScriptProxy()) {
+    return sheetsFn(payload);
+  }
+  try {
+    return await proxyToAppsScript(fnName, payload);
+  } catch (err) {
+    if (isUnknownFunctionError(err) && sheets.hasCredentials()) {
+      return sheetsFn(payload);
+    }
+    throw err;
+  }
+}
+
 async function submitReport(payload) {
   if (useAppsScriptProxy()) {
     return proxyToAppsScript('submitReport', payload);
@@ -126,6 +145,13 @@ async function centralUpdateTicket(payload) {
   return sheets.centralUpdateTicket(payload);
 }
 
+async function centralForwardTechPhoto(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralForwardTechPhoto', payload);
+  }
+  return sheets.centralForwardTechPhoto(payload);
+}
+
 async function centralAddRepairedLandline(payload) {
   if (useAppsScriptProxy()) {
     return proxyToAppsScript('centralAddRepairedLandline', payload);
@@ -138,6 +164,191 @@ async function centralListRatedTickets(payload) {
     return proxyToAppsScript('centralListRatedTickets', payload);
   }
   return sheets.centralListRatedTickets(payload);
+}
+
+async function techList(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techList', payload);
+  }
+  return sheets.techList(payload);
+}
+
+async function techAdd(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techAdd', payload);
+  }
+  return sheets.techAdd(payload);
+}
+
+async function techUpdateStatus(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techUpdateStatus', payload);
+  }
+  return sheets.techUpdateStatus(payload);
+}
+
+async function assignTechnician(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('assignTechnician', payload);
+  }
+  return sheets.assignTechnician(payload);
+}
+
+async function techLogin(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techLogin', payload);
+  }
+  return sheets.techLogin(payload);
+}
+
+async function techListTasks(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techListTasks', payload);
+  }
+  return sheets.techListTasks(payload);
+}
+
+async function techGetTask(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techGetTask', payload);
+  }
+  return sheets.techGetTask(payload);
+}
+
+async function techSendMessage(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techSendMessage', payload);
+  }
+  return sheets.techSendMessage(payload);
+}
+
+async function centralSendTechMessage(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralSendTechMessage', payload);
+  }
+  return sheets.centralSendTechMessage(payload);
+}
+
+async function centralCreateTechInspection(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralCreateTechInspection', payload);
+  }
+  return sheets.centralCreateTechInspection(payload);
+}
+
+async function centralListTechInspections(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralListTechInspections', payload);
+  }
+  return sheets.centralListTechInspections(payload);
+}
+
+async function centralGetTechInspection(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralGetTechInspection', payload);
+  }
+  return sheets.centralGetTechInspection(payload);
+}
+
+async function centralCloseTechInspection(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralCloseTechInspection', payload);
+  }
+  return sheets.centralCloseTechInspection(payload);
+}
+
+async function techSearchSerialData(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techSearchSerialData', payload);
+  }
+  return sheets.techSearchSerialData(payload);
+}
+
+async function techSubmitPreviewInspection(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techSubmitPreviewInspection', payload);
+  }
+  return sheets.techSubmitPreviewInspection(payload);
+}
+
+async function centralGetPreviewInspections(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralGetPreviewInspections', payload);
+  }
+  return sheets.centralGetPreviewInspections(payload);
+}
+
+async function centralGetTechnicianNotes(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralGetTechnicianNotes', payload);
+  }
+  return sheets.centralGetTechnicianNotes(payload);
+}
+
+async function techSubmitTechnicianNote(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techSubmitTechnicianNote', payload);
+  }
+  return sheets.techSubmitTechnicianNote(payload);
+}
+
+async function netTechGetGroundFaults(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('netTechGetGroundFaults', payload);
+  }
+  return sheets.netTechGetGroundFaults(payload);
+}
+
+async function techSearchLandlineData(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techSearchLandlineData', payload);
+  }
+  return sheets.techSearchLandlineData(payload);
+}
+
+async function netTechSubmitNetworkInspection(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('netTechSubmitNetworkInspection', payload);
+  }
+  return sheets.netTechSubmitNetworkInspection(payload);
+}
+
+async function centralGetGroundRepairs(payload) {
+  return proxyToAppsScriptWithSheetsFallback(
+    'centralGetGroundRepairs',
+    payload,
+    sheets.centralGetGroundRepairs
+  );
+}
+
+async function netTechGetNetworkArchive(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('netTechGetNetworkArchive', payload);
+  }
+  return sheets.netTechGetNetworkArchive(payload);
+}
+
+async function netTechGetUnrepairedInspections(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('netTechGetUnrepairedInspections', payload);
+  }
+  return sheets.netTechGetUnrepairedInspections(payload);
+}
+
+async function netTechCheckOpenNetworkInspection(payload) {
+  return proxyToAppsScriptWithSheetsFallback(
+    'netTechCheckOpenNetworkInspection',
+    payload,
+    sheets.netTechCheckOpenNetworkInspection
+  );
+}
+
+async function netTechGetNetworkInspectionHistory(payload) {
+  return proxyToAppsScriptWithSheetsFallback(
+    'netTechGetNetworkInspectionHistory',
+    payload,
+    sheets.netTechGetNetworkInspectionHistory
+  );
 }
 
 function getBackendMode() {
@@ -163,7 +374,34 @@ module.exports = {
   centralListTickets,
   centralGetTicket,
   centralUpdateTicket,
+  centralForwardTechPhoto,
   centralAddRepairedLandline,
   centralListRatedTickets,
+  techList,
+  techAdd,
+  techUpdateStatus,
+  assignTechnician,
+  techLogin,
+  techListTasks,
+  techGetTask,
+  techSendMessage,
+  centralSendTechMessage,
+  centralCreateTechInspection,
+  centralListTechInspections,
+  centralGetTechInspection,
+  centralCloseTechInspection,
+  techSearchSerialData,
+  techSubmitPreviewInspection,
+  centralGetPreviewInspections,
+  centralGetTechnicianNotes,
+  centralGetGroundRepairs,
+  techSubmitTechnicianNote,
+  netTechGetGroundFaults,
+  techSearchLandlineData,
+  netTechSubmitNetworkInspection,
+  netTechGetNetworkArchive,
+  netTechGetNetworkInspectionHistory,
+  netTechGetUnrepairedInspections,
+  netTechCheckOpenNetworkInspection,
   getBackendMode
 };

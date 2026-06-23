@@ -64,22 +64,36 @@
     }
 
     return fetchPromise
-      .then(function (res) { return res.text(); })
-      .then(function (text) {
-        var data;
-        try {
-          data = JSON.parse(text);
-        } catch (_err) {
-          throw {
-            message: appsScriptUrl
-              ? 'تعذر الاتصال بـ Apps Script — تحقق من رابط النشر'
-              : 'تعذر الاتصال بالخادم — تأكد أن npm run dev يعمل'
-          };
-        }
-        if (data && data.error) {
-          throw { message: data.error };
-        }
-        return data;
+      .then(function (res) {
+        return res.text().then(function (text) {
+          var data;
+          try {
+            data = JSON.parse(text);
+          } catch (_err) {
+            if (text.indexOf('PayloadTooLargeError') !== -1) {
+              throw { message: 'حجم الصورة كبير — اختر صورة أصغر أو أعد تشغيل npm run dev' };
+            }
+            if (text.indexOf('Cannot POST /api/') !== -1) {
+              throw { message: 'المسار غير متاح — أعد تشغيل npm run dev (node dev/server.js)' };
+            }
+            if (!res.ok) {
+              throw {
+                message: appsScriptUrl
+                  ? 'تعذر الاتصال بـ Apps Script — تحقق من رابط النشر'
+                  : 'تعذر الاتصال بالخادم (HTTP ' + res.status + ') — تأكد أن npm run dev يعمل'
+              };
+            }
+            throw {
+              message: appsScriptUrl
+                ? 'تعذر الاتصال بـ Apps Script — تحقق من رابط النشر'
+                : 'تعذر الاتصال بالخادم — تأكد أن npm run dev يعمل'
+            };
+          }
+          if (data && data.error) {
+            throw { message: data.error };
+          }
+          return data;
+        });
       })
       .catch(function (err) {
         if (err && err.message) {
@@ -88,7 +102,7 @@
         throw {
           message: appsScriptUrl
             ? 'تعذر الاتصال بـ Apps Script — تحقق من الاتصال بالإنترنت'
-            : 'تعذر الاتصال بالخادم — تأكد أن npm run dev يعمل على المنفذ 3000'
+            : 'تعذر الاتصال بالخادم — تأكد أن npm run dev يعمل'
         };
       });
   }

@@ -469,6 +469,18 @@
     }
     .sender-tag { font-size: 0.68rem; font-weight: 800; opacity: 0.85; display: block; margin-bottom: 2px; }
     .row.them .sender-tag { color: var(--teal-dark); }
+    .chat-photo {
+      max-width: 220px; max-height: 180px; width: auto; height: auto;
+      object-fit: contain; border-radius: 10px; margin-top: 6px;
+      display: block; background: #f0f0f0;
+    }
+    .chat-photo-link {
+      display: block; margin-top: 8px; font-size: 0.88rem; font-weight: 700;
+      color: var(--primary); padding: 8px 12px; background: var(--primary-light);
+      border-radius: 10px; text-align: center; text-decoration: none;
+    }
+    .photo-view-link { display: block; margin-top: 6px; }
+    .chat-photo-caption { display: block; margin-bottom: 6px; font-size: 0.88rem; }
 
     .chat-empty {
       margin: auto;
@@ -538,6 +550,67 @@
     }
     .composer .send:hover { transform: scale(1.06); }
     .composer .send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .composer textarea:disabled {
+      background: #f1f5f9;
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+    .closed-banner, .new-complaint-banner {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.84rem;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .closed-banner.show {
+      display: block;
+      background: #fff3e0;
+      color: #e65100;
+      border: 1px solid #ffcc80;
+    }
+    .new-complaint-banner.show {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid #a5d6a7;
+    }
+    .new-complaint-banner .btn-new-complaint {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      background: var(--success);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .rating-complaint-info {
+      background: #f0f7ff;
+      border: 1px solid #bbdefb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.86rem;
+      color: #1565c0;
+      margin-bottom: 14px;
+      line-height: 1.55;
+      text-align: right;
+    }
+    .rating-complaint-info.hidden { display: none !important; }
+      border: 1px solid #bbdefb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.86rem;
+      color: #1565c0;
+      margin-bottom: 14px;
+      line-height: 1.55;
+      text-align: right;
+    }
 
     .chat-closed-note {
       text-align: center;
@@ -784,6 +857,11 @@
             <span>⭐ تم إنهاء المحادثة — يسعدنا تقييمك للخدمة</span>
             <button type="button" class="btn-rate" id="open-rating-btn">قيّم الآن</button>
           </div>
+          <div class="closed-banner" id="closed-banner"></div>
+          <div class="new-complaint-banner" id="new-complaint-banner">
+            <span>يمكنك فتح شكوى جديدة على نفس الخط</span>
+            <button type="button" class="btn-new-complaint" id="new-complaint-btn">شكوى جديدة</button>
+          </div>
           <div id="chat-alert" class="alert"></div>
           <div class="composer">
             <textarea id="msg-input" rows="1" placeholder="اكتب رسالتك هنا..." maxlength="1000"></textarea>
@@ -799,6 +877,7 @@
     <div class="modal-box">
       <div class="modal-icon">⭐</div>
       <h3>قيّم تواصلك مع السنترال</h3>
+      <div id="rating-complaint-info" class="rating-complaint-info hidden"></div>
       <p class="modal-sub">رأيك يساعدنا على تحسين خدمة سنترال فرشوط</p>
       <div id="rating-modal-alert" class="alert"></div>
 
@@ -835,7 +914,8 @@
       <div id="rating-done-area" style="display:none;text-align:center">
         <div style="font-size:2.6rem;margin:10px 0">🙏</div>
         <p style="color:var(--success);font-weight:700;margin-bottom:16px">شكراً لك! تم حفظ تقييمك بنجاح.</p>
-        <button type="button" class="btn btn-primary" id="rating-close-done">إغلاق</button>
+        <button type="button" class="btn btn-primary" id="new-complaint-after-rating-btn">فتح شكوى جديدة</button>
+        <button type="button" class="btn btn-ghost" id="rating-close-done" style="margin-top:8px">إغلاق</button>
       </div>
     </div>
   </div>
@@ -944,6 +1024,57 @@
     function escapeHtml(t) {
       return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
+    function escapeAttr(t) {
+      return String(t || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    }
+
+    function normalizePhotoUrl(url) {
+      return String(url || '').trim().replace(/&amp;/gi, '&');
+    }
+
+    function extractDriveFileId(url) {
+      var s = normalizePhotoUrl(url);
+      var m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/) || s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      return m ? m[1] : '';
+    }
+
+    function driveImageUrl(url) {
+      var id = extractDriveFileId(url);
+      if (id) return 'https://lh3.googleusercontent.com/d/' + id + '=w400-rw';
+      return normalizePhotoUrl(url);
+    }
+
+    function parseCustomerPhotoBody(text) {
+      var t = String(text || '').trim();
+      var m = t.match(/\[صورة\]([^\|]+)(?:\|([\s\S]*))?/);
+      if (!m) return null;
+      return { photoUrl: normalizePhotoUrl(m[1]), caption: (m[2] || '').trim() };
+    }
+
+    function customerMessageBodyHtml(text) {
+      var photo = parseCustomerPhotoBody(text);
+      var textPart = photo
+        ? String(text || '').replace(/\[صورة\][^\|]+(?:\|[\s\S]*)?/, '').trim()
+        : String(text || '');
+      if (!photo) return escapeHtml(text);
+      var viewUrl = photo.photoUrl;
+      var thumb = driveImageUrl(viewUrl);
+      var html = '';
+      if (textPart) {
+        html += escapeHtml(textPart);
+      }
+      if (photo.caption && photo.caption !== 'صورة من الفني') {
+        html += (textPart ? '<br/>' : '') +
+          '<span class="chat-photo-caption">' + escapeHtml(photo.caption) + '</span>';
+      }
+      html += (textPart || (photo.caption && photo.caption !== 'صورة من الفني') ? '<br/>' : '') +
+        '<a class="photo-view-link" href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">' +
+        '<img class="chat-photo" referrerpolicy="no-referrer" src="' + escapeAttr(thumb) + '" alt="صورة من السنترال" loading="lazy" /></a>' +
+        '<a class="chat-photo-link" href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">📷 فتح الصورة</a>';
+      return html;
+    }
+
     function isResolvedStatus(status) {
       var s = String(status || '').trim();
       return s === 'تم الحل' || s === 'تم الاصلاح' || s === 'تم الإصلاح';
@@ -956,6 +1087,10 @@
     }
 
     /* ===================== تصنيف رسائل الشات ===================== */
+    function newestFirst(list) {
+      return (list && list.length) ? list.slice().reverse() : [];
+    }
+
     function classifyMessage(text) {
       var t = String(text || '').trim();
       if (t.indexOf('العميل:') === 0) {
@@ -976,7 +1111,7 @@
 
     function renderChat(data) {
       var body = $('chat-body');
-      var notifications = getNotifications(data);
+      var notifications = newestFirst(getNotifications(data));
       var signature = JSON.stringify(notifications) + '|' + (data.status || '');
 
       // حدّث رأس المحادثة دائماً
@@ -985,6 +1120,7 @@
       $('chat-state-text').textContent = stateLabel(data.status);
 
       updateRatingUi(data);
+      updateComposerState(data);
 
       if (signature === lastSignature) return;
       lastSignature = signature;
@@ -1012,13 +1148,57 @@
           var tag = c.who === 'me' ? 'أنت' : 'سنترال فرشوط';
           html += '<div class="row ' + c.who + '"><div class="bubble">' +
             '<span class="sender-tag">' + tag + '</span>' +
-            escapeHtml(c.text) +
+            customerMessageBodyHtml(c.text) +
             '<span class="meta">' + escapeHtml(n.date || '') + '</span>' +
             '</div></div>';
         }
       });
       body.innerHTML = html;
-      body.scrollTop = body.scrollHeight;
+      body.scrollTop = 0;
+    }
+
+    function updateComposerState(data) {
+      var input = $('msg-input');
+      var sendBtn = $('send-btn');
+      var canSend = data.isNewConversation === true || data.canSendMessage !== false;
+      input.disabled = !canSend;
+      sendBtn.disabled = !canSend;
+
+      if (!canSend) {
+        if (data.reopenWindowExpired && !data.alreadyRated && isResolvedStatus(data.status)) {
+          input.placeholder = 'انتهت مدة إعادة فتح الشكوى (5 أيام)';
+        } else if (data.alreadyRated && !data.isNewConversation) {
+          input.placeholder = 'اضغط «شكوى جديدة» لبدء محادثة جديدة';
+        } else if (isResolvedStatus(data.status)) {
+          input.placeholder = 'تم إنهاء المحادثة';
+        } else {
+          input.placeholder = 'لا يمكن إرسال رسائل حالياً';
+        }
+      } else if (data.isNewConversation) {
+        input.placeholder = 'اكتب رسالتك لبدء شكوى جديدة...';
+      } else if (isResolvedStatus(data.status) && data.canReopen) {
+        input.placeholder = 'اكتب رسالتك لإعادة فتح الشكوى (خلال 5 أيام)...';
+      } else {
+        input.placeholder = 'اكتب رسالتك هنا...';
+      }
+
+      var closedBanner = $('closed-banner');
+      if (data.reopenWindowExpired && !data.alreadyRated && isResolvedStatus(data.status) && !data.isNewConversation) {
+        var deadlineText = data.reopenDeadline ? (' آخر موعد كان ' + data.reopenDeadline + '.') : '';
+        closedBanner.textContent = 'انتهت مدة إعادة فتح هذه الشكوى (5 أيام من رد السنترال «تم الانتهاء من طلبكم»).' + deadlineText + ' يمكنك تقييم الخدمة.';
+        closedBanner.classList.add('show');
+      } else {
+        closedBanner.classList.remove('show');
+      }
+
+      var newBanner = $('new-complaint-banner');
+      if (data.isNewConversation) {
+        newBanner.classList.remove('show');
+      } else if (data.canOpenNewComplaint && data.alreadyRated) {
+        newBanner.classList.add('show');
+      } else {
+        newBanner.classList.remove('show');
+      }
     }
 
     function updateRatingUi(data) {
@@ -1082,6 +1262,15 @@
         .startChat({ landline: session.landline, mobile: session.mobile, deviceFp: deviceFingerprint });
     }
 
+    function startNewComplaintFlow() {
+      closeRatingModal();
+      beginFreshConversation();
+      setTimeout(function () {
+        var input = $('msg-input');
+        if (input && !input.disabled) input.focus();
+      }, 400);
+    }
+
     function refreshConversation() {
       if (!session.landline || !session.mobile) return;
       google.script.run
@@ -1095,6 +1284,7 @@
 
     function sendMessage() {
       var input = $('msg-input');
+      if (input.disabled) return;
       var message = input.value.trim();
       if (!message) return;
       hideAlert('chat-alert');
@@ -1163,6 +1353,22 @@
       $('rating-form-area').style.display = 'block';
       $('rating-done-area').style.display = 'none';
       resetStars();
+      var infoBox = $('rating-complaint-info');
+      if (lastTicket && lastTicket.date) {
+        var resolutionPart = lastTicket.resolutionDate
+          ? (' · تم إنهاء الطلب: ' + lastTicket.resolutionDate)
+          : '';
+        var deadlinePart = lastTicket.reopenDeadline && !lastTicket.reopenWindowExpired
+          ? (' · آخر موعد لإعادة الفتح: ' + lastTicket.reopenDeadline)
+          : '';
+        infoBox.innerHTML = '<strong>📅 تاريخ الشكوى:</strong> ' + escapeHtml(lastTicket.date) + resolutionPart +
+          '<br><strong>ℹ️</strong> هذا التقييم خاص بالشكوى المسجّلة منذ ' + escapeHtml(lastTicket.date) +
+          ' للخط ' + escapeHtml(lastTicket.landline || session.landline || '') + '.' + deadlinePart;
+        infoBox.classList.remove('hidden');
+      } else {
+        infoBox.classList.add('hidden');
+        infoBox.textContent = '';
+      }
       $('rating-modal').classList.remove('hidden');
     }
     function closeRatingModal() { $('rating-modal').classList.add('hidden'); }
@@ -1239,13 +1445,15 @@
     msgInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        if (!msgInput.disabled) sendMessage();
       }
     });
 
     setupStars('stars-fault', 'fault');
     setupStars('stars-tech', 'tech');
     $('open-rating-btn').addEventListener('click', openRatingModal);
+    $('new-complaint-btn').addEventListener('click', startNewComplaintFlow);
+    $('new-complaint-after-rating-btn').addEventListener('click', startNewComplaintFlow);
     $('rating-submit').addEventListener('click', submitRating);
     $('rating-cancel').addEventListener('click', closeRatingModal);
     $('rating-close-done').addEventListener('click', closeRatingModal);
