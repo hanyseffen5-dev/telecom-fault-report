@@ -816,6 +816,26 @@
       background: linear-gradient(135deg, var(--primary), #1976d2);
       color: #fff;
     }
+    .tab-btn { position: relative; }
+    .tab-unread-badge {
+      position: absolute;
+      top: 4px;
+      left: 6px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      background: #ff1744;
+      color: #fff;
+      border-radius: 999px;
+      border: 2px solid var(--card);
+      font-size: 0.65rem;
+      font-weight: 800;
+      line-height: 14px;
+      text-align: center;
+      pointer-events: none;
+      box-shadow: 0 1px 3px rgba(255, 23, 68, 0.45);
+    }
+    .tab-btn.active .tab-unread-badge { border-color: #1976d2; }
     .tabs { flex-wrap: wrap; }
 
     /* متعذر معاينات */
@@ -1380,6 +1400,13 @@
             </div>
           </div>
           <div id="inspection-chat-summary"></div>
+          <div class="assign-box" id="inspection-assign-box">
+            <div class="lbl">🔄 نقل المهمة / تغيير الفني المسؤول</div>
+            <div class="assign-row">
+              <select id="inspection-assign-select"><option value="">— بدون فني —</option></select>
+              <button type="button" class="btn btn-primary btn-sm" id="inspection-assign-btn" style="width:auto">إسناد</button>
+            </div>
+          </div>
           <div id="inspection-chat-alert" class="alert"></div>
           <div class="card-title" style="font-size:0.9rem;margin-top:12px">🛠️ محادثة السنترال مع الفني</div>
           <div id="inspection-inline-thread" class="chat-thread tech-chat"></div>
@@ -1744,6 +1771,116 @@
     var currentFilter = 'active';
     var currentTicket = null;
     var refreshTimer = null;
+    var unreadItemsCache = [];
+    var UNREAD_STORE_PREFIX = 'central_unread_seen_';
+    var TAB_UNREAD_SCOPES = {
+      chats: ['chats', 'chats-tech'],
+      inspections: ['inspections']
+    };
+    var BASE_PAGE_TITLE = document.title;
+
+    function unreadStoreKey() {
+      return UNREAD_STORE_PREFIX + (currentPin || 'guest');
+    }
+
+    function loadUnreadStore() {
+      try { return JSON.parse(localStorage.getItem(unreadStoreKey()) || '{}'); } catch (e) { return {}; }
+    }
+
+    function saveUnreadStore(store) {
+      try { localStorage.setItem(unreadStoreKey(), JSON.stringify(store || {})); } catch (e) {}
+    }
+
+    function unreadItemStoreKey(item) {
+      return item.scope + ':' + item.row;
+    }
+
+    function isUnreadItem(item, store) {
+      store = store || loadUnreadStore();
+      return store[unreadItemStoreKey(item)] !== item.key;
+    }
+
+    function markUnreadItems(items) {
+      var store = loadUnreadStore();
+      (items || []).forEach(function (item) {
+        store[unreadItemStoreKey(item)] = item.key;
+      });
+      saveUnreadStore(store);
+      updateTabUnreadBadges();
+    }
+
+    function markUnreadRow(row, scopes) {
+      var scopeList = scopes || [];
+      var toMark = unreadItemsCache.filter(function (item) {
+        return item.row === row && scopeList.indexOf(item.scope) !== -1;
+      });
+      markUnreadItems(toMark);
+    }
+
+    function markTabUnreadRead(tabName) {
+      var scopes = TAB_UNREAD_SCOPES[tabName] || [];
+      if (!scopes.length) return;
+      var toMark = unreadItemsCache.filter(function (item) {
+        return scopes.indexOf(item.scope) !== -1;
+      });
+      markUnreadItems(toMark);
+    }
+
+    function tabUnreadCount(tabName) {
+      var scopes = TAB_UNREAD_SCOPES[tabName] || [];
+      if (!scopes.length) return 0;
+      var store = loadUnreadStore();
+      var count = 0;
+      unreadItemsCache.forEach(function (item) {
+        if (scopes.indexOf(item.scope) !== -1 && isUnreadItem(item, store)) count++;
+      });
+      return count;
+    }
+
+    function tabHasUnread(tabName) {
+      return tabUnreadCount(tabName) > 0;
+    }
+
+    function updateTabUnreadBadges() {
+      document.querySelectorAll('.tab-btn[data-tab]').forEach(function (btn) {
+        var tab = btn.getAttribute('data-tab');
+        var count = tabUnreadCount(tab);
+        var badge = btn.querySelector('.tab-unread-badge');
+        if (count > 0) {
+          if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'tab-unread-badge';
+            btn.appendChild(badge);
+          }
+          badge.textContent = count > 99 ? '99+' : String(count);
+          badge.setAttribute('aria-label', count + ' غير مقروء');
+        } else if (badge) {
+          badge.remove();
+        }
+      });
+      var anyUnread = Object.keys(TAB_UNREAD_SCOPES).some(function (tab) {
+        return tabHasUnread(tab);
+      });
+      document.title = anyUnread ? '🔴 رسالة جديدة — ' + BASE_PAGE_TITLE : BASE_PAGE_TITLE;
+    }
+
+    function applyUnreadItems(data) {
+      unreadItemsCache = (data && data.items) ? data.items : [];
+      updateTabUnreadBadges();
+    }
+
+    function pollUnreadIndicators() {
+      if (!currentPin) return;
+      google.script.run
+        .withSuccessHandler(applyUnreadItems)
+        .withFailureHandler(function () {})
+        .centralGetUnreadItems({ pin: currentPin });
+    }
+
+    function resetUnreadTracking() {
+      unreadItemsCache = [];
+      updateTabUnreadBadges();
+    }
     var pendingCustomerPhoto = null;
     var pendingTechPhoto = null;
     var pendingInspectionCreatePhoto = null;
@@ -3440,6 +3577,8 @@
       document.getElementById('inspection-inline-message-input').value = '';
       updateInspectionInlineControls(ticket);
       updateInspectionArchiveButton(ticket);
+      populateInspectionAssignSelect(ticket.assignedTech || '');
+      markUnreadRow(ticket.row, ['inspections']);
       document.getElementById('inspection-chat-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
@@ -3457,15 +3596,8 @@
     }
 
     function updateInspectionInlineControls(ticket) {
-      var resolved = ticket.status === 'تم الحل' || ticket.status === 'تم الاصلاح' || ticket.status === 'تم الإصلاح';
-      ['inspection-inline-send-btn', 'inspection-inline-photo-btn'].forEach(function (id) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        el.disabled = resolved;
-        el.style.opacity = resolved ? '0.5' : '';
-      });
-      var input = document.getElementById('inspection-inline-message-input');
-      if (input) input.disabled = resolved;
+      updateTechComposeState(ticket, 'inspection-inline');
+      updateAssignButtonState(ticket, 'inspection-assign');
     }
 
     function openInspectionInline(row) {
@@ -3493,17 +3625,21 @@
     function closeInspectionInline() {
       if (!currentTicket || techChatContext !== 'inline') return;
       var btn = document.getElementById('inspection-inline-close-btn');
+      var closeLabel = btn.textContent;
       btn.disabled = true;
+      btn.textContent = 'جاري الإغلاق...';
       var note = document.getElementById('inspection-inline-close-note').value.trim();
       google.script.run
         .withSuccessHandler(function (result) {
           btn.disabled = false;
+          btn.textContent = closeLabel;
           showAlert('inspection-chat-alert', result.message, 'success');
           renderInspectionInlineChat(result.ticket);
           loadInspections();
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
+          btn.textContent = closeLabel;
           showAlert('inspection-chat-alert', err.message || 'حدث خطأ', 'error');
         })
         .centralCloseTechInspection({ pin: currentPin, row: currentTicket.row, note: note });
@@ -3569,6 +3705,7 @@
         photoBtn.disabled = resolved;
         photoBtn.style.opacity = resolved ? '0.5' : '';
       }
+      markUnreadRow(ticket.row, ['inspections']);
     }
 
     function openInspection(row) {
@@ -3578,17 +3715,21 @@
     function closeInspection() {
       if (!currentTicket || !currentInspectionMode) return;
       var btn = document.getElementById('inspection-close-btn');
+      var closeLabel = btn.textContent;
       btn.disabled = true;
+      btn.textContent = 'جاري الإغلاق...';
       var note = document.getElementById('inspection-close-note').value.trim();
       google.script.run
         .withSuccessHandler(function (result) {
           btn.disabled = false;
+          btn.textContent = closeLabel;
           showAlert('detail-alert', result.message, 'success');
           renderInspectionDetail(result.ticket);
           loadInspections();
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
+          btn.textContent = closeLabel;
           showAlert('detail-alert', err.message || 'حدث خطأ', 'error');
         })
         .centralCloseTechInspection({ pin: currentPin, row: currentTicket.row, note: note });
@@ -3894,7 +4035,7 @@
       }
       return '<div class="archive-chat-thread">' + messages.map(function (m) {
         var mine = m.senderType === 'فني';
-        var who = mine ? '🛠️ الفني' : '🏢 الإدارة';
+        var who = techMessageLabel(m);
         return '<div class="c-row ' + (mine ? 'them' : 'me') + '"><div class="c-bubble">' +
           '<span class="c-tag">' + who + '</span>' +
           (m.text ? escapeHtml(m.text) : '') +
@@ -4129,6 +4270,7 @@
       updateNotifyFormState(ticket);
       updateArchiveButton(ticket);
       updateTechAssignmentUi(ticket);
+      markUnreadRow(ticket.row, ['chats', 'chats-tech']);
     }
 
     function openTicket(row) {
@@ -4231,10 +4373,12 @@
 
       var btn = document.getElementById('save-btn');
       btn.disabled = true;
+      btn.textContent = 'جاري الإرسال...';
 
       google.script.run
         .withSuccessHandler(function (result) {
           btn.disabled = false;
+          updateSaveBtnLabel();
           clearPendingCustomerPhoto();
           var customMsg = result.message;
           if (photoToSend && message) customMsg = 'تم إرسال الرد والصورة للعميل';
@@ -4245,6 +4389,7 @@
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
+          updateSaveBtnLabel();
           showAlert('detail-alert', err.message || 'حدث خطأ', 'error');
         })
         .centralUpdateTicket({
@@ -4272,6 +4417,7 @@
           loadTechnicians();
           loadTickets();
           startAutoRefresh();
+          pollUnreadIndicators();
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
@@ -4282,6 +4428,7 @@
     }
 
     function refreshMainData() {
+      pollUnreadIndicators();
       if (currentTab === 'inspections') {
         loadInspections();
       } else if (currentTab === 'preview-failures') {
@@ -4386,6 +4533,7 @@
 
     function switchTab(name) {
       currentTab = name;
+      markTabUnreadRead(name);
       document.querySelectorAll('.tab-btn').forEach(function (b) {
         b.classList.toggle('active', b.dataset.tab === name);
       });
@@ -4416,7 +4564,16 @@
     }
 
     function populateAssignSelect(selectedId) {
-      var sel = document.getElementById('assign-select');
+      populateTechSelect('assign-select', selectedId);
+    }
+
+    function populateInspectionAssignSelect(selectedId) {
+      populateTechSelect('inspection-assign-select', selectedId);
+    }
+
+    function populateTechSelect(selectId, selectedId) {
+      var sel = document.getElementById(selectId);
+      if (!sel) return;
       var opts = '<option value="">— بدون فني —</option>';
       technicians.forEach(function (t) {
         if (t.status === 'غير نشط') return;
@@ -4425,6 +4582,57 @@
       });
       sel.innerHTML = opts;
       sel.value = selectedId || '';
+    }
+
+    function afterAssignSuccess(alertId, result) {
+      loadTickets();
+      loadInspections();
+      pollUnreadIndicators();
+      if (currentInspectionMode && selectedInspectionRow) {
+        openInspectionInline(selectedInspectionRow);
+      } else if (currentTicket && !currentInspectionMode) {
+        openTicket(currentTicket.row);
+      }
+    }
+
+    function assignTech() {
+      if (!currentTicket) return;
+      var techId = document.getElementById('assign-select').value;
+      var btn = document.getElementById('assign-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري الإسناد...';
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.textContent = 'إسناد';
+          showAlert('detail-alert', result.message, 'success');
+          afterAssignSuccess('detail-alert', result);
+        })
+        .withFailureHandler(function (err) {
+          btn.textContent = 'إسناد';
+          updateAssignButtonState(currentTicket, 'assign');
+          showAlert('detail-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .assignTechnician({ pin: currentPin, row: currentTicket.row, techId: techId });
+    }
+
+    function assignInspectionTech() {
+      if (!currentTicket || !currentInspectionMode) return;
+      var techId = document.getElementById('inspection-assign-select').value;
+      var btn = document.getElementById('inspection-assign-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري الإسناد...';
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.textContent = 'إسناد';
+          showAlert('inspection-chat-alert', result.message, 'success');
+          afterAssignSuccess('inspection-chat-alert', result);
+        })
+        .withFailureHandler(function (err) {
+          btn.textContent = 'إسناد';
+          updateAssignButtonState(currentTicket, 'inspection-assign');
+          showAlert('inspection-chat-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .assignTechnician({ pin: currentPin, row: currentTicket.row, techId: techId });
     }
 
     function renderTechList(list) {
@@ -4510,23 +4718,58 @@
         .techUpdateStatus({ pin: currentPin, techId: techId, status: status });
     }
 
-    function assignTech() {
-      if (!currentTicket) return;
-      var techId = document.getElementById('assign-select').value;
-      var btn = document.getElementById('assign-btn');
-      btn.disabled = true;
-      google.script.run
-        .withSuccessHandler(function (result) {
-          btn.disabled = false;
-          showAlert('detail-alert', result.message, 'success');
-          openTicket(currentTicket.row);
-          loadTickets();
-        })
-        .withFailureHandler(function (err) {
-          btn.disabled = false;
-          showAlert('detail-alert', err.message || 'حدث خطأ', 'error');
-        })
-        .assignTechnician({ pin: currentPin, row: currentTicket.row, techId: techId });
+    function techMessageLabel(m) {
+      if (m.senderType === 'فني') {
+        return '🛠️ ' + (techNameById(m.senderId) || 'الفني');
+      }
+      var to = m.recipientId ? techNameById(m.recipientId) : '';
+      return to ? '🏢 الإدارة → ' + to : '🏢 الإدارة';
+    }
+
+    function isTicketResolved(ticket) {
+      if (!ticket) return false;
+      var s = ticket.status;
+      return s === 'تم الحل' || s === 'تم الاصلاح' || s === 'تم الإصلاح';
+    }
+
+    function updateAssignButtonState(ticket, prefix) {
+      prefix = prefix || 'assign';
+      var assignBtn = document.getElementById(prefix + '-btn');
+      var assignSel = document.getElementById(prefix + '-select');
+      if (!assignBtn || !assignSel || !ticket) return;
+      var resolved = isTicketResolved(ticket);
+      var assigned = String(ticket.assignedTech || '').trim();
+      var selected = assignSel.value || '';
+      var unchanged = assigned && selected === assigned;
+      assignBtn.disabled = resolved || unchanged;
+      assignBtn.style.opacity = assignBtn.disabled ? '0.5' : '';
+      if (assignSel) {
+        assignSel.disabled = resolved;
+      }
+    }
+
+    function updateTechComposeState(ticket, prefix) {
+      prefix = prefix || 'tech';
+      var resolved = isTicketResolved(ticket);
+      var hasTech = !!(ticket && ticket.assignedTech);
+      var canCompose = hasTech && !resolved;
+      var inputId = prefix === 'inspection-inline' ? 'inspection-inline-message-input' : 'tech-message-input';
+      var sendId = prefix === 'inspection-inline' ? 'inspection-inline-send-btn' : 'tech-send-btn';
+      var photoId = prefix === 'inspection-inline' ? 'inspection-inline-photo-btn' : 'tech-photo-btn';
+      var input = document.getElementById(inputId);
+      var sendBtn = document.getElementById(sendId);
+      var photoBtn = document.getElementById(photoId);
+      if (input) {
+        input.disabled = !canCompose;
+        input.placeholder = canCompose
+          ? 'اكتب رسالة للفني المسؤول (اختياري مع الصورة)...'
+          : (resolved ? 'المهمة مغلقة — لا يمكن إرسال رسائل' : 'عيّن فنياً أولاً لإرسال رسالة');
+      }
+      [sendBtn, photoBtn].forEach(function (el) {
+        if (!el) return;
+        el.disabled = !canCompose;
+        el.style.opacity = canCompose ? '' : '0.5';
+      });
     }
 
     function renderTechChat(messages) {
@@ -4540,7 +4783,7 @@
       }
       thread.innerHTML = messages.map(function (m) {
         var mine = m.senderType === 'إدارة';
-        var who = mine ? '🏢 الإدارة' : ('🛠️ ' + (techNameById(m.senderId) || 'الفني'));
+        var who = techMessageLabel(m);
         var meta = parseAttachment(m.attachment);
         var extras = attachmentHtml(m.attachment);
         var canForward = !mine && techChatContext === 'detail' && !currentInspectionMode && meta && meta.photoUrl && currentTicket && currentTicket.canSendNotification;
@@ -4675,9 +4918,12 @@
     function sendTechMessage() {
       if (!currentTicket) return;
       var ctx = getTechChatContext();
-      var resolved = currentTicket.status === 'تم الحل' || currentTicket.status === 'تم الاصلاح' || currentTicket.status === 'تم الإصلاح';
-      if (resolved) {
+      if (isTicketResolved(currentTicket)) {
         showAlert(ctx.alertId, 'المهمة مغلقة — لا يمكن إرسال رسائل', 'error');
+        return;
+      }
+      if (!currentTicket.assignedTech) {
+        showAlert(ctx.alertId, 'عيّن فنياً أولاً قبل إرسال رسالة', 'error');
         return;
       }
       var input = document.getElementById(ctx.messageInputId);
@@ -4688,7 +4934,9 @@
         return;
       }
       var btn = document.getElementById(ctx.sendBtnId);
+      var sendLabel = btn.textContent;
       btn.disabled = true;
+      btn.textContent = 'جاري الإرسال...';
       var payload = {
         pin: currentPin,
         row: currentTicket.row,
@@ -4701,6 +4949,7 @@
       google.script.run
         .withSuccessHandler(function (result) {
           btn.disabled = false;
+          btn.textContent = sendLabel;
           input.value = '';
           clearTechAttach();
           renderTechChat(result.messages);
@@ -4708,6 +4957,7 @@
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
+          btn.textContent = sendLabel;
           showAlert(ctx.alertId, err.message || 'حدث خطأ', 'error');
         })
         .centralSendTechMessage(payload);
@@ -4716,11 +4966,10 @@
     function updateTechAssignmentUi(ticket) {
       techChatContext = 'detail';
       populateAssignSelect(ticket.assignedTech || '');
-      var hasTech = !!ticket.assignedTech;
-      document.getElementById('tech-chat-block').style.display = hasTech ? 'block' : 'none';
-      if (hasTech) {
-        renderTechChat(ticket.techMessages || []);
-      }
+      document.getElementById('tech-chat-block').style.display = 'block';
+      renderTechChat(ticket.techMessages || []);
+      updateTechComposeState(ticket, 'tech');
+      updateAssignButtonState(ticket, 'assign');
     }
 
     document.getElementById('inspection-create-btn').addEventListener('click', submitInspection);
@@ -4929,6 +5178,17 @@
     });
     document.getElementById('tech-add-btn').addEventListener('click', addTechnician);
     document.getElementById('assign-btn').addEventListener('click', assignTech);
+    document.getElementById('inspection-assign-btn').addEventListener('click', assignInspectionTech);
+    document.getElementById('assign-select').addEventListener('change', function () {
+      if (currentTicket && !currentInspectionMode) {
+        updateAssignButtonState(currentTicket, 'assign');
+      }
+    });
+    document.getElementById('inspection-assign-select').addEventListener('change', function () {
+      if (currentTicket && currentInspectionMode) {
+        updateAssignButtonState(currentTicket, 'inspection-assign');
+      }
+    });
     document.getElementById('tech-send-btn').addEventListener('click', function () {
       techChatContext = 'detail';
       sendTechMessage();
@@ -4956,6 +5216,7 @@
 
     document.getElementById('logout-btn').addEventListener('click', function () {
       stopAutoRefresh();
+      resetUnreadTracking();
       clearPin();
       showSection('login');
       document.getElementById('pin-input').value = '';
@@ -5040,6 +5301,7 @@
       loadTechnicians();
       loadTickets();
       startAutoRefresh();
+      pollUnreadIndicators();
     } else {
       showSection('login');
     }

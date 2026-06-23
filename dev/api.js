@@ -131,6 +131,13 @@ async function centralListTickets(payload) {
   return sheets.centralListTickets(payload);
 }
 
+async function centralGetUnreadItems(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('centralGetUnreadItems', payload);
+  }
+  return sheets.centralGetUnreadItems(payload);
+}
+
 async function centralGetTicket(payload) {
   if (useAppsScriptProxy()) {
     return proxyToAppsScript('centralGetTicket', payload);
@@ -206,6 +213,13 @@ async function techListTasks(payload) {
     return proxyToAppsScript('techListTasks', payload);
   }
   return sheets.techListTasks(payload);
+}
+
+async function techGetUnreadItems(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techGetUnreadItems', payload);
+  }
+  return sheets.techGetUnreadItems(payload);
 }
 
 async function techGetTask(payload) {
@@ -372,6 +386,7 @@ module.exports = {
   submitNewComplaint,
   changeCustomerMobile,
   centralListTickets,
+  centralGetUnreadItems,
   centralGetTicket,
   centralUpdateTicket,
   centralForwardTechPhoto,
@@ -383,6 +398,7 @@ module.exports = {
   assignTechnician,
   techLogin,
   techListTasks,
+  techGetUnreadItems,
   techGetTask,
   techSendMessage,
   centralSendTechMessage,

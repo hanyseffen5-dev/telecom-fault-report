@@ -590,6 +590,19 @@
       font-family: inherit;
       white-space: nowrap;
     }
+    .rated-summary-banner {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.84rem;
+      margin-bottom: 8px;
+      line-height: 1.5;
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+    .rated-summary-banner.show { display: block; }
+    .rated-summary-banner .rated-stars { font-size: 1rem; letter-spacing: 2px; color: #f9a825; }
     .rating-complaint-info {
       background: #f0f7ff;
       border: 1px solid #bbdefb;
@@ -857,6 +870,7 @@
             <span>⭐ تم إنهاء المحادثة — يسعدنا تقييمك للخدمة</span>
             <button type="button" class="btn-rate" id="open-rating-btn">قيّم الآن</button>
           </div>
+          <div class="rated-summary-banner" id="rated-summary-banner"></div>
           <div class="closed-banner" id="closed-banner"></div>
           <div class="new-complaint-banner" id="new-complaint-banner">
             <span>يمكنك فتح شكوى جديدة على نفس الخط</span>
@@ -913,9 +927,12 @@
 
       <div id="rating-done-area" style="display:none;text-align:center">
         <div style="font-size:2.6rem;margin:10px 0">🙏</div>
-        <p style="color:var(--success);font-weight:700;margin-bottom:16px">شكراً لك! تم حفظ تقييمك بنجاح.</p>
-        <button type="button" class="btn btn-primary" id="new-complaint-after-rating-btn">فتح شكوى جديدة</button>
-        <button type="button" class="btn btn-ghost" id="rating-close-done" style="margin-top:8px">إغلاق</button>
+        <p style="color:var(--success);font-weight:700;margin-bottom:8px">شكراً لك! تم حفظ تقييمك بنجاح.</p>
+        <p style="font-size:0.88rem;color:var(--muted);margin-bottom:16px;line-height:1.5">
+          المحادثة والتقييم متاحان لمدة 5 أيام. يمكنك إعادة فتح الشكوى بكتابة رسالة في نفس الصفحة.
+        </p>
+        <button type="button" class="btn btn-primary" id="rating-close-done">متابعة المحادثة</button>
+        <button type="button" class="btn btn-ghost hidden" id="new-complaint-after-rating-btn" style="margin-top:8px">فتح شكوى جديدة</button>
       </div>
     </div>
   </div>
@@ -956,6 +973,9 @@
     var lastSignature = '';
     var ratingPromptShown = false;
     var lastTicket = null;
+    var lastCentralSeenKey = '';
+    var BASE_PAGE_TITLE = document.title;
+    var CUSTOMER_UNREAD_PREFIX = 'customer_unread_seen_';
     var DEVICE_FP_KEY = 'tfr_device_fp_v1';
 
     /* ===================== بصمة الجهاز ===================== */
@@ -1014,6 +1034,62 @@
         $('screen-' + s).classList.toggle('active', s === name);
       });
       window.scrollTo(0, 0);
+      if (name === 'chat' && lastTicket) {
+        markCustomerChatRead(getNotifications(lastTicket));
+      }
+    }
+
+    function customerUnreadStoreKey() {
+      return CUSTOMER_UNREAD_PREFIX + (session.landline || '');
+    }
+
+    function loadLastCentralSeenKey() {
+      try { return localStorage.getItem(customerUnreadStoreKey()) || ''; } catch (e) { return ''; }
+    }
+
+    function saveLastCentralSeenKey(key) {
+      lastCentralSeenKey = key || '';
+      try { localStorage.setItem(customerUnreadStoreKey(), lastCentralSeenKey); } catch (e) {}
+    }
+
+    function isChatScreenActive() {
+      var chatScreen = $('screen-chat');
+      return chatScreen && chatScreen.classList.contains('active');
+    }
+
+    function hasUnreadCentralReply(rawNotifications) {
+      if (!rawNotifications || !rawNotifications.length) return false;
+      var last = rawNotifications[rawNotifications.length - 1];
+      var c = classifyMessage(last.text);
+      if (c.who !== 'them') return false;
+      var key = (last.date || '') + '|' + last.text;
+      return key !== lastCentralSeenKey;
+    }
+
+    function updateCustomerUnreadTitle(rawNotifications) {
+      var unread = hasUnreadCentralReply(rawNotifications);
+      document.title = unread ? '🔴 رسالة جديدة — ' + BASE_PAGE_TITLE : BASE_PAGE_TITLE;
+    }
+
+    function markCustomerChatRead(rawNotifications) {
+      if (!rawNotifications || !rawNotifications.length) {
+        updateCustomerUnreadTitle(rawNotifications);
+        return;
+      }
+      var last = rawNotifications[rawNotifications.length - 1];
+      var c = classifyMessage(last.text);
+      if (c.who === 'them') {
+        saveLastCentralSeenKey((last.date || '') + '|' + last.text);
+      }
+      updateCustomerUnreadTitle(rawNotifications);
+    }
+
+    function updateCustomerUnreadState(rawNotifications) {
+      if (isChatScreenActive() && !document.hidden) {
+        markCustomerChatRead(rawNotifications);
+      } else {
+        updateCustomerUnreadTitle(rawNotifications);
+      }
     }
     function showAlert(id, msg, type) {
       var el = $(id);
@@ -1110,9 +1186,11 @@
     }
 
     function renderChat(data) {
+      lastTicket = data;
       var body = $('chat-body');
-      var notifications = newestFirst(getNotifications(data));
-      var signature = JSON.stringify(notifications) + '|' + (data.status || '');
+      var rawNotifications = getNotifications(data);
+      var notifications = newestFirst(rawNotifications);
+      var signature = JSON.stringify(rawNotifications) + '|' + (data.status || '');
 
       // حدّث رأس المحادثة دائماً
       $('chat-line-num').textContent = data.landline ? '☎ ' + data.landline : '';
@@ -1121,6 +1199,7 @@
 
       updateRatingUi(data);
       updateComposerState(data);
+      updateCustomerUnreadState(rawNotifications);
 
       if (signature === lastSignature) return;
       lastSignature = signature;
@@ -1157,6 +1236,13 @@
       body.scrollTop = 0;
     }
 
+    function starsDisplay(n) {
+      n = Number(n) || 0;
+      var out = '';
+      for (var i = 1; i <= 5; i++) out += i <= n ? '★' : '☆';
+      return out;
+    }
+
     function updateComposerState(data) {
       var input = $('msg-input');
       var sendBtn = $('send-btn');
@@ -1165,9 +1251,13 @@
       sendBtn.disabled = !canSend;
 
       if (!canSend) {
-        if (data.reopenWindowExpired && !data.alreadyRated && isResolvedStatus(data.status)) {
-          input.placeholder = 'انتهت مدة إعادة فتح الشكوى (5 أيام)';
-        } else if (data.alreadyRated && !data.isNewConversation) {
+        if (data.reopenWindowExpired && isResolvedStatus(data.status) && !data.isNewConversation) {
+          if (data.alreadyRated) {
+            input.placeholder = 'انتهت مدة إعادة فتح الشكوى (5 أيام من التقييم)';
+          } else {
+            input.placeholder = 'انتهت مدة إعادة فتح الشكوى (5 أيام)';
+          }
+        } else if (data.alreadyRated && !data.isNewConversation && data.canOpenNewComplaint) {
           input.placeholder = 'اضغط «شكوى جديدة» لبدء محادثة جديدة';
         } else if (isResolvedStatus(data.status)) {
           input.placeholder = 'تم إنهاء المحادثة';
@@ -1177,15 +1267,23 @@
       } else if (data.isNewConversation) {
         input.placeholder = 'اكتب رسالتك لبدء شكوى جديدة...';
       } else if (isResolvedStatus(data.status) && data.canReopen) {
-        input.placeholder = 'اكتب رسالتك لإعادة فتح الشكوى (خلال 5 أيام)...';
+        if (data.alreadyRated) {
+          input.placeholder = 'اكتب رسالتك لإعادة فتح الشكوى (خلال 5 أيام من التقييم)...';
+        } else {
+          input.placeholder = 'اكتب رسالتك لإعادة فتح الشكوى (خلال 5 أيام)...';
+        }
       } else {
         input.placeholder = 'اكتب رسالتك هنا...';
       }
 
       var closedBanner = $('closed-banner');
-      if (data.reopenWindowExpired && !data.alreadyRated && isResolvedStatus(data.status) && !data.isNewConversation) {
+      if (data.reopenWindowExpired && isResolvedStatus(data.status) && !data.isNewConversation) {
         var deadlineText = data.reopenDeadline ? (' آخر موعد كان ' + data.reopenDeadline + '.') : '';
-        closedBanner.textContent = 'انتهت مدة إعادة فتح هذه الشكوى (5 أيام من رد السنترال «تم الانتهاء من طلبكم»).' + deadlineText + ' يمكنك تقييم الخدمة.';
+        if (data.alreadyRated) {
+          closedBanner.textContent = 'انتهت مدة إعادة فتح هذه الشكوى (5 أيام من تاريخ التقييم).' + deadlineText + ' يمكنك فتح شكوى جديدة.';
+        } else {
+          closedBanner.textContent = 'انتهت مدة إعادة فتح هذه الشكوى (5 أيام من رد السنترال «تم الانتهاء من طلبكم»).' + deadlineText + ' يمكنك تقييم الخدمة.';
+        }
         closedBanner.classList.add('show');
       } else {
         closedBanner.classList.remove('show');
@@ -1194,7 +1292,7 @@
       var newBanner = $('new-complaint-banner');
       if (data.isNewConversation) {
         newBanner.classList.remove('show');
-      } else if (data.canOpenNewComplaint && data.alreadyRated) {
+      } else if (data.canOpenNewComplaint) {
         newBanner.classList.add('show');
       } else {
         newBanner.classList.remove('show');
@@ -1204,20 +1302,36 @@
     function updateRatingUi(data) {
       lastTicket = data;
       var banner = $('rating-banner');
+      var ratedSummary = $('rated-summary-banner');
       var canRate = data.canRate === true;
       var alreadyRated = data.alreadyRated === true;
       var deviceBlocked = data.hasDeviceFp && data.deviceTrusted === false;
 
       if (canRate && !deviceBlocked) {
         banner.classList.add('show');
+        ratedSummary.classList.remove('show');
         if (!ratingPromptShown) {
           ratingPromptShown = true;
           setTimeout(openRatingModal, 700);
         }
-      } else if (isResolvedStatus(data.status) && alreadyRated) {
+      } else if (isResolvedStatus(data.status) && alreadyRated && !data.isNewConversation) {
         banner.classList.remove('show');
+        var deadlinePart = data.reopenDeadline && !data.reopenWindowExpired
+          ? (' · آخر موعد لإعادة الفتح: ' + data.reopenDeadline)
+          : '';
+        var reopenHint = !data.reopenWindowExpired
+          ? ' يمكنك إعادة فتح الشكوى بكتابة رسالة أدناه.'
+          : '';
+        ratedSummary.innerHTML =
+          '<strong>⭐ تقييمك:</strong> الحل ' +
+          '<span class="rated-stars">' + starsDisplay(data.ratingFault) + '</span>' +
+          ' · التعامل ' +
+          '<span class="rated-stars">' + starsDisplay(data.ratingTech) + '</span>' +
+          deadlinePart + reopenHint;
+        ratedSummary.classList.add('show');
       } else {
         banner.classList.remove('show');
+        ratedSummary.classList.remove('show');
       }
     }
 
@@ -1233,6 +1347,7 @@
           btn.disabled = false;
           btn.textContent = 'فتح المحادثة 💬';
           session = { landline: data.landline || landline, mobile: data.mobile || mobile };
+          lastCentralSeenKey = loadLastCentralSeenKey();
           ratingPromptShown = false;
           lastSignature = '';
           showScreen('chat');
@@ -1389,7 +1504,7 @@
           $('rating-form-area').style.display = 'none';
           $('rating-done-area').style.display = 'block';
           $('rating-banner').classList.remove('show');
-          beginFreshConversation();
+          refreshConversation();
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
@@ -1502,9 +1617,12 @@
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) {
         stopPolling();
-      } else if ($('screen-chat').classList.contains('active')) {
-        refreshConversation();
-        startPolling();
+      } else {
+        if ($('screen-chat').classList.contains('active')) {
+          if (lastTicket) markCustomerChatRead(getNotifications(lastTicket));
+          refreshConversation();
+          startPolling();
+        }
       }
     });
   </script>

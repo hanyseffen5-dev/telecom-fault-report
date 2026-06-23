@@ -942,8 +942,9 @@ function rowToObject_(row, rowNumber) {
     isArchiveComplaint: isArchiveComplaintRow_(row),
     alreadyRated: !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]),
     canOpenNewComplaint: isResolvedStatus_(status) && (
-      !!(row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) ||
-      isArchiveComplaintRow_(row)
+      (isTicketRated_(row) && !isWithinPostRatingReopenWindow_(row)) ||
+      isArchiveComplaintRow_(row) ||
+      (!isTicketRated_(row) && windowInfo.reopenWindowExpired)
     ),
     canSendNotification: canCentralSendNotification_(status, notifications),
     mobileRegistered: !isEmptyMobile_(row[COL.MOBILE - 1]),
@@ -1327,6 +1328,25 @@ function isWithinReopenWindow_(row) {
   return diffDays <= COMPLAINT_REOPEN_DAYS;
 }
 
+function getRatingDateFromRow_(row) {
+  if (!isTicketRated_(row)) return null;
+  if (row[COL.LAST_UPDATE - 1]) {
+    const d = row[COL.LAST_UPDATE - 1] instanceof Date
+      ? row[COL.LAST_UPDATE - 1]
+      : new Date(row[COL.LAST_UPDATE - 1]);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return null;
+}
+
+function isWithinPostRatingReopenWindow_(row) {
+  if (!isTicketRated_(row)) return false;
+  const ratingDate = getRatingDateFromRow_(row);
+  if (!ratingDate) return true;
+  const diffDays = (Date.now() - ratingDate.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays <= COMPLAINT_REOPEN_DAYS;
+}
+
 function getReopenWindowInfo_(row) {
   const complaintDate = row[COL.DATE - 1] ? formatDate_(row[COL.DATE - 1]) : '';
   let resolutionDate = '';
@@ -1334,13 +1354,24 @@ function getReopenWindowInfo_(row) {
   let reopenWindowExpired = false;
 
   if (isResolvedStatus_(String(row[COL.STATUS - 1] || ''))) {
-    const completionDate = getCompletionDateFromRow_(row);
-    if (completionDate) {
-      resolutionDate = formatDate_(completionDate);
-      const deadline = new Date(completionDate.getTime());
-      deadline.setDate(deadline.getDate() + COMPLAINT_REOPEN_DAYS);
-      reopenDeadline = formatDate_(deadline);
-      reopenWindowExpired = !isWithinReopenWindow_(row);
+    if (isTicketRated_(row)) {
+      const ratingDate = getRatingDateFromRow_(row);
+      if (ratingDate) {
+        resolutionDate = formatDate_(ratingDate);
+        const deadline = new Date(ratingDate.getTime());
+        deadline.setDate(deadline.getDate() + COMPLAINT_REOPEN_DAYS);
+        reopenDeadline = formatDate_(deadline);
+        reopenWindowExpired = !isWithinPostRatingReopenWindow_(row);
+      }
+    } else {
+      const completionDate = getCompletionDateFromRow_(row);
+      if (completionDate) {
+        resolutionDate = formatDate_(completionDate);
+        const deadline = new Date(completionDate.getTime());
+        deadline.setDate(deadline.getDate() + COMPLAINT_REOPEN_DAYS);
+        reopenDeadline = formatDate_(deadline);
+        reopenWindowExpired = !isWithinReopenWindow_(row);
+      }
     }
   }
 
@@ -1356,15 +1387,15 @@ function canSendCustomerMessage_(row) {
   if (isTechInspectionRow_(row)) return false;
   const status = String(row[COL.STATUS - 1] || STATUS_NEW);
   if (!isResolvedStatus_(status)) return true;
-  if (row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) return false;
+  if (isTicketRated_(row)) return isWithinPostRatingReopenWindow_(row);
   return isWithinReopenWindow_(row);
 }
 
 function canReopenRow_(row) {
   const status = String(row[COL.STATUS - 1] || STATUS_NEW);
   if (!isResolvedStatus_(status)) return false;
-  if (row[COL.RATING_FAULT - 1] || row[COL.RATING_TECH - 1]) return false;
   if (!isRatingEligibleRow_(row)) return false;
+  if (isTicketRated_(row)) return isWithinPostRatingReopenWindow_(row);
   return isWithinReopenWindow_(row);
 }
 
@@ -1629,14 +1660,13 @@ function reopenTicket(payload) {
   }
 
   if (!canReopenRow_(result.data[result.index])) {
+    if (isTicketRated_(result.data[result.index]) && !isWithinPostRatingReopenWindow_(result.data[result.index])) {
+      throw new Error('انتهت مدة إعادة فتح الشكوى (5 أيام من تاريخ التقييم). يمكنك فتح شكوى جديدة.');
+    }
     if (!isWithinReopenWindow_(result.data[result.index])) {
       throw new Error('انتهت مدة إعادة فتح الشكوى (5 أيام من تاريخ إنهاء السنترال للطلب)');
     }
     throw new Error('إعادة الفتح غير متاحة لهذا البلاغ');
-  }
-
-  if (result.data[result.index][COL.RATING_FAULT - 1] || result.data[result.index][COL.RATING_TECH - 1]) {
-    throw new Error('لا يمكن إعادة فتح بلاغ تم تقييمه');
   }
 
   const now = new Date();
@@ -1769,7 +1799,8 @@ function buildFreshChatView_(ticket, row) {
 
 function shouldShowFreshChatView_(row) {
   const status = String(row[COL.STATUS - 1] || STATUS_NEW);
-  return isResolvedStatus_(status) && isTicketRated_(row);
+  if (!isResolvedStatus_(status) || !isTicketRated_(row)) return false;
+  return !isWithinPostRatingReopenWindow_(row);
 }
 
 /**
@@ -1904,7 +1935,30 @@ function sendCustomerMessage(payload) {
 
     const currentStatus = String(rowData[COL.STATUS - 1] || STATUS_NEW);
     if (isResolvedStatus_(currentStatus)) {
-      if (rowData[COL.RATING_FAULT - 1] || rowData[COL.RATING_TECH - 1]) {
+      if (isTicketRated_(rowData)) {
+        if (isWithinPostRatingReopenWindow_(rowData)) {
+          const now = new Date();
+          const existing = sheet.getRange(rowNumber, COL.NOTIFICATION).getValue();
+          const updated = appendNotificationLine_(existing, CUSTOMER_MSG_PREFIX + message, now);
+          sheet.getRange(rowNumber, COL.NOTIFICATION).setValue(updated);
+          sheet.getRange(rowNumber, COL.STATUS).setValue(STATUS_REOPENED);
+          sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(now);
+
+          const ticket = rowToObject_(
+            sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0],
+            rowNumber
+          );
+          const deviceInfo = bindOrVerifyDeviceFp_(sheet, rowNumber, rowData, deviceFp);
+          ticket.deviceTrusted = deviceInfo.deviceTrusted;
+          ticket.deviceFpBound = deviceInfo.deviceFpBound;
+          ticket.deviceFp = deviceInfo.deviceFp || ticket.deviceFp;
+
+          return {
+            success: true,
+            message: 'تم إعادة فتح الشكوى وإرسال رسالتك إلى السنترال.',
+            ticket: ticket
+          };
+        }
         const created = createChatRow_(landline, mobile, deviceFp, message);
         const newRowData = created.sheet.getRange(created.rowNumber, 1, 1, HEADERS.length).getValues()[0];
         const ticket = rowToObject_(newRowData, created.rowNumber);
@@ -2197,6 +2251,147 @@ function getMessagesForTicket_(ticketRow) {
   return messages;
 }
 
+function messageBelongsToTech_(msg, techId) {
+  const id = String(techId || '').trim();
+  if (!id || !msg) return false;
+  const sender = String(msg.senderId || '').trim();
+  const recipient = String(msg.recipientId || '').trim();
+  if (msg.senderType === SENDER_TECH && sender === id) return true;
+  if (msg.senderType === SENDER_CENTRAL && recipient === id) return true;
+  return false;
+}
+
+function filterMessagesForTech_(messages, techId) {
+  const id = String(techId || '').trim();
+  if (!id) return [];
+  return (messages || []).filter(function (m) {
+    return messageBelongsToTech_(m, id);
+  });
+}
+
+function getMessagesForTechOnTicket_(ticketRow, techId) {
+  return filterMessagesForTech_(getMessagesForTicket_(ticketRow), techId);
+}
+
+function getLastTechMessageForTech_(ticketRow, techId) {
+  const messages = getMessagesForTechOnTicket_(ticketRow, techId);
+  if (!messages.length) return null;
+  return messages[messages.length - 1];
+}
+
+function classifyNotificationSender_(text) {
+  const t = String(text || '').trim();
+  if (t.indexOf('العميل:') === 0) return SENDER_CUSTOMER;
+  if (t.indexOf('السنترال:') === 0) return SENDER_CENTRAL;
+  return 'system';
+}
+
+function getLastTechMessage_(ticketRow, techId) {
+  if (techId) {
+    return getLastTechMessageForTech_(ticketRow, techId);
+  }
+  const messages = getMessagesForTicket_(ticketRow);
+  if (!messages.length) return null;
+  return messages[messages.length - 1];
+}
+
+function buildUnreadItem_(scope, row, key) {
+  return {
+    scope: String(scope || ''),
+    row: Number(row) || 0,
+    key: String(key || '')
+  };
+}
+
+/** عناصر قد تكون غير مقروءة — لوحة السنترال (محادثات + فحص فني) */
+function centralGetUnreadItems(payload) {
+  verifyCentralAuth_(payload.pin);
+  ensureHeaders_();
+
+  const data = getSheet_().getDataRange().getValues();
+  const latestByLine = getLatestRowByLine_(data);
+  const items = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[COL.LANDLINE - 1] && !row[COL.MOBILE - 1]) continue;
+
+    const rowNumber = i + 1;
+    const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+    if (isResolvedStatus_(status)) continue;
+
+    if (isTechInspectionRow_(row)) {
+      const assignedTech = String(row[COL.ASSIGNED_TECH - 1] || '').trim();
+      const lastTech = getLastTechMessage_(rowNumber, assignedTech);
+      if (lastTech && lastTech.senderType === SENDER_TECH) {
+        items.push(buildUnreadItem_(
+          'inspections',
+          rowNumber,
+          lastTech.id || lastTech.date || lastTech.text
+        ));
+      }
+      continue;
+    }
+
+    if (!isLatestTicketForLine_(rowNumber, row, latestByLine)) continue;
+
+    const lastUpdate = row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '';
+    const notifications = parseNotifications_(row[COL.NOTIFICATION - 1], lastUpdate);
+    if (notifications.length) {
+      const last = notifications[notifications.length - 1];
+      if (classifyNotificationSender_(last.text) === SENDER_CUSTOMER) {
+        items.push(buildUnreadItem_(
+          'chats',
+          rowNumber,
+          (last.date || '') + '|' + String(last.text || '').slice(0, 120)
+        ));
+      }
+    }
+
+    const assignedTech = String(row[COL.ASSIGNED_TECH - 1] || '').trim();
+    const lastTech = getLastTechMessage_(rowNumber, assignedTech);
+    if (lastTech && lastTech.senderType === SENDER_TECH) {
+      items.push(buildUnreadItem_(
+        'chats-tech',
+        rowNumber,
+        lastTech.id || lastTech.date || lastTech.text
+      ));
+    }
+  }
+
+  return { items: items };
+}
+
+/** عناصر قد تكون غير مقروءة — لوحة الفني */
+function techGetUnreadItems(payload) {
+  verifyTechAuth_(payload.techId, payload.pin);
+  ensureHeaders_();
+
+  const techId = String(payload.techId || '').trim();
+  const data = getSheet_().getDataRange().getValues();
+  const items = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (String(row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) continue;
+
+    const rowNumber = i + 1;
+    const status = String(row[COL.STATUS - 1] || STATUS_NEW);
+    if (isResolvedStatus_(status)) continue;
+
+    const lastMsg = getLastTechMessage_(rowNumber, techId);
+    if (lastMsg && lastMsg.senderType === SENDER_CENTRAL) {
+      items.push(buildUnreadItem_(
+        'tasks',
+        rowNumber,
+        lastMsg.id || lastMsg.date || lastMsg.text
+      ));
+    }
+  }
+
+  return { items: items };
+}
+
 /** قائمة الفنيين (للإدارة) — بدون كشف الـ PIN */
 function techList(payload) {
   verifyCentralAuth_(payload.pin);
@@ -2258,7 +2453,8 @@ function techUpdateStatus(payload) {
   return { success: true, message: 'تم تحديث الحالة', status: status };
 }
 
-/** تعيين فني لمحادثة (الإدارة) — techId فارغ = إلغاء التعيين */
+/** تعيين فني لمحادثة (الإدارة) — techId فارغ = إلغاء التعيين
+ *  يُزامِن الإسناد على كل المهام النشطة لنفس الخط (محادثة عميل + فحص فني...) */
 function assignTechnician(payload) {
   verifyCentralAuth_(payload.pin);
   ensureHeaders_();
@@ -2266,6 +2462,11 @@ function assignTechnician(payload) {
   const rowNumber = Number(payload.row);
   const techId = String(payload.techId || '').trim();
   const result = getTicketRow_(rowNumber);
+  const landline = String(result.row[COL.LANDLINE - 1] || '');
+
+  if (!landline) {
+    throw new Error('لا يوجد خط أرضي لهذه المهمة');
+  }
 
   let techName = '';
   if (techId) {
@@ -2276,26 +2477,53 @@ function assignTechnician(payload) {
     techName = String(found.values[TECH_COL.NAME - 1] || '');
   }
 
-  result.sheet.getRange(rowNumber, COL.ASSIGNED_TECH).setValue(techId);
-  result.sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(new Date());
+  const sheet = result.sheet;
+  const data = sheet.getDataRange().getValues();
+  const targetLandline = normalizeLandlineForMatch_(landline);
+  const now = new Date();
+  let syncedRows = 0;
 
-  if (techId) {
-    const landline = String(result.row[COL.LANDLINE - 1] || '');
-    appendMessage_(
-      rowNumber,
-      SENDER_CENTRAL,
-      RECIPIENT_CENTRAL,
-      techId,
-      'تم إسناد المهمة إليك — الخط الأرضي: ' + landline,
-      ''
-    );
+  for (let i = 1; i < data.length; i++) {
+    const rn = i + 1;
+    const row = data[i];
+    if (!row[COL.LANDLINE - 1]) continue;
+    if (normalizeLandlineForMatch_(row[COL.LANDLINE - 1]) !== targetLandline) continue;
+    if (isResolvedStatus_(String(row[COL.STATUS - 1] || STATUS_NEW))) continue;
+
+    const oldTech = String(row[COL.ASSIGNED_TECH - 1] || '').trim();
+    if (oldTech === techId) continue;
+
+    sheet.getRange(rn, COL.ASSIGNED_TECH).setValue(techId);
+    sheet.getRange(rn, COL.LAST_UPDATE).setValue(now);
+    syncedRows++;
+
+    if (techId) {
+      appendMessage_(
+        rn,
+        SENDER_CENTRAL,
+        RECIPIENT_CENTRAL,
+        techId,
+        'تم إسناد المهمة إليك — الخط الأرضي: ' + landline,
+        ''
+      );
+    }
+  }
+
+  let message = techId ? ('تم إسناد المهمة للفني ' + techName) : 'تم إلغاء تعيين الفني';
+  if (syncedRows > 1) {
+    message += ' (شمل ' + syncedRows + ' مهام نشطة على نفس الخط)';
+  } else if (syncedRows === 0) {
+    message = techId
+      ? ('الفني ' + techName + ' مسند مسبقاً على هذا الخط')
+      : 'لا يوجد فنيون مسندون على مهام نشطة لهذا الخط';
   }
 
   return {
     success: true,
-    message: techId ? ('تم إسناد المهمة للفني ' + techName) : 'تم إلغاء تعيين الفني',
+    message: message,
     assignedTech: techId,
-    assignedTechName: techName
+    assignedTechName: techName,
+    syncedRows: syncedRows
   };
 }
 
@@ -2357,7 +2585,7 @@ function techGetTask(payload) {
   }
 
   const ticket = rowToObject_(result.row, rowNumber);
-  ticket.messages = getMessagesForTicket_(rowNumber);
+  ticket.messages = getMessagesForTechOnTicket_(rowNumber, techId);
   ticket.archive = getTicketArchive_(ticket.landline, ticket.mobile, rowNumber);
   return ticket;
 }
@@ -2411,7 +2639,7 @@ function techSendMessage(payload) {
   return {
     success: true,
     message: 'تم إرسال رسالتك إلى الإدارة',
-    messages: getMessagesForTicket_(rowNumber)
+    messages: getMessagesForTechOnTicket_(rowNumber, techId)
   };
 }
 
@@ -2612,8 +2840,8 @@ function centralGetTechInspection(payload) {
   }
 
   const ticket = rowToObject_(result.row, rowNumber);
-  ticket.techMessages = getMessagesForTicket_(rowNumber);
   const techId = String(result.row[COL.ASSIGNED_TECH - 1] || '').trim();
+  ticket.techMessages = getMessagesForTicket_(rowNumber);
   if (techId) {
     const found = findTechById_(techId);
     if (found.row !== -1) {

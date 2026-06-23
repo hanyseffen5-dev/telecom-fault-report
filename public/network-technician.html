@@ -238,6 +238,26 @@
       background: linear-gradient(135deg, var(--primary), #0288d1);
       color: #fff;
     }
+    .tab-btn { position: relative; }
+    .tab-unread-badge {
+      position: absolute;
+      top: 4px;
+      left: 6px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      background: #ff1744;
+      color: #fff;
+      border-radius: 999px;
+      border: 2px solid var(--card);
+      font-size: 0.65rem;
+      font-weight: 800;
+      line-height: 14px;
+      text-align: center;
+      pointer-events: none;
+      box-shadow: 0 1px 3px rgba(255, 23, 68, 0.45);
+    }
+    .tab-btn.active .tab-unread-badge { border-color: #0288d1; }
     .tab-btn.tab-btn-long {
       font-size: 0.76rem;
       line-height: 1.35;
@@ -656,7 +676,7 @@
           زر الكاميرا يلتقط الصورة والموقع معاً. اسمح للمتصفح بالكاميرا والموقع عند الطلب.
         </p>
         <div id="ni-attach-preview" class="attach-preview hidden"></div>
-        <button type="button" class="btn btn-primary" id="ni-submit-btn">✅ إرسال فحص العطل إلى شيت فحص الشبكات</button>
+        <button type="button" class="btn btn-primary" id="ni-submit-btn">إرسال</button>
         </div>
       </div>
     </section>
@@ -783,6 +803,112 @@
     var session = { id: '', pin: '', name: '', status: '' };
     var currentTask = null;
     var refreshTimer = null;
+    var unreadItemsCache = [];
+    var UNREAD_STORE_PREFIX = 'net_tech_unread_seen_';
+    var TAB_UNREAD_SCOPES = { tasks: ['tasks'] };
+    var BASE_PAGE_TITLE = document.title;
+
+    function unreadStoreKey() {
+      return UNREAD_STORE_PREFIX + (session.id || 'guest');
+    }
+
+    function loadUnreadStore() {
+      try { return JSON.parse(localStorage.getItem(unreadStoreKey()) || '{}'); } catch (e) { return {}; }
+    }
+
+    function saveUnreadStore(store) {
+      try { localStorage.setItem(unreadStoreKey(), JSON.stringify(store || {})); } catch (e) {}
+    }
+
+    function unreadItemStoreKey(item) {
+      return item.scope + ':' + item.row;
+    }
+
+    function isUnreadItem(item, store) {
+      store = store || loadUnreadStore();
+      return store[unreadItemStoreKey(item)] !== item.key;
+    }
+
+    function markUnreadItems(items) {
+      var store = loadUnreadStore();
+      (items || []).forEach(function (item) {
+        store[unreadItemStoreKey(item)] = item.key;
+      });
+      saveUnreadStore(store);
+      updateTabUnreadBadges();
+    }
+
+    function markUnreadRow(row, scopes) {
+      var scopeList = scopes || [];
+      var toMark = unreadItemsCache.filter(function (item) {
+        return item.row === row && scopeList.indexOf(item.scope) !== -1;
+      });
+      markUnreadItems(toMark);
+    }
+
+    function markTabUnreadRead(tabName) {
+      var scopes = TAB_UNREAD_SCOPES[tabName] || [];
+      if (!scopes.length) return;
+      var toMark = unreadItemsCache.filter(function (item) {
+        return scopes.indexOf(item.scope) !== -1;
+      });
+      markUnreadItems(toMark);
+    }
+
+    function tabUnreadCount(tabName) {
+      var scopes = TAB_UNREAD_SCOPES[tabName] || [];
+      if (!scopes.length) return 0;
+      var store = loadUnreadStore();
+      var count = 0;
+      unreadItemsCache.forEach(function (item) {
+        if (scopes.indexOf(item.scope) !== -1 && isUnreadItem(item, store)) count++;
+      });
+      return count;
+    }
+
+    function tabHasUnread(tabName) {
+      return tabUnreadCount(tabName) > 0;
+    }
+
+    function updateTabUnreadBadges() {
+      document.querySelectorAll('.tab-btn[data-tab]').forEach(function (btn) {
+        var tab = btn.getAttribute('data-tab');
+        var count = tabUnreadCount(tab);
+        var badge = btn.querySelector('.tab-unread-badge');
+        if (count > 0) {
+          if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'tab-unread-badge';
+            btn.appendChild(badge);
+          }
+          badge.textContent = count > 99 ? '99+' : String(count);
+          badge.setAttribute('aria-label', count + ' غير مقروء');
+        } else if (badge) {
+          badge.remove();
+        }
+      });
+      var anyUnread = tabHasUnread('tasks');
+      document.title = anyUnread ? '🔴 رسالة جديدة — ' + BASE_PAGE_TITLE : BASE_PAGE_TITLE;
+    }
+
+    function applyUnreadItems(data) {
+      unreadItemsCache = (data && data.items) ? data.items : [];
+      updateTabUnreadBadges();
+    }
+
+    function pollUnreadIndicators() {
+      if (!session.id || !session.pin) return;
+      google.script.run
+        .withSuccessHandler(applyUnreadItems)
+        .withFailureHandler(function () {})
+        .techGetUnreadItems({ techId: session.id, pin: session.pin });
+    }
+
+    function resetUnreadTracking() {
+      unreadItemsCache = [];
+      updateTabUnreadBadges();
+    }
+
     var pendingPhoto = null;
     var pendingLocation = null;
     var cameraStream = null;
@@ -1740,6 +1866,7 @@
 
     function switchMainTab(tab) {
       activeMainTab = tab;
+      if (tab === 'tasks') markTabUnreadRead('tasks');
       document.querySelectorAll('.tab-btn').forEach(function (b) {
         b.classList.toggle('active', b.getAttribute('data-tab') === tab);
       });
@@ -1952,6 +2079,7 @@
       }
 
       var btn = $('ni-submit-btn');
+      var sendLabel = btn.textContent;
       btn.disabled = true;
       btn.textContent = 'جاري الإرسال...';
       hideAlert('ni-alert');
@@ -1984,7 +2112,7 @@
       google.script.run
         .withSuccessHandler(function (result) {
           btn.disabled = false;
-          btn.textContent = '✅ إرسال فحص العطل إلى شيت فحص الشبكات';
+          btn.textContent = sendLabel;
           showAlert('ni-alert', result.message, 'success');
           resetNetworkInspectionForm();
           if (inspectionPanelSource === 'unrepaired-inspection') {
@@ -1993,7 +2121,7 @@
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
-          btn.textContent = '✅ إرسال فحص العطل إلى شيت فحص الشبكات';
+          btn.textContent = sendLabel;
           var msg = err && err.message ? err.message : '';
           if (isOpenInspectionErrorMessage(msg)) {
             showOpenInspectionModal(rec.landline || '', '');
@@ -2318,6 +2446,7 @@
       $('send-btn').style.opacity = resolved ? '0.5' : '';
       $('camera-btn').disabled = resolved;
       $('location-btn').disabled = resolved;
+      markUnreadRow(ticket.row, ['tasks']);
     }
 
     function openTask(row) {
@@ -2390,6 +2519,7 @@
       showSection('tasks');
       loadTasks();
       startAutoRefresh();
+      pollUnreadIndicators();
     }
 
     function tryLogin(techId, pin) {
@@ -2414,7 +2544,9 @@
 
     function startAutoRefresh() {
       stopAutoRefresh();
+      pollUnreadIndicators();
       refreshTimer = setInterval(function () {
+        pollUnreadIndicators();
         if (!$('tasks-section').classList.contains('hidden') && activeMainTab === 'tasks') loadTasks();
         else if (!$('tasks-section').classList.contains('hidden') && activeMainTab === 'ground-fault') loadGroundFaults();
         else if (!$('tasks-section').classList.contains('hidden') && activeMainTab === 'unrepaired-inspection') loadUnrepairedInspections();
@@ -2433,7 +2565,7 @@
     $('pin-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('login-btn').click(); });
     $('refresh-btn').addEventListener('click', loadTasks);
     $('logout-btn').addEventListener('click', function () {
-      stopAutoRefresh(); clearSession(); showSection('login');
+      stopAutoRefresh(); resetUnreadTracking(); clearSession(); showSection('login');
       $('tech-id-input').value = ''; $('pin-input').value = '';
     });
     $('back-btn').addEventListener('click', function () { closeCameraModal(); closeArchiveModal(); showSection('tasks'); currentTask = null; loadTasks(); });
