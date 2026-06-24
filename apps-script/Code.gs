@@ -179,6 +179,12 @@ const TECH_STATUS_BUSY = 'مشغول';
 const TECH_STATUS_INACTIVE = 'غير نشط';
 const TECH_STATUSES = [TECH_STATUS_AVAILABLE, TECH_STATUS_BUSY, TECH_STATUS_INACTIVE];
 
+const ANNOUNCEMENTS_SHEET_NAME = 'إعلانات_الفنيين';
+const ANNOUNCEMENTS_HEADERS = ['ann_id', 'النوع', 'العنوان', 'المحتوى', 'معرّفات_الفنيين', 'أسماء_الفنيين', 'التاريخ', 'رابط_الصورة'];
+const ANN_COL = { ID: 1, TYPE: 2, TITLE: 3, BODY: 4, TECH_IDS: 5, TECH_NAMES: 6, DATE: 7, IMAGE: 8 };
+const ANNOUNCEMENTS_DRIVE_ROOT_NAME = 'مرفقات_إعلانات_الفنيين';
+const ANN_TYPES = ['إعلان', 'تعليمات'];
+
 const CHANNEL_OPEN = 'مفتوحة';
 const CHANNEL_CLOSED = 'مغلقة';
 
@@ -374,6 +380,12 @@ function doPost(e) {
       result = netTechCheckOpenNetworkInspection(payload);
     } else if (fn === 'netTechGetNetworkInspectionHistory') {
       result = netTechGetNetworkInspectionHistory(payload);
+    } else if (fn === 'centralCreateTechAnnouncement') {
+      result = centralCreateTechAnnouncement(payload);
+    } else if (fn === 'centralListTechAnnouncements') {
+      result = centralListTechAnnouncements(payload);
+    } else if (fn === 'techListAnnouncements') {
+      result = techListAnnouncements(payload);
     } else {
       throw new Error('دالة غير معروفة');
     }
@@ -2431,6 +2443,260 @@ function techAdd(payload) {
   };
 }
 
+function ensureAnnouncementsHeaders_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(ANNOUNCEMENTS_HEADERS);
+    sheet.getRange(1, 1, 1, ANNOUNCEMENTS_HEADERS.length).setFontWeight('bold');
+    return;
+  }
+  const headerRow = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), ANNOUNCEMENTS_HEADERS.length)).getValues()[0];
+  const hasImageCol = headerRow.some(function (h) {
+    return String(h || '').trim() === 'رابط_الصورة';
+  });
+  if (!hasImageCol) {
+    const col = headerRow.length + 1;
+    sheet.getRange(1, col).setValue('رابط_الصورة').setFontWeight('bold');
+  }
+}
+
+function getAnnouncementsSheet_() {
+  const ss = getSpreadsheet_();
+  let sheet = ss.getSheetByName(ANNOUNCEMENTS_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(ANNOUNCEMENTS_SHEET_NAME);
+  }
+  ensureAnnouncementsHeaders_(sheet);
+  return sheet;
+}
+
+function getAnnouncementDriveRootFolder_() {
+  var storedId = PropertiesService.getScriptProperties().getProperty('ANNOUNCEMENTS_DRIVE_ROOT_ID');
+  if (storedId) {
+    try { return DriveApp.getFolderById(storedId); } catch (err) {}
+  }
+  var folders = DriveApp.getFoldersByName(ANNOUNCEMENTS_DRIVE_ROOT_NAME);
+  if (folders.hasNext()) {
+    var existing = folders.next();
+    PropertiesService.getScriptProperties().setProperty('ANNOUNCEMENTS_DRIVE_ROOT_ID', existing.getId());
+    return existing;
+  }
+  var folder = DriveApp.createFolder(ANNOUNCEMENTS_DRIVE_ROOT_NAME);
+  PropertiesService.getScriptProperties().setProperty('ANNOUNCEMENTS_DRIVE_ROOT_ID', folder.getId());
+  return folder;
+}
+
+function uploadAnnouncementPhoto_(base64Data, mimeType, annId) {
+  if (!base64Data) return '';
+  var bytes = Utilities.base64Decode(base64Data);
+  if (bytes.length > MAX_PHOTO_BYTES) {
+    throw new Error('حجم الصورة كبير جداً (الحد الأقصى 5 ميغابايت)');
+  }
+  var mime = String(mimeType || 'image/jpeg').split(';')[0];
+  var ext = mime.indexOf('png') !== -1 ? 'png' : 'jpg';
+  var stamp = Utilities.formatDate(new Date(), 'Africa/Cairo', 'yyyyMMdd_HHmmss');
+  var fileName = 'ann_' + annId + '_' + stamp + '.' + ext;
+  var folder = getAnnouncementDriveRootFolder_();
+  var file = folder.createFile(Utilities.newBlob(bytes, mime, fileName));
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (err) {}
+  return 'https://drive.google.com/uc?export=view&id=' + file.getId();
+}
+
+function sortAnnouncementsNewestFirst_(items) {
+  items.sort(function (a, b) {
+    return (Number(b._row) || 0) - (Number(a._row) || 0);
+  });
+  items.forEach(function (item) { delete item._row; });
+  return items;
+}
+
+function generateAnnId_(data) {
+  let max = 0;
+  for (let i = 1; i < data.length; i++) {
+    const id = String(data[i][ANN_COL.ID - 1] || '');
+    const m = id.match(/^A(\d+)$/);
+    if (m) {
+      max = Math.max(max, Number(m[1]));
+    }
+  }
+  return 'A' + (max + 1);
+}
+
+function normalizeTechId_(techId) {
+  return String(techId || '').trim().toUpperCase();
+}
+
+function parseAnnouncementTechIds_(raw) {
+  return String(raw || '').split(/[|,،;]+/).map(function (s) {
+    return normalizeTechId_(s);
+  }).filter(Boolean);
+}
+
+function isAnnouncementForTech_(techIds, techId) {
+  const target = normalizeTechId_(techId);
+  if (!target) return false;
+  const ids = Array.isArray(techIds)
+    ? techIds.map(normalizeTechId_)
+    : parseAnnouncementTechIds_(techIds);
+  if (!ids.length) return false;
+  return ids.indexOf(target) !== -1;
+}
+
+function getAnnouncementColumnIndexes_(sheet) {
+  const headerRow = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  const indexes = {
+    ID: ANN_COL.ID - 1,
+    TYPE: ANN_COL.TYPE - 1,
+    TITLE: ANN_COL.TITLE - 1,
+    BODY: ANN_COL.BODY - 1,
+    TECH_IDS: ANN_COL.TECH_IDS - 1,
+    TECH_NAMES: ANN_COL.TECH_NAMES - 1,
+    DATE: ANN_COL.DATE - 1,
+    IMAGE: ANN_COL.IMAGE - 1
+  };
+  headerRow.forEach(function (label, i) {
+    const h = String(label || '').trim();
+    if (h === 'ann_id') indexes.ID = i;
+    else if (h === 'النوع') indexes.TYPE = i;
+    else if (h === 'العنوان') indexes.TITLE = i;
+    else if (h === 'المحتوى') indexes.BODY = i;
+    else if (h === 'معرّفات_الفنيين') indexes.TECH_IDS = i;
+    else if (h === 'أسماء_الفنيين') indexes.TECH_NAMES = i;
+    else if (h === 'التاريخ') indexes.DATE = i;
+    else if (h === 'رابط_الصورة') indexes.IMAGE = i;
+  });
+  return indexes;
+}
+
+function resolveAnnouncementImageUrl_(row, c) {
+  const direct = String(row[c.IMAGE] || '').trim();
+  if (direct && direct.indexOf('http') === 0) return direct;
+  for (let i = 0; i < row.length; i++) {
+    const cell = String(row[i] || '').trim();
+    if (cell.indexOf('http') === 0 && cell.indexOf('drive.google.com') !== -1) {
+      return cell;
+    }
+  }
+  return direct;
+}
+
+function announcementRowToObject_(row, colIndexes) {
+  const c = colIndexes || {
+    ID: ANN_COL.ID - 1,
+    TYPE: ANN_COL.TYPE - 1,
+    TITLE: ANN_COL.TITLE - 1,
+    BODY: ANN_COL.BODY - 1,
+    TECH_IDS: ANN_COL.TECH_IDS - 1,
+    TECH_NAMES: ANN_COL.TECH_NAMES - 1,
+    DATE: ANN_COL.DATE - 1,
+    IMAGE: ANN_COL.IMAGE - 1
+  };
+  const techIds = parseAnnouncementTechIds_(row[c.TECH_IDS]);
+  const dateVal = String(row[c.DATE] || '');
+  const imageUrl = resolveAnnouncementImageUrl_(row, c);
+  const date = (dateVal.indexOf('drive.google.com') !== -1 && imageUrl === dateVal)
+    ? ''
+    : dateVal;
+  return {
+    id: String(row[c.ID] || ''),
+    type: String(row[c.TYPE] || ''),
+    title: String(row[c.TITLE] || ''),
+    body: String(row[c.BODY] || ''),
+    techIds: techIds,
+    techNames: String(row[c.TECH_NAMES] || ''),
+    date: date,
+    imageUrl: imageUrl
+  };
+}
+
+/** إرسال إعلان أو تعليمات لفنيين محددين (الإدارة) */
+function centralCreateTechAnnouncement(payload) {
+  verifyCentralAuth_(payload.pin);
+  const type = String(payload.type || '').trim();
+  const title = String(payload.title || '').trim();
+  const body = String(payload.body || '').trim();
+  const photoBase64 = String(payload.photoBase64 || '').trim();
+  const photoMimeType = String(payload.photoMimeType || 'image/jpeg').trim();
+  const techIds = Array.isArray(payload.techIds) ? payload.techIds.map(function (id) {
+    return String(id || '').trim();
+  }).filter(Boolean) : [];
+
+  if (ANN_TYPES.indexOf(type) === -1) {
+    throw new Error('اختر نوعاً صحيحاً: إعلان أو تعليمات');
+  }
+  if (title.length < 2) {
+    throw new Error('العنوان مطلوب');
+  }
+  if (body.length < 2 && !photoBase64) {
+    throw new Error('اكتب المحتوى أو أرفق صورة');
+  }
+  if (!techIds.length) {
+    throw new Error('اختر فنياً واحداً على الأقل');
+  }
+
+  const uniqueIds = [];
+  const techNames = [];
+  techIds.forEach(function (techId) {
+    if (uniqueIds.indexOf(techId) !== -1) return;
+    const found = findTechById_(techId);
+    if (found.row === -1) {
+      throw new Error('فني غير معروف: ' + techId);
+    }
+    uniqueIds.push(techId);
+    techNames.push(String(found.values[TECH_COL.NAME - 1] || techId));
+  });
+
+  const sheet = getAnnouncementsSheet_();
+  const data = sheet.getDataRange().getValues();
+  const annId = generateAnnId_(data);
+  const now = formatPreviewDateTime_(new Date());
+  const imageUrl = photoBase64 ? uploadAnnouncementPhoto_(photoBase64, photoMimeType, annId) : '';
+
+  sheet.appendRow([annId, type, title, body, uniqueIds.join('|'), techNames.join('، '), now, imageUrl]);
+
+  return {
+    success: true,
+    message: 'تم إرسال ' + type + ' إلى ' + uniqueIds.length + ' فني' + (imageUrl ? ' مع صورة' : ''),
+    announcement: announcementRowToObject_(sheet.getRange(sheet.getLastRow(), 1, 1, ANNOUNCEMENTS_HEADERS.length).getValues()[0])
+  };
+}
+
+/** قائمة الإعلانات والتعليمات (الإدارة) */
+function centralListTechAnnouncements(payload) {
+  verifyCentralAuth_(payload.pin);
+  const sheet = getAnnouncementsSheet_();
+  const data = sheet.getDataRange().getValues();
+  const colIndexes = getAnnouncementColumnIndexes_(sheet);
+  const items = [];
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][colIndexes.ID]) continue;
+    const ann = announcementRowToObject_(data[i], colIndexes);
+    ann._row = i;
+    items.push(ann);
+  }
+  return { announcements: sortAnnouncementsNewestFirst_(items), total: items.length };
+}
+
+/** إعلانات وتعليمات الفني الحالي */
+function techListAnnouncements(payload) {
+  const techId = normalizeTechId_(payload.techId);
+  verifyTechAuth_(payload.techId, payload.techPin);
+  const sheet = getAnnouncementsSheet_();
+  const data = sheet.getDataRange().getValues();
+  const colIndexes = getAnnouncementColumnIndexes_(sheet);
+  const items = [];
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][colIndexes.ID]) continue;
+    const ann = announcementRowToObject_(data[i], colIndexes);
+    if (isAnnouncementForTech_(ann.techIds, techId)) {
+      ann._row = i;
+      items.push(ann);
+    }
+  }
+  return { announcements: sortAnnouncementsNewestFirst_(items), total: items.length };
+}
+
 /** تحديث حالة الفني — من الإدارة (pin) أو من الفني نفسه (techId+techPin) */
 function techUpdateStatus(payload) {
   const status = String(payload.status || '').trim();
@@ -4049,7 +4315,8 @@ function setupSheet() {
     Logger.log('تم إعداد صفحة: ' + sheet.getName());
     getTechSheet_();
     getMessagesSheet_();
-    Logger.log('تم إعداد تبويبي الفنيين والرسائل');
+    getAnnouncementsSheet_();
+    Logger.log('تم إعداد تبويبي الفنيين والرسائل والإعلانات');
     Logger.log('تم إعداد الشيت بنجاح');
   } catch (err) {
     Logger.log('خطأ: ' + (err.message || err));

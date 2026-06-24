@@ -365,6 +365,29 @@ async function netTechGetNetworkInspectionHistory(payload) {
   );
 }
 
+async function centralCreateTechAnnouncement(payload) {
+  return proxyToAppsScriptWithSheetsFallback(
+    'centralCreateTechAnnouncement',
+    payload,
+    sheets.centralCreateTechAnnouncement
+  );
+}
+
+async function centralListTechAnnouncements(payload) {
+  return proxyToAppsScriptWithSheetsFallback(
+    'centralListTechAnnouncements',
+    payload,
+    sheets.centralListTechAnnouncements
+  );
+}
+
+async function techListAnnouncements(payload) {
+  if (useAppsScriptProxy()) {
+    return proxyToAppsScript('techListAnnouncements', payload);
+  }
+  return sheets.techListAnnouncements(payload);
+}
+
 function getBackendMode() {
   if (useAppsScriptProxy()) {
     return 'apps-script';
@@ -419,5 +442,8 @@ module.exports = {
   netTechGetNetworkInspectionHistory,
   netTechGetUnrepairedInspections,
   netTechCheckOpenNetworkInspection,
+  centralCreateTechAnnouncement,
+  centralListTechAnnouncements,
+  techListAnnouncements,
   getBackendMode
 };

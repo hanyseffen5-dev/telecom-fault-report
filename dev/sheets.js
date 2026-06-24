@@ -168,6 +168,12 @@ const RECIPIENT_CENTRAL = 'central';
 const TECH_STATUS_AVAILABLE = 'متاح';
 const TECH_STATUS_INACTIVE = 'غير نشط';
 const TECH_STATUSES = ['متاح', 'مشغول', 'غير نشط'];
+
+const ANNOUNCEMENTS_SHEET_NAME = 'إعلانات_الفنيين';
+const ANNOUNCEMENTS_HEADERS = ['ann_id', 'النوع', 'العنوان', 'المحتوى', 'معرّفات_الفنيين', 'أسماء_الفنيين', 'التاريخ', 'رابط_الصورة'];
+const ANN_COL = { ID: 1, TYPE: 2, TITLE: 3, BODY: 4, TECH_IDS: 5, TECH_NAMES: 6, DATE: 7, IMAGE: 8 };
+const ANNOUNCEMENTS_DRIVE_ROOT_NAME = 'مرفقات_إعلانات_الفنيين';
+const ANN_TYPES = ['إعلان', 'تعليمات'];
 const CHANNEL_CLOSED = 'مغلقة';
 
 const STATUS_NEW = 'جديد';
@@ -2168,6 +2174,184 @@ async function techAdd(payload) {
   };
 }
 
+async function ensureAnnouncementImageColumn() {
+  await ensureTab(ANNOUNCEMENTS_SHEET_NAME, ANNOUNCEMENTS_HEADERS);
+  const sheets = getSheets();
+  const resp = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `'${ANNOUNCEMENTS_SHEET_NAME}'!A1:Z1`
+  });
+  const first = (resp.data.values && resp.data.values[0]) || [];
+  if (first.some((h) => String(h || '').trim() === 'رابط_الصورة')) return;
+  const col = colLetter(first.length + 1);
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `'${ANNOUNCEMENTS_SHEET_NAME}'!${col}1`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [['رابط_الصورة']] }
+  });
+}
+
+async function getAnnouncementRows() {
+  await ensureAnnouncementImageColumn();
+  const sheets = getSheets();
+  const lastCol = colLetter(ANNOUNCEMENTS_HEADERS.length);
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `'${ANNOUNCEMENTS_SHEET_NAME}'!A:${lastCol}`
+  });
+  return res.data.values || [];
+}
+
+function generateAnnIdFromData(data) {
+  let max = 0;
+  for (let i = 1; i < data.length; i++) {
+    const id = String(data[i][ANN_COL.ID - 1] || '');
+    const m = id.match(/^A(\d+)$/);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return 'A' + (max + 1);
+}
+
+function normalizeTechId(techId) {
+  return String(techId || '').trim().toUpperCase();
+}
+
+function parseAnnouncementTechIds(raw) {
+  return String(raw || '').split(/[|,،;]+/).map((s) => normalizeTechId(s)).filter(Boolean);
+}
+
+function isAnnouncementForTech(techIds, techId) {
+  const target = normalizeTechId(techId);
+  if (!target) return false;
+  const ids = Array.isArray(techIds)
+    ? techIds.map(normalizeTechId)
+    : parseAnnouncementTechIds(techIds);
+  if (!ids.length) return false;
+  return ids.includes(target);
+}
+
+function sortAnnouncementsNewestFirst(items) {
+  items.sort((a, b) => (Number(b._row) || 0) - (Number(a._row) || 0));
+  items.forEach((item) => { delete item._row; });
+  return items;
+}
+
+function announcementRowToRecord(row) {
+  const techIds = parseAnnouncementTechIds(row[ANN_COL.TECH_IDS - 1]);
+  let imageUrl = String(row[ANN_COL.IMAGE - 1] || '').trim();
+  if (!imageUrl || imageUrl.indexOf('http') !== 0) {
+    for (let i = 0; i < row.length; i++) {
+      const cell = String(row[i] || '').trim();
+      if (cell.indexOf('http') === 0 && cell.includes('drive.google.com')) {
+        imageUrl = cell;
+        break;
+      }
+    }
+  }
+  let date = String(row[ANN_COL.DATE - 1] || '');
+  if (date.includes('drive.google.com') && date === imageUrl) date = '';
+  return {
+    id: String(row[ANN_COL.ID - 1] || ''),
+    type: String(row[ANN_COL.TYPE - 1] || ''),
+    title: String(row[ANN_COL.TITLE - 1] || ''),
+    body: String(row[ANN_COL.BODY - 1] || ''),
+    techIds,
+    techNames: String(row[ANN_COL.TECH_NAMES - 1] || ''),
+    date,
+    imageUrl
+  };
+}
+
+async function centralCreateTechAnnouncement(payload) {
+  verifyCentralAuth(payload.pin);
+  const type = String(payload.type || '').trim();
+  const title = String(payload.title || '').trim();
+  const body = String(payload.body || '').trim();
+  const photoBase64 = String(payload.photoBase64 || '').trim();
+  const photoMimeType = String(payload.photoMimeType || 'image/jpeg').trim();
+  const techIds = Array.isArray(payload.techIds)
+    ? payload.techIds.map((id) => String(id || '').trim()).filter(Boolean)
+    : [];
+
+  if (!ANN_TYPES.includes(type)) {
+    throw new Error('اختر نوعاً صحيحاً: إعلان أو تعليمات');
+  }
+  if (title.length < 2) throw new Error('العنوان مطلوب');
+  if (body.length < 2 && !photoBase64) throw new Error('اكتب المحتوى أو أرفق صورة');
+  if (!techIds.length) throw new Error('اختر فنياً واحداً على الأقل');
+
+  const data = await getTechRows();
+  const uniqueIds = [];
+  const techNames = [];
+  techIds.forEach((techId) => {
+    if (uniqueIds.includes(techId)) return;
+    const found = findTechByIdIn(data, techId);
+    if (found.rowNumber === -1) throw new Error('فني غير معروف: ' + techId);
+    uniqueIds.push(techId);
+    techNames.push(String(found.values[TECH_COL.NAME - 1] || techId));
+  });
+
+  const annData = await getAnnouncementRows();
+  const annId = generateAnnIdFromData(annData);
+  const now = formatPreviewDateTime(new Date());
+  const imageUrl = photoBase64 ? await uploadAnnouncementPhoto(photoBase64, photoMimeType, annId) : '';
+  const sheets = getSheets();
+  const lastCol = colLetter(ANNOUNCEMENTS_HEADERS.length);
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `'${ANNOUNCEMENTS_SHEET_NAME}'!A:${lastCol}`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: [[annId, type, title, body, uniqueIds.join('|'), techNames.join('، '), now, imageUrl]]
+    }
+  });
+
+  return {
+    success: true,
+    message: 'تم إرسال ' + type + ' إلى ' + uniqueIds.length + ' فني' + (imageUrl ? ' مع صورة' : ''),
+    announcement: {
+      id: annId,
+      type,
+      title,
+      body,
+      techIds: uniqueIds,
+      techNames: techNames.join('، '),
+      date: now,
+      imageUrl
+    }
+  };
+}
+
+async function centralListTechAnnouncements(payload) {
+  verifyCentralAuth(payload.pin);
+  const data = await getAnnouncementRows();
+  const items = [];
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][ANN_COL.ID - 1]) continue;
+    const ann = announcementRowToRecord(data[i]);
+    ann._row = i;
+    items.push(ann);
+  }
+  return { announcements: sortAnnouncementsNewestFirst(items), total: items.length };
+}
+
+async function techListAnnouncements(payload) {
+  const techId = normalizeTechId(payload.techId);
+  await verifyTechAuth(payload.techId, payload.techPin);
+  const data = await getAnnouncementRows();
+  const items = [];
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][ANN_COL.ID - 1]) continue;
+    const ann = announcementRowToRecord(data[i]);
+    if (isAnnouncementForTech(ann.techIds, techId)) {
+      ann._row = i;
+      items.push(ann);
+    }
+  }
+  return { announcements: sortAnnouncementsNewestFirst(items), total: items.length };
+}
+
 async function techUpdateStatus(payload) {
   const status = String(payload.status || '').trim();
   if (!TECH_STATUSES.includes(status)) {
@@ -2674,6 +2858,44 @@ async function resolveFarshootPreviewSheetTitle() {
   const byGid = tabs.find((tab) => tab.properties.sheetId === FARSHOOT_PREVIEW_SHEET_GID);
   if (byGid) return byGid.properties.title;
   throw new Error('لم يتم العثور على تبويب «' + FARSHOOT_PREVIEW_SHEET_NAME + '» في شيت فرشوط');
+}
+
+async function getOrCreateAnnouncementDriveRoot() {
+  const drive = google.drive({ version: 'v3', auth: getAuth() });
+  const q = "mimeType='application/vnd.google-apps.folder' and name='" + ANNOUNCEMENTS_DRIVE_ROOT_NAME.replace(/'/g, "\\'") + "' and trashed=false";
+  const listed = await drive.files.list({ q, fields: 'files(id)', spaces: 'drive' });
+  if (listed.data.files && listed.data.files[0]) return listed.data.files[0].id;
+  const created = await drive.files.create({
+    requestBody: { name: ANNOUNCEMENTS_DRIVE_ROOT_NAME, mimeType: 'application/vnd.google-apps.folder' },
+    fields: 'id'
+  });
+  return created.data.id;
+}
+
+async function uploadAnnouncementPhoto(base64Data, mimeType, annId) {
+  if (!base64Data) return '';
+  const bytes = Buffer.from(base64Data, 'base64');
+  if (bytes.length > MAX_PHOTO_BYTES) {
+    throw new Error('حجم الصورة كبير جداً (الحد الأقصى 5 ميغابايت)');
+  }
+  const mime = String(mimeType || 'image/jpeg').split(';')[0];
+  const ext = mime.includes('png') ? 'png' : 'jpg';
+  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
+  const fileName = 'ann_' + annId + '_' + stamp + '.' + ext;
+  const folderId = await getOrCreateAnnouncementDriveRoot();
+  const drive = google.drive({ version: 'v3', auth: getAuth() });
+  const created = await drive.files.create({
+    requestBody: { name: fileName, parents: [folderId] },
+    media: { mimeType: mime, body: require('stream').Readable.from(bytes) },
+    fields: 'id'
+  });
+  try {
+    await drive.permissions.create({
+      fileId: created.data.id,
+      requestBody: { role: 'reader', type: 'anyone' }
+    });
+  } catch (_err) {}
+  return 'https://drive.google.com/uc?export=view&id=' + created.data.id;
 }
 
 async function getOrCreatePreviewDriveFolder(serial) {
@@ -3767,6 +3989,9 @@ module.exports = {
   netTechGetNetworkInspectionHistory,
   netTechGetUnrepairedInspections,
   netTechCheckOpenNetworkInspection,
+  centralCreateTechAnnouncement,
+  centralListTechAnnouncements,
+  techListAnnouncements,
   hasCredentials,
   resolveSheetTitle
 };

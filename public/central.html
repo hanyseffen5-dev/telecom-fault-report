@@ -1012,6 +1012,69 @@
       white-space: nowrap;
     }
     .preview-link-btn:hover { background: #dbeafe; }
+    .tech-checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .tech-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fafbfc;
+      cursor: pointer;
+      font-size: 0.86rem;
+    }
+    .tech-checkbox-item:has(input:checked) {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .tech-checkbox-item input { width: auto; margin: 0; }
+    .announcement-sent-item {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+    .announcement-sent-item.type-ad { border-right: 4px solid #1565c0; }
+    .announcement-sent-item.type-guide { border-right: 4px solid #ef6c00; }
+    .announcement-sent-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .announcement-sent-title { font-weight: 800; }
+    .announcement-sent-meta { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+    .announcement-sent-body { font-size: 0.88rem; white-space: pre-wrap; line-height: 1.7; }
+    .announcement-sent-photo-wrap { margin-top: 10px; }
+    .announcement-sent-photo-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #e3f2fd; border: 1.5px solid #90caf9; border-radius: 10px;
+      padding: 6px 12px; font-family: inherit; font-size: 0.82rem;
+      font-weight: 700; color: #1565c0; cursor: pointer;
+    }
+    .announcement-sent-photo-btn:hover { background: #bbdefb; }
+    .announcement-sent-photo-icon { font-size: 1.1rem; line-height: 1; }
+    .announcement-sent-photo-expand { margin-top: 10px; }
+    .announcement-sent-photo-expand.hidden { display: none !important; }
+    .announcement-sent-photo-full {
+      display: block; max-width: 100%; max-height: 55vh;
+      border-radius: 10px; border: 1px solid var(--border); object-fit: contain;
+      background: #fff;
+    }
+    .announcement-sent-photo-close {
+      display: block; margin-top: 8px; background: none; border: none;
+      font-family: inherit; font-size: 0.78rem; font-weight: 700;
+      color: var(--muted); cursor: pointer; padding: 0;
+    }
+    .announcement-sent-photo-close:hover { color: var(--text); }
     .preview-action-badge {
       display: inline-block;
       padding: 3px 8px;
@@ -1239,6 +1302,7 @@
         <button type="button" class="tab-btn" data-tab="preview-failures">🚫 متعذر معاينات</button>
         <button type="button" class="tab-btn" data-tab="tech-reports">📢 إبلاغ الفنيين</button>
         <button type="button" class="tab-btn" data-tab="ground-repairs">🔧 الإصلاحات الأرضية</button>
+        <button type="button" class="tab-btn" data-tab="announcements">📣 إعلانات وتعليمات</button>
         <button type="button" class="tab-btn" data-tab="techs">🛠️ إدارة الفنيين</button>
       </div>
 
@@ -1675,6 +1739,62 @@
           <div id="grepr-empty" class="empty-state hidden">لا توجد سجلات إصلاحات أرضية</div>
         </div>
       </div><!-- /ground-repairs-tab -->
+
+      <!-- تبويب إعلانات وتعليمات الفنيين -->
+      <div id="announcements-tab" class="hidden">
+        <div class="card">
+          <div class="card-title">📣 إرسال إعلان أو تعليمات للفنيين</div>
+          <p style="font-size:0.82rem;color:var(--muted);margin:0 0 14px">
+            اختر نوع الرسالة والفنيين المستهدفين — ستظهر في لوحة الفني في مساحة مخصصة أعلى المهام.
+          </p>
+          <div id="ann-create-alert" class="alert"></div>
+          <div class="form-row-2">
+            <div class="form-group" style="margin-bottom:0">
+              <label for="ann-type">النوع</label>
+              <select id="ann-type">
+                <option value="إعلان">إعلان</option>
+                <option value="تعليمات">تعليمات</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="ann-title">العنوان</label>
+              <input type="text" id="ann-title" placeholder="مثال: تنبيه صيانة الشبكة" autocomplete="off" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:14px">
+            <label for="ann-body">المحتوى</label>
+            <textarea id="ann-body" placeholder="اكتب الإعلان أو التعليمات للفنيين..." style="min-height:110px"></textarea>
+          </div>
+          <div class="form-group">
+            <label>صورة مرفقة (اختياري)</label>
+            <div class="tech-attach-bar">
+              <input type="file" id="ann-photo-input" accept="image/*" class="hidden" />
+              <button type="button" class="btn btn-outline btn-sm" id="ann-photo-btn">📷 إرفاق صورة</button>
+            </div>
+            <div id="ann-photo-preview" class="tech-attach-preview hidden"></div>
+          </div>
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+              <label style="margin:0">الفنيون المستهدفون *</label>
+              <div style="display:flex;gap:8px">
+                <button type="button" class="btn btn-outline btn-sm" id="ann-select-all-btn" style="width:auto">تحديد الكل</button>
+                <button type="button" class="btn btn-outline btn-sm" id="ann-clear-all-btn" style="width:auto">إلغاء التحديد</button>
+              </div>
+            </div>
+            <div id="ann-tech-checkboxes" class="tech-checkbox-grid"></div>
+            <div id="ann-tech-empty" class="empty-state hidden" style="padding:16px">لا يوجد فنيون — أضف فنياً من تبويب إدارة الفنيين أولاً</div>
+          </div>
+          <button type="button" class="btn btn-primary" id="ann-send-btn">إرسال للفنيين المحددين</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📋 الإعلانات والتعليمات المرسلة</div>
+          <div id="ann-list-alert" class="alert"></div>
+          <div id="ann-list-loader" class="loader hidden"><div class="spinner"></div> جاري التحميل...</div>
+          <div id="ann-sent-list"></div>
+          <div id="ann-sent-empty" class="empty-state hidden">لم يُرسل أي إعلان أو تعليمات بعد</div>
+        </div>
+      </div><!-- /announcements-tab -->
     </section>
 
     <!-- تفاصيل البلاغ -->
@@ -4542,9 +4662,13 @@
       document.getElementById('preview-failures-tab').classList.toggle('hidden', name !== 'preview-failures');
       document.getElementById('tech-reports-tab').classList.toggle('hidden', name !== 'tech-reports');
       document.getElementById('ground-repairs-tab').classList.toggle('hidden', name !== 'ground-repairs');
+      document.getElementById('announcements-tab').classList.toggle('hidden', name !== 'announcements');
       document.getElementById('techs-tab').classList.toggle('hidden', name !== 'techs');
       if (name === 'techs') {
         loadTechnicians();
+      }
+      if (name === 'announcements') {
+        loadAnnouncementsTab();
       }
       if (name === 'inspections') {
         loadTechnicians(function () {
@@ -4716,6 +4840,219 @@
           showAlert('tech-list-alert', err.message || 'حدث خطأ', 'error');
         })
         .techUpdateStatus({ pin: currentPin, techId: techId, status: status });
+    }
+
+    function renderAnnTechCheckboxes(techs) {
+      var box = document.getElementById('ann-tech-checkboxes');
+      var empty = document.getElementById('ann-tech-empty');
+      var active = (techs || []).filter(function (t) { return t.status !== 'غير نشط'; });
+      if (!active.length) {
+        box.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      box.innerHTML = active.map(function (t) {
+        return '<label class="tech-checkbox-item">' +
+          '<input type="checkbox" class="ann-tech-cb" value="' + escapeHtml(t.id) + '" />' +
+          '<span>' + escapeHtml(t.name) + ' <span class="ltr">(' + escapeHtml(t.id) + ')</span></span>' +
+        '</label>';
+      }).join('');
+    }
+
+    function getSelectedAnnTechIds() {
+      return Array.prototype.slice.call(document.querySelectorAll('.ann-tech-cb:checked')).map(function (cb) {
+        return cb.value;
+      });
+    }
+
+    function announcementDriveViewUrl(url) {
+      var id = extractDriveFileId(url);
+      if (id) return 'https://drive.google.com/uc?export=view&id=' + id;
+      return normalizePhotoUrl(url);
+    }
+
+    function announcementDriveThumbUrl(url) {
+      var id = extractDriveFileId(url);
+      if (id) return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w800';
+      return normalizePhotoUrl(url);
+    }
+
+    function renderAnnouncementImageHtml(imageUrl) {
+      if (!imageUrl) return '';
+      var viewUrl = announcementDriveViewUrl(imageUrl);
+      var thumb = announcementDriveThumbUrl(imageUrl);
+      return '<div class="announcement-sent-photo-wrap">' +
+        '<button type="button" class="announcement-sent-photo-btn" aria-expanded="false">' +
+          '<span class="announcement-sent-photo-icon" aria-hidden="true">🖼️</span>' +
+          '<span>صورة مرفقة</span>' +
+        '</button>' +
+        '<div class="announcement-sent-photo-expand hidden">' +
+          '<a href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">' +
+            '<img class="announcement-sent-photo-full" referrerpolicy="no-referrer" src="' + escapeAttr(thumb) + '" ' +
+            'data-fallback="' + escapeAttr(viewUrl) + '" ' +
+            'onerror="if(this.dataset.fallback){this.onerror=null;this.src=this.dataset.fallback;}" ' +
+            'alt="صورة مرفقة" loading="lazy" /></a>' +
+          '<button type="button" class="announcement-sent-photo-close">✕ إخفاء الصورة</button>' +
+        '</div></div>';
+    }
+
+    function bindSentAnnouncementPhotoToggles() {
+      var tab = document.getElementById('announcements-tab');
+      if (!tab || tab._photoToggleBound) return;
+      tab._photoToggleBound = true;
+      tab.addEventListener('click', function (e) {
+        var btn = e.target.closest('.announcement-sent-photo-btn');
+        if (btn) {
+          var wrap = btn.closest('.announcement-sent-photo-wrap');
+          var expand = wrap && wrap.querySelector('.announcement-sent-photo-expand');
+          if (!expand) return;
+          expand.classList.toggle('hidden');
+          btn.setAttribute('aria-expanded', expand.classList.contains('hidden') ? 'false' : 'true');
+          return;
+        }
+        var closeBtn = e.target.closest('.announcement-sent-photo-close');
+        if (closeBtn) {
+          var wrap2 = closeBtn.closest('.announcement-sent-photo-wrap');
+          var expand2 = wrap2 && wrap2.querySelector('.announcement-sent-photo-expand');
+          var btn2 = wrap2 && wrap2.querySelector('.announcement-sent-photo-btn');
+          if (expand2) expand2.classList.add('hidden');
+          if (btn2) btn2.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    function sortAnnouncementsNewestFirst(items) {
+      if (!items || !items.length) return items || [];
+      return items.slice().sort(function (a, b) {
+        var na = Number(String(a.id || '').replace(/^A/, '')) || 0;
+        var nb = Number(String(b.id || '').replace(/^A/, '')) || 0;
+        return nb - na;
+      });
+    }
+
+    function renderSentAnnouncements(items) {
+      var list = document.getElementById('ann-sent-list');
+      var empty = document.getElementById('ann-sent-empty');
+      items = sortAnnouncementsNewestFirst(items);
+      if (!items || !items.length) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      list.innerHTML = items.map(function (ann) {
+        var isGuide = ann.type === 'تعليمات';
+        var bodyHtml = ann.body ? '<div class="announcement-sent-body">' + escapeHtml(ann.body) + '</div>' : '';
+        return '<div class="announcement-sent-item ' + (isGuide ? 'type-guide' : 'type-ad') + '">' +
+          '<div class="announcement-sent-head">' +
+            '<div class="announcement-sent-title">' + escapeHtml(ann.title) + '</div>' +
+            '<span class="badge" style="background:' + (isGuide ? '#fff3e0' : '#e3f2fd') + '">' + escapeHtml(ann.type) + '</span>' +
+          '</div>' +
+          bodyHtml +
+          renderAnnouncementImageHtml(ann.imageUrl) +
+          '<div class="announcement-sent-meta">👥 ' + escapeHtml(ann.techNames || '') +
+            ' · 📅 ' + escapeHtml(ann.date || '') + '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function loadAnnouncementsList() {
+      document.getElementById('ann-list-loader').classList.remove('hidden');
+      hideAlert('ann-list-alert');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          document.getElementById('ann-list-loader').classList.add('hidden');
+          renderSentAnnouncements((data && data.announcements) || []);
+        })
+        .withFailureHandler(function (err) {
+          document.getElementById('ann-list-loader').classList.add('hidden');
+          showAlert('ann-list-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralListTechAnnouncements({ pin: currentPin });
+    }
+
+    function loadAnnouncementsTab() {
+      loadTechnicians(function () {
+        renderAnnTechCheckboxes(technicians);
+        loadAnnouncementsList();
+      });
+    }
+
+    var pendingAnnPhoto = null;
+
+    function clearAnnPhoto() {
+      pendingAnnPhoto = null;
+      var input = document.getElementById('ann-photo-input');
+      if (input) input.value = '';
+      var box = document.getElementById('ann-photo-preview');
+      if (box) {
+        box.innerHTML = '';
+        box.classList.add('hidden');
+      }
+    }
+
+    function renderAnnPhotoPreview() {
+      var box = document.getElementById('ann-photo-preview');
+      if (!box) return;
+      if (!pendingAnnPhoto) {
+        box.innerHTML = '';
+        box.classList.add('hidden');
+        return;
+      }
+      box.classList.remove('hidden');
+      box.innerHTML = '<img src="' + escapeAttr(pendingAnnPhoto.previewUrl) + '" alt="معاينة الصورة" />' +
+        '<button type="button" class="tech-attach-clear" id="ann-photo-clear">✕ إزالة الصورة</button>';
+      document.getElementById('ann-photo-clear').addEventListener('click', clearAnnPhoto);
+    }
+
+    function handleAnnPhotoFile(file) {
+      if (!file) return;
+      compressTechPhoto(file, function (data) {
+        pendingAnnPhoto = data;
+        renderAnnPhotoPreview();
+        hideAlert('ann-create-alert');
+      });
+    }
+
+    function sendAnnouncement() {
+      var type = document.getElementById('ann-type').value;
+      var title = document.getElementById('ann-title').value.trim();
+      var body = document.getElementById('ann-body').value.trim();
+      var techIds = getSelectedAnnTechIds();
+      if (!title) { showAlert('ann-create-alert', 'أدخل العنوان', 'error'); return; }
+      if (!body && !pendingAnnPhoto) { showAlert('ann-create-alert', 'اكتب المحتوى أو أرفق صورة', 'error'); return; }
+      if (!techIds.length) { showAlert('ann-create-alert', 'اختر فنياً واحداً على الأقل', 'error'); return; }
+
+      var btn = document.getElementById('ann-send-btn');
+      btn.disabled = true;
+      hideAlert('ann-create-alert');
+      var payload = {
+        pin: currentPin,
+        type: type,
+        title: title,
+        body: body,
+        techIds: techIds
+      };
+      if (pendingAnnPhoto) {
+        payload.photoBase64 = pendingAnnPhoto.base64;
+        payload.photoMimeType = pendingAnnPhoto.mimeType;
+      }
+      google.script.run
+        .withSuccessHandler(function (result) {
+          btn.disabled = false;
+          showAlert('ann-create-alert', result.message || 'تم الإرسال', 'success');
+          document.getElementById('ann-title').value = '';
+          document.getElementById('ann-body').value = '';
+          clearAnnPhoto();
+          document.querySelectorAll('.ann-tech-cb').forEach(function (cb) { cb.checked = false; });
+          loadAnnouncementsList();
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          showAlert('ann-create-alert', err.message || 'حدث خطأ', 'error');
+        })
+        .centralCreateTechAnnouncement(payload);
     }
 
     function techMessageLabel(m) {
@@ -5177,6 +5514,21 @@
       b.addEventListener('click', function () { switchTab(b.dataset.tab); });
     });
     document.getElementById('tech-add-btn').addEventListener('click', addTechnician);
+    document.getElementById('ann-send-btn').addEventListener('click', sendAnnouncement);
+    bindSentAnnouncementPhotoToggles();
+    document.getElementById('ann-photo-btn').addEventListener('click', function () {
+      document.getElementById('ann-photo-input').click();
+    });
+    document.getElementById('ann-photo-input').addEventListener('change', function () {
+      handleAnnPhotoFile(this.files && this.files[0]);
+      this.value = '';
+    });
+    document.getElementById('ann-select-all-btn').addEventListener('click', function () {
+      document.querySelectorAll('.ann-tech-cb').forEach(function (cb) { cb.checked = true; });
+    });
+    document.getElementById('ann-clear-all-btn').addEventListener('click', function () {
+      document.querySelectorAll('.ann-tech-cb').forEach(function (cb) { cb.checked = false; });
+    });
     document.getElementById('assign-btn').addEventListener('click', assignTech);
     document.getElementById('inspection-assign-btn').addEventListener('click', assignInspectionTech);
     document.getElementById('assign-select').addEventListener('change', function () {

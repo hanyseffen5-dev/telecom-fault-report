@@ -96,6 +96,60 @@
       background: #ede7f6; border: 2px solid #b39ddb; border-radius: 12px;
       padding: 12px 14px; font-size: 0.88rem; font-weight: 700; color: #4527a0; margin-bottom: 12px;
     }
+    .announcements-panel { margin-bottom: 16px; }
+    .announcement-item {
+      border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 16px;
+      margin-bottom: 10px; background: #fafbff;
+    }
+    .announcement-item.type-ad {
+      border-right: 4px solid #1565c0; background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%);
+    }
+    .announcement-item.type-guide {
+      border-right: 4px solid #ef6c00; background: linear-gradient(135deg, #fff3e0 0%, #fff 100%);
+    }
+    .announcement-head {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px;
+    }
+    .announcement-title { font-weight: 800; font-size: 0.95rem; color: var(--text); }
+    .announcement-type {
+      font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+    }
+    .announcement-type.ad { background: #bbdefb; color: #0d47a1; }
+    .announcement-type.guide { background: #ffe0b2; color: #e65100; }
+    .announcement-body { font-size: 0.88rem; color: var(--text); white-space: pre-wrap; line-height: 1.7; }
+    .announcement-photo-wrap { margin-top: 10px; }
+    .announcement-photo-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #e3f2fd; border: 1.5px solid #90caf9; border-radius: 10px;
+      padding: 6px 12px; font-family: inherit; font-size: 0.82rem;
+      font-weight: 700; color: #1565c0; cursor: pointer;
+    }
+    .announcement-photo-btn:hover { background: #bbdefb; }
+    .announcement-photo-icon { font-size: 1.1rem; line-height: 1; }
+    .announcement-photo-expand { margin-top: 10px; }
+    .announcement-photo-expand.hidden { display: none !important; }
+    .announcement-photo-full {
+      display: block; max-width: 100%; max-height: 55vh;
+      border-radius: 10px; border: 1px solid var(--border); object-fit: contain;
+      background: #fff;
+    }
+    .announcement-photo-close {
+      display: block; margin-top: 8px; background: none; border: none;
+      font-family: inherit; font-size: 0.78rem; font-weight: 700;
+      color: var(--muted); cursor: pointer; padding: 0;
+    }
+    .announcement-photo-close:hover { color: var(--text); }
+    .announcement-date { font-size: 0.74rem; color: var(--muted); margin-top: 10px; }
+    .announcements-older-section { margin-top: 4px; }
+    .announcements-older-toggle {
+      width: 100%; background: #f0f4ff; border: 1.5px dashed var(--border);
+      border-radius: 10px; padding: 10px 14px; font-family: inherit;
+      font-size: 0.86rem; font-weight: 700; color: var(--primary-dark);
+      cursor: pointer; text-align: center;
+    }
+    .announcements-older-toggle:hover { background: var(--primary-light); }
+    .announcements-older-list { margin-top: 10px; }
+    .announcements-older-list.hidden { display: none !important; }
     .inspection-info.hidden, .customer-section.hidden { display: none !important; }
     .ltr { direction: ltr; unicode-bidi: embed; display: inline-block; }
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
@@ -319,13 +373,21 @@
     <section id="tasks-section" class="hidden">
       <div class="toolbar">
         <span class="who" id="who-label"></span>
-        <select id="status-select" class="btn-sm" style="border:1.5px solid var(--border);border-radius:10px">
+        <select id="status-select" class="btn-sm hidden" style="border:1.5px solid var(--border);border-radius:10px" aria-hidden="true" tabindex="-1">
           <option value="متاح">متاح</option>
           <option value="مشغول">مشغول</option>
           <option value="غير نشط">غير نشط</option>
         </select>
         <button type="button" class="btn btn-outline btn-sm" id="refresh-btn">تحديث</button>
         <button type="button" class="btn btn-outline btn-sm" id="logout-btn">خروج</button>
+      </div>
+      <div id="announcements-panel" class="announcements-panel hidden">
+        <div class="card">
+          <div class="card-title">📣 إعلانات وتعليمات من الإدارة</div>
+          <div id="announcements-loader" class="loader hidden"><div class="spinner"></div> جاري التحميل...</div>
+          <div id="announcements-list"></div>
+          <div id="announcements-empty" class="empty-state hidden">لا توجد إعلانات أو تعليمات موجهة إليك حالياً</div>
+        </div>
       </div>
       <div class="tabs">
         <button type="button" class="tab-btn active" data-tab="tasks">📋 مهامي</button>
@@ -1049,11 +1111,16 @@
       return null;
     }
 
+    function driveViewUrl(url) {
+      var id = extractDriveFileId(url);
+      if (id) return 'https://drive.google.com/uc?export=view&id=' + id;
+      return normalizePhotoUrl(url);
+    }
+
     function driveImageUrl(url) {
-      var s = normalizePhotoUrl(url);
-      var id = extractDriveFileId(s);
-      if (id) return 'https://lh3.googleusercontent.com/d/' + id + '=w400-rw';
-      return s;
+      var id = extractDriveFileId(url);
+      if (id) return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w800';
+      return normalizePhotoUrl(url);
     }
 
     function parseCustomerPhotoBody(text) {
@@ -1877,14 +1944,154 @@
     function updateOwnStatus(status) {
       google.script.run
         .withSuccessHandler(function () { session.status = status; saveSession(); })
-        .withFailureHandler(function (err) { showAlert('tasks-alert', err.message || 'حدث خطأ', 'error'); })
+        .withFailureHandler(function () { /* الحالة مخفية عن الفني */ })
         .techUpdateStatus({ techId: session.id, techPin: session.pin, status: status });
+    }
+
+    function resolveAnnouncementImageUrl(ann) {
+      var url = normalizePhotoUrl(ann && ann.imageUrl);
+      if (url && url.indexOf('http') === 0) return url;
+      return '';
+    }
+
+    function renderAnnouncementImageHtml(imageUrl) {
+      if (!imageUrl) return '';
+      var viewUrl = driveViewUrl(imageUrl);
+      var thumb = driveImageUrl(imageUrl);
+      return '<div class="announcement-photo-wrap">' +
+        '<button type="button" class="announcement-photo-btn" aria-expanded="false">' +
+          '<span class="announcement-photo-icon" aria-hidden="true">🖼️</span>' +
+          '<span>صورة مرفقة</span>' +
+        '</button>' +
+        '<div class="announcement-photo-expand hidden">' +
+          '<a href="' + escapeAttr(viewUrl) + '" target="_blank" rel="noopener noreferrer">' +
+            '<img class="announcement-photo-full" referrerpolicy="no-referrer" src="' + escapeAttr(thumb) + '" ' +
+            'data-fallback="' + escapeAttr(viewUrl) + '" ' +
+            'onerror="if(this.dataset.fallback){this.onerror=null;this.src=this.dataset.fallback;}" ' +
+            'alt="صورة مرفقة" loading="lazy" /></a>' +
+          '<button type="button" class="announcement-photo-close">✕ إخفاء الصورة</button>' +
+        '</div></div>';
+    }
+
+    function bindAnnouncementPhotoToggles() {
+      var panel = $('announcements-panel');
+      if (!panel || panel._photoToggleBound) return;
+      panel._photoToggleBound = true;
+      panel.addEventListener('click', function (e) {
+        var btn = e.target.closest('.announcement-photo-btn');
+        if (btn) {
+          var wrap = btn.closest('.announcement-photo-wrap');
+          var expand = wrap && wrap.querySelector('.announcement-photo-expand');
+          if (!expand) return;
+          expand.classList.toggle('hidden');
+          var isOpen = !expand.classList.contains('hidden');
+          btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          return;
+        }
+        var closeBtn = e.target.closest('.announcement-photo-close');
+        if (closeBtn) {
+          var wrap2 = closeBtn.closest('.announcement-photo-wrap');
+          var expand2 = wrap2 && wrap2.querySelector('.announcement-photo-expand');
+          var btn2 = wrap2 && wrap2.querySelector('.announcement-photo-btn');
+          if (expand2) expand2.classList.add('hidden');
+          if (btn2) btn2.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    function renderAnnouncementCard(ann) {
+      var isGuide = ann.type === 'تعليمات';
+      var bodyHtml = ann.body ? '<div class="announcement-body">' + escapeHtml(ann.body) + '</div>' : '';
+      var imageUrl = resolveAnnouncementImageUrl(ann);
+      return '<div class="announcement-item ' + (isGuide ? 'type-guide' : 'type-ad') + '">' +
+        '<div class="announcement-head">' +
+          '<div class="announcement-title">' + escapeHtml(ann.title) + '</div>' +
+          '<span class="announcement-type ' + (isGuide ? 'guide' : 'ad') + '">' + escapeHtml(ann.type) + '</span>' +
+        '</div>' +
+        bodyHtml +
+        renderAnnouncementImageHtml(imageUrl) +
+        '<div class="announcement-date">📅 ' + escapeHtml(ann.date || '') + '</div>' +
+      '</div>';
+    }
+
+    function bindAnnouncementsOlderToggle() {
+      var toggle = $('announcements-older-toggle');
+      var olderList = $('announcements-older-list');
+      if (!toggle || !olderList) return;
+      toggle.onclick = function () {
+        olderList.classList.toggle('hidden');
+        toggle.setAttribute('aria-expanded', olderList.classList.contains('hidden') ? 'false' : 'true');
+      };
+    }
+
+    function sortAnnouncementsNewestFirst(items) {
+      if (!items || !items.length) return items || [];
+      return items.slice().sort(function (a, b) {
+        var na = Number(String(a.id || '').replace(/^A/, '')) || 0;
+        var nb = Number(String(b.id || '').replace(/^A/, '')) || 0;
+        return nb - na;
+      });
+    }
+
+    function normalizeTechIdLocal(id) {
+      return String(id || '').trim().toUpperCase();
+    }
+
+    function isAnnouncementForMe(ann, techId) {
+      var target = normalizeTechIdLocal(techId);
+      if (!target || !ann || !ann.techIds) return false;
+      var ids = Array.isArray(ann.techIds) ? ann.techIds : String(ann.techIds).split(/[|,،;]+/);
+      return ids.some(function (id) { return normalizeTechIdLocal(id) === target; });
+    }
+
+    function renderAnnouncements(items) {
+      var panel = $('announcements-panel');
+      var list = $('announcements-list');
+      var empty = $('announcements-empty');
+      items = sortAnnouncementsNewestFirst((items || []).filter(function (ann) {
+        return isAnnouncementForMe(ann, session.id);
+      }));
+      if (!items || !items.length) {
+        panel.classList.remove('hidden');
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      panel.classList.remove('hidden');
+      empty.classList.add('hidden');
+      var latest = items[0];
+      var older = items.slice(1);
+      var html = renderAnnouncementCard(latest);
+      if (older.length) {
+        html += '<div class="announcements-older-section">' +
+          '<button type="button" class="announcements-older-toggle" id="announcements-older-toggle" aria-expanded="false">إعلانات سابقة</button>' +
+          '<div id="announcements-older-list" class="announcements-older-list hidden">' +
+            older.map(renderAnnouncementCard).join('') +
+          '</div></div>';
+      }
+      list.innerHTML = html;
+      bindAnnouncementsOlderToggle();
+    }
+
+    function loadAnnouncements() {
+      if (!session.id || !session.pin) return;
+      $('announcements-loader').classList.remove('hidden');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          $('announcements-loader').classList.add('hidden');
+          renderAnnouncements((data && data.announcements) || []);
+        })
+        .withFailureHandler(function () {
+          $('announcements-loader').classList.add('hidden');
+          $('announcements-panel').classList.add('hidden');
+        })
+        .techListAnnouncements({ techId: session.id, techPin: session.pin });
     }
 
     function enterApp() {
       $('who-label').textContent = '🛠️ ' + session.name + ' (' + session.id + ')';
-      $('status-select').value = session.status || 'متاح';
       showSection('tasks');
+      loadAnnouncements();
       loadTasks();
       startAutoRefresh();
       pollUnreadIndicators();
@@ -1915,7 +2122,10 @@
       pollUnreadIndicators();
       refreshTimer = setInterval(function () {
         pollUnreadIndicators();
-        if (!$('tasks-section').classList.contains('hidden') && activeMainTab === 'tasks') loadTasks();
+        if (!$('tasks-section').classList.contains('hidden') && activeMainTab === 'tasks') {
+          loadAnnouncements();
+          loadTasks();
+        }
         else if (!$('detail-section').classList.contains('hidden') && currentTask) openTask(currentTask.row);
       }, 25000);
     }
@@ -1929,7 +2139,7 @@
       tryLogin(techId, pin);
     });
     $('pin-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('login-btn').click(); });
-    $('refresh-btn').addEventListener('click', loadTasks);
+    $('refresh-btn').addEventListener('click', function () { loadAnnouncements(); loadTasks(); });
     $('logout-btn').addEventListener('click', function () {
       stopAutoRefresh(); resetUnreadTracking(); clearSession(); showSection('login');
       $('tech-id-input').value = ''; $('pin-input').value = '';
@@ -2016,6 +2226,7 @@
     }
 
     var saved = loadSession();
+    bindAnnouncementPhotoToggles();
     if (saved && saved.id && saved.pin) {
       session = saved;
       enterApp();
