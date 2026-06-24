@@ -96,6 +96,9 @@
       background: #ede7f6; border: 2px solid #b39ddb; border-radius: 12px;
       padding: 12px 14px; font-size: 0.88rem; font-weight: 700; color: #4527a0; margin-bottom: 12px;
     }
+    .inspection-banner.shared {
+      background: #e8f5e9; border-color: #81c784; color: #2e7d32;
+    }
     .announcements-panel { margin-bottom: 16px; }
     .announcement-item {
       border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 16px;
@@ -1700,6 +1703,14 @@
       el.scrollTop = 0;
     }
 
+    function adminMessageLabel(m) {
+      if (m.senderType === 'فني') {
+        if (session && m.senderId === session.id) return '🛠️ أنت';
+        return '🛠️ ' + (m.senderName || 'فني آخر');
+      }
+      return '🏢 الإدارة';
+    }
+
     function renderAdminThread(messages) {
       var el = $('admin-thread');
       messages = newestFirst(messages);
@@ -1708,8 +1719,8 @@
         return;
       }
       el.innerHTML = messages.map(function (m) {
-        var mine = m.senderType === 'فني';
-        var who = mine ? '🛠️ أنت' : '🏢 الإدارة';
+        var mine = m.senderType === 'فني' && session && m.senderId === session.id;
+        var who = adminMessageLabel(m);
         var extras = attachmentHtml(m.attachment);
         return '<div class="c-row ' + (mine ? 'them' : 'me') + '"><div class="c-bubble">' +
           '<span class="c-tag">' + who + '</span>' +
@@ -1818,7 +1829,9 @@
         var archiveBadge = t.archiveCount > 0
           ? '<span class="task-archive-badge">📁 ' + t.archiveCount + ' شكوى سابقة</span>' : '';
         var inspectionBadge = t.isTechInspection
-          ? '<span class="task-inspection-badge">🔍 فحص من السنترال</span>' : '';
+          ? '<span class="task-inspection-badge">🔍 فحص من السنترال' +
+            (t.isMultiTechInspection ? (t.inspectionShared ? ' · مشتركة' : ' · متعددة') : '') +
+            '</span>' : '';
         return '<div class="task-card" data-row="' + t.row + '">' +
           '<div class="task-top"><div class="task-phone">☎ <span class="ltr">' + escapeHtml(t.landline) + '</span> ' + inspectionBadge + '</div>' +
             statusBadge(t.status) + '</div>' +
@@ -1856,6 +1869,16 @@
       $('archive-btn').classList.toggle('hidden', isInspection);
       if (isInspection) {
         $('inspection-note-text').textContent = ticket.inspectionNote || 'طلب فحص من السنترال';
+        var banner = $('inspection-info').querySelector('.inspection-banner');
+        if (banner && ticket.isMultiTechInspection) {
+          banner.classList.toggle('shared', !!ticket.inspectionShared);
+          banner.textContent = ticket.inspectionShared
+            ? '🔍 مهمة فحص مشتركة — يرى جميع الفنيين المختارين المحادثة.'
+            : '🔍 مهمة فحص من السنترال — محادثتك خاصة حتى يرد أحد الفنيين الآخرين.';
+        } else if (banner) {
+          banner.classList.remove('shared');
+          banner.textContent = '🔍 مهمة فحص من السنترال — لا توجد محادثة عميل';
+        }
       }
       $('detail-content').innerHTML =
         '<div class="detail-grid">' +

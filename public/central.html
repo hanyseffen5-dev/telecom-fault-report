@@ -1428,8 +1428,18 @@
             <input type="tel" id="inspection-landline" placeholder="مثال: 09624******" dir="ltr" autocomplete="off" />
           </div>
           <div class="form-group">
-            <label for="inspection-tech">الفني المسؤول</label>
-            <select id="inspection-tech"><option value="">— اختر الفني —</option></select>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+              <label style="margin:0">الفنيون المستهدفون *</label>
+              <div style="display:flex;gap:8px">
+                <button type="button" class="btn btn-outline btn-sm" id="inspection-select-all-btn" style="width:auto">تحديد الكل</button>
+                <button type="button" class="btn btn-outline btn-sm" id="inspection-clear-all-btn" style="width:auto">إلغاء التحديد</button>
+              </div>
+            </div>
+            <p style="font-size:0.78rem;color:var(--muted);margin:6px 0 10px">
+              المهمة تظهر للفنيين المحددين فقط — وعند ردّ أي فنٍّ تُشارك المحادثة مع باقي الفريق.
+            </p>
+            <div id="inspection-tech-checkboxes" class="tech-checkbox-grid"></div>
+            <div id="inspection-tech-empty" class="empty-state hidden" style="padding:16px">لا يوجد فنيون — أضف فنياً من تبويب إدارة الفنيين أولاً</div>
           </div>
           <div class="form-group">
             <label for="inspection-note">تفاصيل طلب الفحص</label>
@@ -1440,7 +1450,7 @@
             <button type="button" class="btn btn-outline btn-sm" id="inspection-create-photo-btn">📷 إرفاق صورة</button>
             <div id="inspection-create-attach-preview" class="tech-attach-preview hidden"></div>
           </div>
-          <button type="button" class="btn btn-primary" id="inspection-create-btn">إرسال للفني</button>
+          <button type="button" class="btn btn-primary" id="inspection-create-btn">إرسال للفنيين المحددين</button>
         </div>
 
         <div class="inspection-filter-bar">
@@ -3541,14 +3551,42 @@
     }
 
     function populateInspectionTechSelect() {
-      var sel = document.getElementById('inspection-tech');
-      if (!sel) return;
-      var opts = '<option value="">— اختر الفني —</option>';
-      technicians.forEach(function (t) {
-        if (t.status === 'غير نشط') return;
-        opts += '<option value="' + t.id + '">' + escapeHtml(t.name) + ' (' + escapeHtml(t.status) + ')</option>';
+      renderInspectionTechCheckboxes(technicians);
+    }
+
+    function renderInspectionTechCheckboxes(techs) {
+      var box = document.getElementById('inspection-tech-checkboxes');
+      var empty = document.getElementById('inspection-tech-empty');
+      if (!box) return;
+      var active = (techs || []).filter(function (t) { return t.status !== 'غير نشط'; });
+      if (!active.length) {
+        box.innerHTML = '';
+        if (empty) empty.classList.remove('hidden');
+        return;
+      }
+      if (empty) empty.classList.add('hidden');
+      box.innerHTML = active.map(function (t) {
+        return '<label class="tech-checkbox-item">' +
+          '<input type="checkbox" class="inspection-tech-cb" value="' + escapeHtml(t.id) + '" />' +
+          '<span>' + escapeHtml(t.name) + ' <span class="ltr">(' + escapeHtml(t.id) + ')</span></span>' +
+        '</label>';
+      }).join('');
+    }
+
+    function getSelectedInspectionTechIds() {
+      return Array.prototype.slice.call(document.querySelectorAll('.inspection-tech-cb:checked')).map(function (cb) {
+        return cb.value;
       });
-      sel.innerHTML = opts;
+    }
+
+    function formatInspectionTechLabel(t) {
+      if (t.assignedTechNames && t.assignedTechNames.length) {
+        return t.assignedTechNames.join('، ');
+      }
+      if (t.assignedTechIds && t.assignedTechIds.length) {
+        return t.assignedTechIds.map(function (id) { return techNameById(id) || id; }).join('، ');
+      }
+      return techNameById(t.assignedTech) || t.assignedTech || '—';
     }
 
     function filterInspectionTasks(tasks) {
@@ -3556,7 +3594,7 @@
       var q = inspectionSearch.toLowerCase().replace(/\s/g, '');
       return tasks.filter(function (t) {
         var landline = String(t.landline || '').toLowerCase().replace(/\s/g, '');
-        var tech = String(techNameById(t.assignedTech) || t.assignedTech || '').toLowerCase();
+        var tech = formatInspectionTechLabel(t).toLowerCase();
         var note = String(t.note || '').toLowerCase();
         return landline.indexOf(q) !== -1 || tech.indexOf(q) !== -1 || note.indexOf(q) !== -1;
       });
@@ -3579,7 +3617,10 @@
             statusBadge(t.status) +
           '</div>' +
           '<div class="ticket-meta">' +
-            '<span>🛠️ ' + escapeHtml(techNameById(t.assignedTech) || t.assignedTech) + '</span>' +
+            '<span>🛠️ ' + escapeHtml(formatInspectionTechLabel(t)) + '</span>' +
+            (t.isMultiTechInspection
+              ? '<span class="inspection-badge">' + (t.inspectionShared ? '👥 مشتركة' : '👥 متعددة') + '</span>'
+              : '') +
             '<span>🕐 ' + escapeHtml(t.lastUpdate || t.date) + '</span>' +
           '</div>' +
           (t.note ? '<div class="inspection-note-preview">' + escapeHtml(t.note) + '</div>' : '') +
@@ -3617,10 +3658,10 @@
 
     function submitInspection() {
       var landline = document.getElementById('inspection-landline').value.trim();
-      var techId = document.getElementById('inspection-tech').value;
+      var techIds = getSelectedInspectionTechIds();
       var note = document.getElementById('inspection-note').value.trim();
       if (!landline) { showAlert('inspection-create-alert', 'أدخل رقم الخط الأرضي', 'error'); return; }
-      if (!techId) { showAlert('inspection-create-alert', 'اختر الفني', 'error'); return; }
+      if (!techIds.length) { showAlert('inspection-create-alert', 'اختر فنياً واحداً على الأقل', 'error'); return; }
       if (!note && !pendingInspectionCreatePhoto) {
         showAlert('inspection-create-alert', 'اكتب تفاصيل الفحص أو أرفق صورة', 'error');
         return;
@@ -3634,7 +3675,7 @@
       var payload = {
         pin: currentPin,
         landline: landline,
-        techId: techId,
+        techIds: techIds,
         note: note
       };
       if (pendingInspectionCreatePhoto) {
@@ -3645,11 +3686,11 @@
       google.script.run
         .withSuccessHandler(function (result) {
           btn.disabled = false;
-          btn.textContent = 'إرسال للفني';
+          btn.textContent = 'إرسال للفنيين المحددين';
           showAlert('inspection-create-alert', result.message, 'success');
           document.getElementById('inspection-landline').value = '';
           document.getElementById('inspection-note').value = '';
-          document.getElementById('inspection-tech').value = '';
+          document.querySelectorAll('.inspection-tech-cb:checked').forEach(function (cb) { cb.checked = false; });
           clearInspectionCreateAttach();
           loadInspections();
           if (result.ticket) {
@@ -3658,7 +3699,7 @@
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
-          btn.textContent = 'إرسال للفني';
+          btn.textContent = 'إرسال للفنيين المحددين';
           showAlert('inspection-create-alert', err.message || 'حدث خطأ', 'error');
         })
         .centralCreateTechInspection(payload);
@@ -3680,12 +3721,19 @@
       document.getElementById('inspection-chat-panel').classList.remove('hidden');
       document.getElementById('inspection-chat-title').textContent =
         '🔍 فحص — ☎ ' + (ticket.landline || '');
-      var techLabel = ticket.assignedTechName || techNameById(ticket.assignedTech) || ticket.assignedTech || '—';
+      var techLabel = ticket.assignedTechName || formatInspectionTechLabel(ticket);
       document.getElementById('inspection-chat-summary').innerHTML =
         '<div class="detail-grid" style="margin-top:10px">' +
-          '<div class="detail-item"><div class="lbl">الفني</div><div class="val">' + escapeHtml(techLabel) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">الفنيون</div><div class="val">' + escapeHtml(techLabel) + '</div></div>' +
           '<div class="detail-item"><div class="lbl">الحالة</div><div class="val">' + statusBadge(ticket.status) + '</div></div>' +
         '</div>' +
+        (ticket.isMultiTechInspection
+          ? '<p style="font-size:0.82rem;color:var(--muted);margin:10px 0 0">' +
+            (ticket.inspectionShared
+              ? '👥 المهمة مشتركة — يرى جميع الفنيين المختارين المحادثة.'
+              : '👥 مهمة لعدة فنيين — تظهر لباقي الفريق بعد أول رد من أحد الفنيين.') +
+            '</p>'
+          : '') +
         (ticket.inspectionNote
           ? '<p style="font-size:0.88rem;color:var(--muted);margin:10px 0 0"><strong>التفاصيل:</strong> ' + escapeHtml(ticket.inspectionNote) + '</p>'
           : '');
@@ -3698,6 +3746,10 @@
       updateInspectionInlineControls(ticket);
       updateInspectionArchiveButton(ticket);
       populateInspectionAssignSelect(ticket.assignedTech || '');
+      var assignBox = document.getElementById('inspection-assign-box');
+      if (assignBox) {
+        assignBox.style.display = ticket.isMultiTechInspection ? 'none' : '';
+      }
       markUnreadRow(ticket.row, ['inspections']);
       document.getElementById('inspection-chat-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -3793,7 +3845,7 @@
       techChatContext = 'detail';
       currentTicket = ticket;
       setDetailMode('inspection');
-      var techLabel = ticket.assignedTechName || techNameById(ticket.assignedTech) || ticket.assignedTech || '—';
+      var techLabel = ticket.assignedTechName || formatInspectionTechLabel(ticket);
       var closeBox = document.getElementById('inspection-close-box');
       closeBox.classList.toggle('hidden', !ticket.canCloseInspection);
       document.getElementById('inspection-close-note').value = '';
@@ -3801,7 +3853,7 @@
       document.getElementById('detail-content').innerHTML =
         '<div class="detail-grid">' +
           '<div class="detail-item"><div class="lbl">رقم الخط الأرضي</div><div class="val ltr">' + escapeHtml(ticket.landline) + '</div></div>' +
-          '<div class="detail-item"><div class="lbl">الفني المسؤول</div><div class="val">' + escapeHtml(techLabel) + '</div></div>' +
+          '<div class="detail-item"><div class="lbl">الفنيون</div><div class="val">' + escapeHtml(techLabel) + '</div></div>' +
           '<div class="detail-item"><div class="lbl">تاريخ الإرسال</div><div class="val ltr">' + escapeHtml(ticket.date) + '</div></div>' +
           '<div class="detail-item"><div class="lbl">آخر نشاط</div><div class="val ltr">' + escapeHtml(ticket.lastUpdate) + '</div></div>' +
           '<div class="detail-item"><div class="lbl">حالة المهمة</div><div class="val">' + statusBadge(ticket.status) + '</div></div>' +
@@ -5528,6 +5580,12 @@
     });
     document.getElementById('ann-clear-all-btn').addEventListener('click', function () {
       document.querySelectorAll('.ann-tech-cb').forEach(function (cb) { cb.checked = false; });
+    });
+    document.getElementById('inspection-select-all-btn').addEventListener('click', function () {
+      document.querySelectorAll('.inspection-tech-cb').forEach(function (cb) { cb.checked = true; });
+    });
+    document.getElementById('inspection-clear-all-btn').addEventListener('click', function () {
+      document.querySelectorAll('.inspection-tech-cb').forEach(function (cb) { cb.checked = false; });
     });
     document.getElementById('assign-btn').addEventListener('click', assignTech);
     document.getElementById('inspection-assign-btn').addEventListener('click', assignInspectionTech);

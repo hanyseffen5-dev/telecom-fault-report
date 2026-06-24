@@ -175,6 +175,8 @@ const ANN_COL = { ID: 1, TYPE: 2, TITLE: 3, BODY: 4, TECH_IDS: 5, TECH_NAMES: 6,
 const ANNOUNCEMENTS_DRIVE_ROOT_NAME = 'مرفقات_إعلانات_الفنيين';
 const ANN_TYPES = ['إعلان', 'تعليمات'];
 const CHANNEL_CLOSED = 'مغلقة';
+const INSPECTION_MULTI = 'multi';
+const INSPECTION_SHARED = 'multi:shared';
 
 const STATUS_NEW = 'جديد';
 const STATUS_IN_PROGRESS = 'قيد المعالجة';
@@ -2004,6 +2006,10 @@ function filterMessagesForTech(messages, techId) {
 }
 
 async function getMessagesForTechOnTicket(ticketRow, techId) {
+  const { row } = await getTicketRowData(ticketRow);
+  if (isTechInspectionRow(row)) {
+    return getMessagesForTechOnInspection(ticketRow, techId, row);
+  }
   return filterMessagesForTech(await getMessagesForTicket(ticketRow), techId);
 }
 
@@ -2054,9 +2060,17 @@ async function centralGetUnreadItems(payload) {
     if (isResolvedStatus(status)) continue;
 
     if (isTechInspectionRow(row)) {
-      const assignedTech = String(row[COL.ASSIGNED_TECH - 1] || '').trim();
-      const lastTech = await getLastTechMessage(rowNumber, assignedTech);
-      if (lastTech && lastTech.senderType === SENDER_TECH) {
+      const assignedIds = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
+      let lastTech = null;
+      for (const tid of assignedIds) {
+        const candidate = await getLastTechMessage(rowNumber, tid);
+        if (candidate && candidate.senderType === SENDER_TECH) {
+          if (!lastTech || String(candidate.date || '') > String(lastTech.date || '')) {
+            lastTech = candidate;
+          }
+        }
+      }
+      if (lastTech) {
         items.push(buildUnreadItem(
           'inspections',
           rowNumber,
@@ -2105,18 +2119,18 @@ async function techGetUnreadItems(payload) {
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (String(row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) continue;
-
     const rowNumber = i + 1;
+    if (!(await inspectionTaskVisibleInTechList(row, rowNumber, techId))) continue;
+
     const status = String(row[COL.STATUS - 1] || STATUS_NEW);
     if (isResolvedStatus(status)) continue;
 
-    const lastMsg = await getLastTechMessage(rowNumber, techId);
-    if (lastMsg && lastMsg.senderType === SENDER_CENTRAL) {
+    const lastAny = await getLastTechMessage(rowNumber, techId);
+    if (lastAny && lastAny.senderType === SENDER_CENTRAL) {
       items.push(buildUnreadItem(
         'tasks',
         rowNumber,
-        lastMsg.id || lastMsg.date || lastMsg.text
+        lastAny.id || lastAny.date || lastAny.text
       ));
     }
   }
@@ -2219,6 +2233,154 @@ function normalizeTechId(techId) {
 
 function parseAnnouncementTechIds(raw) {
   return String(raw || '').split(/[|,،;]+/).map((s) => normalizeTechId(s)).filter(Boolean);
+}
+
+function parseInspectionTechIds(raw) {
+  return parseAnnouncementTechIds(raw);
+}
+
+function isTechInInspection(row, techId) {
+  if (!isTechInspectionRow(row)) return false;
+  return isAnnouncementForTech(parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]), techId);
+}
+
+function isMultiTechInspection(row) {
+  return isTechInspectionRow(row) && parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]).length > 1;
+}
+
+async function getTechNameById(techId) {
+  const techRows = await getTechRows();
+  const found = findTechByIdIn(techRows, techId);
+  if (found.rowNumber === -1) return String(techId || '');
+  return String(found.row[TECH_COL.NAME - 1] || techId);
+}
+
+async function getInspectionTechNames(techIds) {
+  const names = [];
+  for (const id of (techIds || [])) {
+    names.push(await getTechNameById(id));
+  }
+  return names;
+}
+
+async function techHasInspectionInvite(ticketRow, techId) {
+  const id = normalizeTechId(techId);
+  if (!id) return false;
+  const messages = await getMessagesForTicket(ticketRow);
+  return messages.some((m) => m.senderType === SENDER_CENTRAL && normalizeTechId(m.recipientId) === id);
+}
+
+function hasInspectionTechReply(messages, assignedIds) {
+  return (messages || []).some((m) => {
+    if (m.senderType !== SENDER_TECH) return false;
+    return assignedIds.includes(normalizeTechId(m.senderId));
+  });
+}
+
+async function isInspectionShared(row, ticketRow) {
+  const channel = String(row[COL.CUST_TECH_CHANNEL - 1] || '').trim();
+  if (channel === INSPECTION_SHARED) return true;
+  const assignedIds = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
+  if (assignedIds.length <= 1) return true;
+  const messages = await getMessagesForTicket(ticketRow);
+  return hasInspectionTechReply(messages, assignedIds);
+}
+
+async function markInspectionShared(rowNumber) {
+  const title = await resolveSheetTitle();
+  const sheets = getSheets();
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `'${title}'!${colLetter(COL.CUST_TECH_CHANNEL)}${rowNumber}`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [[INSPECTION_SHARED]] }
+  });
+}
+
+async function inspectionTaskVisibleInTechList(row, rowNumber, techId) {
+  if (!isTechInspectionRow(row)) {
+    return normalizeTechId(row[COL.ASSIGNED_TECH - 1]) === normalizeTechId(techId);
+  }
+  if (!isTechInInspection(row, techId)) return false;
+  const assignedIds = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
+  if (assignedIds.length <= 1) return true;
+  if (isResolvedStatus(row[COL.STATUS - 1])) return true;
+  if (await isInspectionShared(row, rowNumber)) return true;
+  return techHasInspectionInvite(rowNumber, techId);
+}
+
+function filterMessagesForMultiInspection(messages, assignedIds) {
+  return (messages || []).filter((m) => {
+    if (m.senderType === SENDER_CENTRAL) {
+      const recip = normalizeTechId(m.recipientId);
+      return !recip || assignedIds.includes(recip);
+    }
+    if (m.senderType === SENDER_TECH) {
+      return assignedIds.includes(normalizeTechId(m.senderId));
+    }
+    return false;
+  });
+}
+
+async function getMessagesForTechOnInspection(ticketRow, techId, row) {
+  const all = await getMessagesForTicket(ticketRow);
+  const assignedIds = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
+  if (assignedIds.length <= 1) {
+    return filterMessagesForTech(all, techId);
+  }
+  if (await isInspectionShared(row, ticketRow) || isResolvedStatus(row[COL.STATUS - 1])) {
+    return filterMessagesForMultiInspection(all, assignedIds);
+  }
+  return filterMessagesForTech(all, techId);
+}
+
+async function notifyOtherInspectionTechsOnShare(rowNumber, row, respondingTechId) {
+  const assignedIds = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
+  if (assignedIds.length <= 1) return;
+  const responder = normalizeTechId(respondingTechId);
+  const landline = String(row[COL.LANDLINE - 1] || '');
+  const responderName = await getTechNameById(respondingTechId);
+  const notifyText = '🔔 ردّ الفني ' + responderName + ' على مهمة الفحص — الخط: ' + landline +
+    '. يمكنك الآن متابعة المحادثة مع باقي الفريق.';
+  for (const tid of assignedIds) {
+    if (tid === responder) continue;
+    await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, tid, notifyText, '');
+  }
+}
+
+async function maybeShareInspectionOnTechReply(rowNumber, row, techId) {
+  if (!isMultiTechInspection(row)) return;
+  if (await isInspectionShared(row, rowNumber)) return;
+  await markInspectionShared(rowNumber);
+  await notifyOtherInspectionTechsOnShare(rowNumber, row, techId);
+}
+
+async function enrichInspectionFields(ticket, row, rowNumber) {
+  if (!ticket.isTechInspection) return ticket;
+  const ids = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
+  ticket.assignedTechIds = ids;
+  ticket.assignedTechNames = await getInspectionTechNames(ids);
+  ticket.isMultiTechInspection = ids.length > 1;
+  ticket.inspectionShared = await isInspectionShared(row, rowNumber);
+  return ticket;
+}
+
+function normalizeInspectionTechIdsPayload(payload) {
+  let techIds = payload && payload.techIds;
+  if (Array.isArray(techIds)) {
+    techIds = techIds.map((id) => normalizeTechId(id)).filter(Boolean);
+  } else {
+    techIds = [];
+  }
+  if (!techIds.length) {
+    const single = normalizeTechId(payload && payload.techId);
+    if (single) techIds = [single];
+  }
+  const unique = [];
+  techIds.forEach((id) => {
+    if (!unique.includes(id)) unique.push(id);
+  });
+  return unique;
 }
 
 function isAnnouncementForTech(techIds, techId) {
@@ -2480,9 +2642,9 @@ async function techListTasks(payload) {
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (String(row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) continue;
-
     const rowNumber = i + 1;
+    if (!(await inspectionTaskVisibleInTechList(row, rowNumber, techId))) continue;
+
     const lastUpdate = row[COL.LAST_UPDATE - 1] ? formatDate(row[COL.LAST_UPDATE - 1]) : '';
     const notifications = parseNotifications(row[COL.NOTIFICATION - 1], lastUpdate);
     tasks.push({
@@ -2495,7 +2657,9 @@ async function techListTasks(payload) {
       lastUpdate,
       lastNotification: notifications.length ? notifications[notifications.length - 1].text : '',
       archiveCount: await countTicketArchive(String(row[COL.LANDLINE - 1] || ''), rowNumber),
-      isTechInspection: isTechInspectionRow(row)
+      isTechInspection: isTechInspectionRow(row),
+      isMultiTechInspection: isMultiTechInspection(row),
+      inspectionShared: await isInspectionShared(row, rowNumber)
     });
   }
 
@@ -2511,12 +2675,28 @@ async function techGetTask(payload) {
   const techId = String(payload.techId || '').trim();
   const { row } = await getTicketRowData(rowNumber);
 
-  if (String(row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) {
+  if (!isTechInInspection(row, techId) &&
+      normalizeTechId(row[COL.ASSIGNED_TECH - 1]) !== normalizeTechId(techId)) {
     throw new Error('هذه المهمة غير مسندة إليك');
+  }
+  if (isTechInspectionRow(row) && !(await inspectionTaskVisibleInTechList(row, rowNumber, techId))) {
+    throw new Error('هذه المهمة غير متاحة لك بعد');
   }
 
   const ticket = rowToCentralObject(row, rowNumber);
+  await enrichInspectionFields(ticket, row, rowNumber);
   ticket.messages = await getMessagesForTechOnTicket(rowNumber, techId);
+  if (ticket.isMultiTechInspection && ticket.assignedTechIds && ticket.assignedTechIds.length) {
+    const nameMap = {};
+    ticket.assignedTechIds.forEach((id, idx) => {
+      nameMap[normalizeTechId(id)] = ticket.assignedTechNames[idx] || id;
+    });
+    ticket.messages.forEach((m) => {
+      if (m.senderType === SENDER_TECH) {
+        m.senderName = nameMap[normalizeTechId(m.senderId)] || 'فني آخر';
+      }
+    });
+  }
   ticket.archive = await getTicketArchive(ticket.landline, ticket.mobile, rowNumber);
   return ticket;
 }
@@ -2541,8 +2721,12 @@ async function techSendMessage(payload) {
   }
 
   const { row } = await getTicketRowData(rowNumber);
-  if (String(row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) {
+  if (!isTechInInspection(row, techId) &&
+      normalizeTechId(row[COL.ASSIGNED_TECH - 1]) !== normalizeTechId(techId)) {
     throw new Error('هذه المهمة غير مسندة إليك');
+  }
+  if (isTechInspectionRow(row) && !(await inspectionTaskVisibleInTechList(row, rowNumber, techId))) {
+    throw new Error('هذه المهمة غير متاحة لك بعد');
   }
 
   let photoUrl = '';
@@ -2564,6 +2748,9 @@ async function techSendMessage(payload) {
   }
 
   await appendMessage(rowNumber, SENDER_TECH, techId, RECIPIENT_CENTRAL, message, attachment);
+  if (isTechInspectionRow(row)) {
+    await maybeShareInspectionOnTechReply(rowNumber, row, techId);
+  }
   const title = await resolveSheetTitle();
   const sheets = getSheets();
   await sheets.spreadsheets.values.update({
@@ -2597,8 +2784,8 @@ async function centralSendTechMessage(payload) {
   }
 
   const { row } = await getTicketRowData(rowNumber);
-  const techId = String(row[COL.ASSIGNED_TECH - 1] || '').trim();
-  if (!techId) {
+  const assignedRaw = String(row[COL.ASSIGNED_TECH - 1] || '').trim();
+  if (!assignedRaw) {
     throw new Error('لا يوجد فني مسند لهذه المحادثة');
   }
 
@@ -2616,7 +2803,14 @@ async function centralSendTechMessage(payload) {
     message = '📷 صورة من الإدارة';
   }
 
-  await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, techId, message, attachment);
+  const inspectionMulti = isMultiTechInspection(row);
+  const assignedIds = inspectionMulti
+    ? parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1])
+    : [normalizeTechId(assignedRaw)];
+
+  for (const targetTechId of assignedIds) {
+    await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, targetTechId, message, attachment);
+  }
   const title = await resolveSheetTitle();
   const sheets = getSheets();
   await sheets.spreadsheets.values.update({
@@ -2628,7 +2822,9 @@ async function centralSendTechMessage(payload) {
 
   return {
     success: true,
-    message: photoUrl ? 'تم إرسال الرسالة والصورة للفني' : 'تم إرسال رسالتك إلى الفني',
+    message: photoUrl
+      ? 'تم إرسال الرسالة والصورة للفني' + (assignedIds.length > 1 ? 'ين' : '')
+      : 'تم إرسال رسالتك إلى الفني' + (assignedIds.length > 1 ? 'ين' : ''),
     messages: await getMessagesForTicket(rowNumber)
   };
 }
@@ -2638,25 +2834,30 @@ async function centralCreateTechInspection(payload) {
   await ensureHeaders();
 
   const landline = validateLandline(payload.landline);
-  const techId = String(payload.techId || '').trim();
+  const techIds = normalizeInspectionTechIdsPayload(payload);
   const note = String(payload.note || '').trim();
   const photoBase64 = String(payload.photoBase64 || '').trim();
   const photoMimeType = String(payload.photoMimeType || 'image/jpeg').trim();
 
-  if (!techId) throw new Error('اختر الفني المسؤول عن الفحص');
+  if (!techIds.length) throw new Error('اختر فنياً واحداً على الأقل');
   if (!note && !photoBase64) throw new Error('اكتب تفاصيل طلب الفحص أو أرفق صورة');
   if (note.length > MAX_MESSAGE_LENGTH) throw new Error('الوصف طويل جداً');
 
   const techRows = await getTechRows();
-  const found = findTechByIdIn(techRows, techId);
-  if (found.rowNumber === -1) throw new Error('فني غير معروف');
-  const techName = String(found.row[TECH_COL.NAME - 1] || '');
+  const techNames = [];
+  for (const id of techIds) {
+    const found = findTechByIdIn(techRows, id);
+    if (found.rowNumber === -1) throw new Error('فني غير معروف: ' + id);
+    techNames.push(String(found.row[TECH_COL.NAME - 1] || id));
+  }
 
   const title = await resolveSheetTitle();
   const sheets = getSheets();
   const now = new Date();
   const nowStr = nowFormatted();
   const notifLine = appendNotificationLine('', 'السنترال: [فحص فني] ' + (note || '📷 صورة مرفقة'), now);
+  const assignedStorage = techIds.join(',');
+  const channelVal = techIds.length > 1 ? INSPECTION_MULTI : CHANNEL_CLOSED;
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
@@ -2664,7 +2865,7 @@ async function centralCreateTechInspection(payload) {
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
-      values: [[nowStr, landline, TECH_INSPECTION_REASON, '', STATUS_IN_PROGRESS, notifLine, nowStr, '', '', '', '', '', RATING_FLAG_NO, techId, CHANNEL_CLOSED, '']]
+      values: [[nowStr, landline, TECH_INSPECTION_REASON, '', STATUS_IN_PROGRESS, notifLine, nowStr, '', '', '', '', '', RATING_FLAG_NO, assignedStorage, channelVal, '']]
     }
   });
 
@@ -2684,15 +2885,18 @@ async function centralCreateTechInspection(payload) {
   if (photoUrl) {
     attachment = JSON.stringify({ photoUrl: photoUrl });
   }
-  await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, techId, msgText, attachment);
+  const initialTargets = techIds;
+  for (const targetTechId of initialTargets) {
+    await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, targetTechId, msgText, attachment);
+  }
 
-  const ticket = rowToCentralObject(data[rowNumber - 1] || (await getAllRows())[rowNumber - 1], rowNumber);
   const freshData = await getAllRows();
   const ticketFresh = rowToCentralObject(freshData[rowNumber - 1], rowNumber);
+  await enrichInspectionFields(ticketFresh, freshData[rowNumber - 1], rowNumber);
   ticketFresh.techMessages = await getMessagesForTicket(rowNumber);
-  ticketFresh.assignedTechName = techName;
+  ticketFresh.assignedTechName = techNames.join('، ');
 
-  return { success: true, message: 'تم إرسال مهمة الفحص للفني ' + techName, ticket: ticketFresh };
+  return { success: true, message: 'تم إرسال مهمة الفحص إلى: ' + techNames.join('، '), ticket: ticketFresh };
 }
 
 async function centralListTechInspections(payload) {
@@ -2714,6 +2918,7 @@ async function centralListTechInspections(payload) {
     if (resolved) closedCount++; else activeCount++;
     if (filter === 'active' && resolved) continue;
     if (filter === 'closed' && !resolved) continue;
+    const assignedIds = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
     tasks.push({
       row: rowNumber,
       date: row[COL.DATE - 1] ? formatDate(row[COL.DATE - 1]) : '',
@@ -2721,6 +2926,10 @@ async function centralListTechInspections(payload) {
       status,
       lastUpdate: row[COL.LAST_UPDATE - 1] ? formatDate(row[COL.LAST_UPDATE - 1]) : '',
       assignedTech: String(row[COL.ASSIGNED_TECH - 1] || ''),
+      assignedTechIds: assignedIds,
+      assignedTechNames: await getInspectionTechNames(assignedIds),
+      isMultiTechInspection: isMultiTechInspection(row),
+      inspectionShared: await isInspectionShared(row, rowNumber),
       note: extractTechInspectionNote(row[COL.NOTIFICATION - 1])
     });
   }
@@ -2735,12 +2944,15 @@ async function centralGetTechInspection(payload) {
   const { row } = await getTicketRowData(rowNumber);
   if (!isTechInspectionRow(row)) throw new Error('هذه ليست مهمة فحص فني');
   const ticket = rowToCentralObject(row, rowNumber);
-  const techId = String(row[COL.ASSIGNED_TECH - 1] || '').trim();
+  await enrichInspectionFields(ticket, row, rowNumber);
+  const techIds = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
   ticket.techMessages = await getMessagesForTicket(rowNumber);
-  if (techId) {
+  if (techIds.length === 1) {
     const techRows = await getTechRows();
-    const found = findTechByIdIn(techRows, techId);
+    const found = findTechByIdIn(techRows, techIds[0]);
     if (found.rowNumber !== -1) ticket.assignedTechName = String(found.row[TECH_COL.NAME - 1] || '');
+  } else if (techIds.length > 1) {
+    ticket.assignedTechName = (await getInspectionTechNames(techIds)).join('، ');
   }
   ticket.canCloseInspection = !isResolvedStatus(ticket.status);
   ticket.archive = await getInspectionPageArchive(ticket.landline, rowNumber);
@@ -2757,7 +2969,7 @@ async function centralCloseTechInspection(payload) {
   if (!isTechInspectionRow(row)) throw new Error('هذه ليست مهمة فحص فني');
   if (isResolvedStatus(row[COL.STATUS - 1])) throw new Error('المهمة مغلقة مسبقاً');
 
-  const techId = String(row[COL.ASSIGNED_TECH - 1] || '').trim();
+  const techIds = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
   const now = new Date();
   let closeMsg = 'تم إغلاق مهمة الفحص من السنترال';
   if (note) closeMsg += ' — ' + note;
@@ -2765,21 +2977,28 @@ async function centralCloseTechInspection(payload) {
   const updated = appendNotificationLine(row[COL.NOTIFICATION - 1], 'السنترال: ' + closeMsg, now);
   const title = await resolveSheetTitle();
   const sheets = getSheets();
+  const batchData = [
+    { range: `'${title}'!${colLetter(COL.STATUS)}${rowNumber}`, values: [[STATUS_RESOLVED]] },
+    { range: `'${title}'!${colLetter(COL.NOTIFICATION)}${rowNumber}`, values: [[updated]] },
+    { range: `'${title}'!${colLetter(COL.LAST_UPDATE)}${rowNumber}`, values: [[nowFormatted()]] }
+  ];
+  if (techIds.length > 1 && String(row[COL.CUST_TECH_CHANNEL - 1] || '').trim() !== INSPECTION_SHARED) {
+    batchData.push({
+      range: `'${title}'!${colLetter(COL.CUST_TECH_CHANNEL)}${rowNumber}`,
+      values: [[INSPECTION_SHARED]]
+    });
+  }
   await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
-    requestBody: {
-      valueInputOption: 'USER_ENTERED',
-      data: [
-        { range: `'${title}'!${colLetter(COL.STATUS)}${rowNumber}`, values: [[STATUS_RESOLVED]] },
-        { range: `'${title}'!${colLetter(COL.NOTIFICATION)}${rowNumber}`, values: [[updated]] },
-        { range: `'${title}'!${colLetter(COL.LAST_UPDATE)}${rowNumber}`, values: [[nowFormatted()]] }
-      ]
-    }
+    requestBody: { valueInputOption: 'USER_ENTERED', data: batchData }
   });
-  if (techId) await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, techId, closeMsg, '');
+  for (const targetTechId of techIds) {
+    await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, targetTechId, closeMsg, '');
+  }
 
   const freshData = await getAllRows();
   const ticket = rowToCentralObject(freshData[rowNumber - 1], rowNumber);
+  await enrichInspectionFields(ticket, freshData[rowNumber - 1], rowNumber);
   ticket.techMessages = await getMessagesForTicket(rowNumber);
   ticket.canCloseInspection = false;
   ticket.archive = await getInspectionPageArchive(ticket.landline, rowNumber);

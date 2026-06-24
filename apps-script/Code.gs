@@ -187,6 +187,10 @@ const ANN_TYPES = ['إعلان', 'تعليمات'];
 
 const CHANNEL_OPEN = 'مفتوحة';
 const CHANNEL_CLOSED = 'مغلقة';
+/** مهمة فحص لعدة فنيين — قبل أول رد */
+const INSPECTION_MULTI = 'multi';
+/** مهمة فحص مشتركة — بعد أول رد من أحد الفنيين */
+const INSPECTION_SHARED = 'multi:shared';
 
 const RATING_FLAG_YES = 'نعم';
 const RATING_FLAG_NO = 'لا';
@@ -2282,6 +2286,10 @@ function filterMessagesForTech_(messages, techId) {
 }
 
 function getMessagesForTechOnTicket_(ticketRow, techId) {
+  const result = getTicketRow_(ticketRow);
+  if (isTechInspectionRow_(result.row)) {
+    return getMessagesForTechOnInspection_(ticketRow, techId, result.row);
+  }
   return filterMessagesForTech_(getMessagesForTicket_(ticketRow), techId);
 }
 
@@ -2333,9 +2341,17 @@ function centralGetUnreadItems(payload) {
     if (isResolvedStatus_(status)) continue;
 
     if (isTechInspectionRow_(row)) {
-      const assignedTech = String(row[COL.ASSIGNED_TECH - 1] || '').trim();
-      const lastTech = getLastTechMessage_(rowNumber, assignedTech);
-      if (lastTech && lastTech.senderType === SENDER_TECH) {
+      const assignedIds = parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1]);
+      let lastTech = null;
+      for (let t = 0; t < assignedIds.length; t++) {
+        const candidate = getLastTechMessage_(rowNumber, assignedIds[t]);
+        if (candidate && candidate.senderType === SENDER_TECH) {
+          if (!lastTech || String(candidate.date || '') > String(lastTech.date || '')) {
+            lastTech = candidate;
+          }
+        }
+      }
+      if (lastTech) {
         items.push(buildUnreadItem_(
           'inspections',
           rowNumber,
@@ -2385,18 +2401,22 @@ function techGetUnreadItems(payload) {
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (String(row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) continue;
-
     const rowNumber = i + 1;
+    if (!inspectionTaskVisibleInTechList_(row, rowNumber, techId)) continue;
+
     const status = String(row[COL.STATUS - 1] || STATUS_NEW);
     if (isResolvedStatus_(status)) continue;
 
-    const lastMsg = getLastTechMessage_(rowNumber, techId);
-    if (lastMsg && lastMsg.senderType === SENDER_CENTRAL) {
+    const lastMsg = getLastTechMessageForTech_(rowNumber, techId);
+    if (!lastMsg && isMultiTechInspection_(row) && !isInspectionShared_(row, rowNumber)) {
+      if (!techHasInspectionInvite_(rowNumber, techId)) continue;
+    }
+    const lastAny = getLastTechMessage_(rowNumber, techId);
+    if (lastAny && lastAny.senderType === SENDER_CENTRAL) {
       items.push(buildUnreadItem_(
         'tasks',
         rowNumber,
-        lastMsg.id || lastMsg.date || lastMsg.text
+        lastAny.id || lastAny.date || lastAny.text
       ));
     }
   }
@@ -2531,6 +2551,151 @@ function parseAnnouncementTechIds_(raw) {
   return String(raw || '').split(/[|,،;]+/).map(function (s) {
     return normalizeTechId_(s);
   }).filter(Boolean);
+}
+
+function parseInspectionTechIds_(raw) {
+  return parseAnnouncementTechIds_(raw);
+}
+
+function isTechInInspection_(row, techId) {
+  if (!isTechInspectionRow_(row)) return false;
+  return isAnnouncementForTech_(parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1]), techId);
+}
+
+function isMultiTechInspection_(row) {
+  return isTechInspectionRow_(row) && parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1]).length > 1;
+}
+
+function getTechNameById_(techId) {
+  const found = findTechById_(techId);
+  if (found.row === -1) return String(techId || '');
+  return String(found.values[TECH_COL.NAME - 1] || techId);
+}
+
+function getInspectionTechNames_(techIds) {
+  return (techIds || []).map(function (id) {
+    return getTechNameById_(id);
+  });
+}
+
+function techHasInspectionInvite_(ticketRow, techId) {
+  const id = normalizeTechId_(techId);
+  if (!id) return false;
+  const messages = getMessagesForTicket_(ticketRow);
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
+    if (m.senderType === SENDER_CENTRAL && normalizeTechId_(m.recipientId) === id) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasInspectionTechReply_(messages, assignedIds) {
+  for (let i = 0; i < (messages || []).length; i++) {
+    const m = messages[i];
+    if (m.senderType !== SENDER_TECH) continue;
+    if (assignedIds.indexOf(normalizeTechId_(m.senderId)) !== -1) return true;
+  }
+  return false;
+}
+
+function isInspectionShared_(row, ticketRow) {
+  const channel = String(row[COL.CUST_TECH_CHANNEL - 1] || '').trim();
+  if (channel === INSPECTION_SHARED) return true;
+  const assignedIds = parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1]);
+  if (assignedIds.length <= 1) return true;
+  return hasInspectionTechReply_(getMessagesForTicket_(ticketRow), assignedIds);
+}
+
+function markInspectionShared_(sheet, rowNumber) {
+  sheet.getRange(rowNumber, COL.CUST_TECH_CHANNEL).setValue(INSPECTION_SHARED);
+}
+
+function inspectionTaskVisibleInTechList_(row, rowNumber, techId) {
+  if (!isTechInspectionRow_(row)) {
+    return normalizeTechId_(row[COL.ASSIGNED_TECH - 1]) === normalizeTechId_(techId);
+  }
+  if (!isTechInInspection_(row, techId)) return false;
+  const assignedIds = parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1]);
+  if (assignedIds.length <= 1) return true;
+  if (isResolvedStatus_(row[COL.STATUS - 1])) return true;
+  if (isInspectionShared_(row, rowNumber)) return true;
+  return techHasInspectionInvite_(rowNumber, techId);
+}
+
+function filterMessagesForMultiInspection_(messages, assignedIds) {
+  return (messages || []).filter(function (m) {
+    if (m.senderType === SENDER_CENTRAL) {
+      const recip = normalizeTechId_(m.recipientId);
+      return !recip || assignedIds.indexOf(recip) !== -1;
+    }
+    if (m.senderType === SENDER_TECH) {
+      return assignedIds.indexOf(normalizeTechId_(m.senderId)) !== -1;
+    }
+    return false;
+  });
+}
+
+function getMessagesForTechOnInspection_(ticketRow, techId, row) {
+  const all = getMessagesForTicket_(ticketRow);
+  const assignedIds = parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1]);
+  if (assignedIds.length <= 1) {
+    return filterMessagesForTech_(all, techId);
+  }
+  if (isInspectionShared_(row, ticketRow) || isResolvedStatus_(row[COL.STATUS - 1])) {
+    return filterMessagesForMultiInspection_(all, assignedIds);
+  }
+  return filterMessagesForTech_(all, techId);
+}
+
+function notifyOtherInspectionTechsOnShare_(sheet, rowNumber, row, respondingTechId) {
+  const assignedIds = parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1]);
+  if (assignedIds.length <= 1) return;
+  const responder = normalizeTechId_(respondingTechId);
+  const landline = String(row[COL.LANDLINE - 1] || '');
+  const responderName = getTechNameById_(respondingTechId);
+  const notifyText = '🔔 ردّ الفني ' + responderName + ' على مهمة الفحص — الخط: ' + landline +
+    '. يمكنك الآن متابعة المحادثة مع باقي الفريق.';
+  assignedIds.forEach(function (tid) {
+    if (tid === responder) return;
+    appendMessage_(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, tid, notifyText, '');
+  });
+}
+
+function maybeShareInspectionOnTechReply_(sheet, rowNumber, row, techId) {
+  if (!isMultiTechInspection_(row)) return;
+  if (isInspectionShared_(row, rowNumber)) return;
+  markInspectionShared_(sheet, rowNumber);
+  notifyOtherInspectionTechsOnShare_(sheet, rowNumber, row, techId);
+}
+
+function enrichInspectionFields_(ticket, row, rowNumber) {
+  if (!ticket.isTechInspection) return ticket;
+  const ids = parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1]);
+  ticket.assignedTechIds = ids;
+  ticket.assignedTechNames = getInspectionTechNames_(ids);
+  ticket.isMultiTechInspection = ids.length > 1;
+  ticket.inspectionShared = isInspectionShared_(row, rowNumber);
+  return ticket;
+}
+
+function normalizeInspectionTechIdsPayload_(payload) {
+  let techIds = payload && payload.techIds;
+  if (Array.isArray(techIds)) {
+    techIds = techIds.map(function (id) { return normalizeTechId_(id); }).filter(Boolean);
+  } else {
+    techIds = [];
+  }
+  if (!techIds.length) {
+    const single = normalizeTechId_(payload && payload.techId);
+    if (single) techIds = [single];
+  }
+  const unique = [];
+  techIds.forEach(function (id) {
+    if (unique.indexOf(id) === -1) unique.push(id);
+  });
+  return unique;
 }
 
 function isAnnouncementForTech_(techIds, techId) {
@@ -2813,9 +2978,9 @@ function techListTasks(payload) {
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (String(row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) continue;
-
     const rowNumber = i + 1;
+    if (!inspectionTaskVisibleInTechList_(row, rowNumber, techId)) continue;
+
     const lastUpdate = row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '';
     const notifications = parseNotifications_(row[COL.NOTIFICATION - 1], lastUpdate);
 
@@ -2829,7 +2994,9 @@ function techListTasks(payload) {
       lastUpdate: lastUpdate,
       lastNotification: notifications.length ? notifications[notifications.length - 1].text : '',
       archiveCount: countTicketArchive_(String(row[COL.LANDLINE - 1] || ''), rowNumber),
-      isTechInspection: isTechInspectionRow_(row)
+      isTechInspection: isTechInspectionRow_(row),
+      isMultiTechInspection: isMultiTechInspection_(row),
+      inspectionShared: isInspectionShared_(row, rowNumber)
     });
   }
 
@@ -2846,12 +3013,28 @@ function techGetTask(payload) {
   const techId = String(payload.techId || '').trim();
   const result = getTicketRow_(rowNumber);
 
-  if (String(result.row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) {
+  if (!isTechInInspection_(result.row, techId) &&
+      normalizeTechId_(result.row[COL.ASSIGNED_TECH - 1]) !== normalizeTechId_(techId)) {
     throw new Error('هذه المهمة غير مسندة إليك');
+  }
+  if (isTechInspectionRow_(result.row) && !inspectionTaskVisibleInTechList_(result.row, rowNumber, techId)) {
+    throw new Error('هذه المهمة غير متاحة لك بعد');
   }
 
   const ticket = rowToObject_(result.row, rowNumber);
+  enrichInspectionFields_(ticket, result.row, rowNumber);
   ticket.messages = getMessagesForTechOnTicket_(rowNumber, techId);
+  if (ticket.isMultiTechInspection && ticket.assignedTechIds && ticket.assignedTechIds.length) {
+    const nameMap = {};
+    ticket.assignedTechIds.forEach(function (id, idx) {
+      nameMap[normalizeTechId_(id)] = ticket.assignedTechNames[idx] || id;
+    });
+    ticket.messages.forEach(function (m) {
+      if (m.senderType === SENDER_TECH) {
+        m.senderName = nameMap[normalizeTechId_(m.senderId)] || 'فني آخر';
+      }
+    });
+  }
   ticket.archive = getTicketArchive_(ticket.landline, ticket.mobile, rowNumber);
   return ticket;
 }
@@ -2877,8 +3060,12 @@ function techSendMessage(payload) {
   }
 
   const result = getTicketRow_(rowNumber);
-  if (String(result.row[COL.ASSIGNED_TECH - 1] || '').trim() !== techId) {
+  if (!isTechInInspection_(result.row, techId) &&
+      normalizeTechId_(result.row[COL.ASSIGNED_TECH - 1]) !== normalizeTechId_(techId)) {
     throw new Error('هذه المهمة غير مسندة إليك');
+  }
+  if (isTechInspectionRow_(result.row) && !inspectionTaskVisibleInTechList_(result.row, rowNumber, techId)) {
+    throw new Error('هذه المهمة غير متاحة لك بعد');
   }
 
   let photoUrl = '';
@@ -2900,6 +3087,9 @@ function techSendMessage(payload) {
   }
 
   appendMessage_(rowNumber, SENDER_TECH, techId, RECIPIENT_CENTRAL, message, attachment);
+  if (isTechInspectionRow_(result.row)) {
+    maybeShareInspectionOnTechReply_(result.sheet, rowNumber, result.row, techId);
+  }
   result.sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(new Date());
 
   return {
@@ -2927,8 +3117,8 @@ function centralSendTechMessage(payload) {
   }
 
   const result = getTicketRow_(rowNumber);
-  const techId = String(result.row[COL.ASSIGNED_TECH - 1] || '').trim();
-  if (!techId) {
+  const assignedRaw = String(result.row[COL.ASSIGNED_TECH - 1] || '').trim();
+  if (!assignedRaw) {
     throw new Error('لا يوجد فني مسند لهذه المحادثة');
   }
 
@@ -2946,12 +3136,20 @@ function centralSendTechMessage(payload) {
     message = '📷 صورة من الإدارة';
   }
 
-  appendMessage_(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, techId, message, attachment);
+  const inspectionMulti = isMultiTechInspection_(result.row);
+  const assignedIds = inspectionMulti
+    ? parseInspectionTechIds_(result.row[COL.ASSIGNED_TECH - 1])
+    : [normalizeTechId_(assignedRaw)];
+
+  assignedIds.forEach(function (targetTechId) {
+    appendMessage_(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, targetTechId, message, attachment);
+  });
   result.sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(new Date());
 
   return {
     success: true,
-    message: photoUrl ? 'تم إرسال الرسالة والصورة للفني' : 'تم إرسال رسالتك إلى الفني',
+    message: photoUrl ? 'تم إرسال الرسالة والصورة للفني' + (assignedIds.length > 1 ? 'ين' : '') :
+      'تم إرسال رسالتك إلى الفني' + (assignedIds.length > 1 ? 'ين' : ''),
     messages: getMessagesForTicket_(rowNumber)
   };
 }
@@ -2962,13 +3160,13 @@ function centralCreateTechInspection(payload) {
   ensureHeaders_();
 
   const landline = validateLandline_(payload.landline);
-  const techId = String(payload.techId || '').trim();
+  const techIds = normalizeInspectionTechIdsPayload_(payload);
   const note = String(payload.note || '').trim();
   const photoBase64 = String(payload.photoBase64 || '').trim();
   const photoMimeType = String(payload.photoMimeType || 'image/jpeg').trim();
 
-  if (!techId) {
-    throw new Error('اختر الفني المسؤول عن الفحص');
+  if (!techIds.length) {
+    throw new Error('اختر فنياً واحداً على الأقل');
   }
   if (!note && !photoBase64) {
     throw new Error('اكتب تفاصيل طلب الفحص أو أرفق صورة');
@@ -2977,15 +3175,20 @@ function centralCreateTechInspection(payload) {
     throw new Error('الوصف طويل جداً');
   }
 
-  const found = findTechById_(techId);
-  if (found.row === -1) {
-    throw new Error('فني غير معروف');
-  }
-  const techName = String(found.values[TECH_COL.NAME - 1] || '');
+  const techNames = [];
+  techIds.forEach(function (id) {
+    const found = findTechById_(id);
+    if (found.row === -1) {
+      throw new Error('فني غير معروف: ' + id);
+    }
+    techNames.push(String(found.values[TECH_COL.NAME - 1] || id));
+  });
 
   const sheet = getSheet_();
   const now = new Date();
   const notifLine = appendNotificationLine_('', 'السنترال: [فحص فني] ' + (note || '📷 صورة مرفقة'), now);
+  const assignedStorage = techIds.join(',');
+  const channelVal = techIds.length > 1 ? INSPECTION_MULTI : CHANNEL_CLOSED;
 
   sheet.appendRow([
     now,
@@ -3001,8 +3204,8 @@ function centralCreateTechInspection(payload) {
     '',
     '',
     RATING_FLAG_NO,
-    techId,
-    CHANNEL_CLOSED,
+    assignedStorage,
+    channelVal,
     ''
   ]);
 
@@ -3021,25 +3224,30 @@ function centralCreateTechInspection(payload) {
   if (photoUrl) {
     attachment = JSON.stringify({ photoUrl: photoUrl });
   }
-  appendMessage_(
-    rowNumber,
-    SENDER_CENTRAL,
-    RECIPIENT_CENTRAL,
-    techId,
-    msgText,
-    attachment
-  );
+
+  const initialTargets = techIds;
+  initialTargets.forEach(function (targetTechId) {
+    appendMessage_(
+      rowNumber,
+      SENDER_CENTRAL,
+      RECIPIENT_CENTRAL,
+      targetTechId,
+      msgText,
+      attachment
+    );
+  });
 
   const ticket = rowToObject_(
     sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0],
     rowNumber
   );
+  enrichInspectionFields_(ticket, sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0], rowNumber);
   ticket.techMessages = getMessagesForTicket_(rowNumber);
-  ticket.assignedTechName = techName;
+  ticket.assignedTechName = techNames.join('، ');
 
   return {
     success: true,
-    message: 'تم إرسال مهمة الفحص للفني ' + techName,
+    message: 'تم إرسال مهمة الفحص إلى: ' + techNames.join('، '),
     ticket: ticket
   };
 }
@@ -3078,6 +3286,10 @@ function centralListTechInspections(payload) {
       status: status,
       lastUpdate: row[COL.LAST_UPDATE - 1] ? formatDate_(row[COL.LAST_UPDATE - 1]) : '',
       assignedTech: String(row[COL.ASSIGNED_TECH - 1] || ''),
+      assignedTechIds: parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1]),
+      assignedTechNames: getInspectionTechNames_(parseInspectionTechIds_(row[COL.ASSIGNED_TECH - 1])),
+      isMultiTechInspection: isMultiTechInspection_(row),
+      inspectionShared: isInspectionShared_(row, rowNumber),
       note: extractTechInspectionNote_(row[COL.NOTIFICATION - 1])
     });
   }
@@ -3106,13 +3318,16 @@ function centralGetTechInspection(payload) {
   }
 
   const ticket = rowToObject_(result.row, rowNumber);
-  const techId = String(result.row[COL.ASSIGNED_TECH - 1] || '').trim();
+  enrichInspectionFields_(ticket, result.row, rowNumber);
+  const techIds = parseInspectionTechIds_(result.row[COL.ASSIGNED_TECH - 1]);
   ticket.techMessages = getMessagesForTicket_(rowNumber);
-  if (techId) {
-    const found = findTechById_(techId);
+  if (techIds.length === 1) {
+    const found = findTechById_(techIds[0]);
     if (found.row !== -1) {
       ticket.assignedTechName = String(found.values[TECH_COL.NAME - 1] || '');
     }
+  } else if (techIds.length > 1) {
+    ticket.assignedTechName = getInspectionTechNames_(techIds).join('، ');
   }
   ticket.canCloseInspection = !isResolvedStatus_(ticket.status);
   ticket.archive = getInspectionPageArchive_(ticket.landline, rowNumber);
@@ -3137,7 +3352,7 @@ function centralCloseTechInspection(payload) {
     throw new Error('المهمة مغلقة مسبقاً');
   }
 
-  const techId = String(result.row[COL.ASSIGNED_TECH - 1] || '').trim();
+  const techIds = parseInspectionTechIds_(result.row[COL.ASSIGNED_TECH - 1]);
   const now = new Date();
   let closeMsg = 'تم إغلاق مهمة الفحص من السنترال';
   if (note) {
@@ -3146,18 +3361,20 @@ function centralCloseTechInspection(payload) {
 
   result.sheet.getRange(rowNumber, COL.STATUS).setValue(STATUS_RESOLVED);
   result.sheet.getRange(rowNumber, COL.LAST_UPDATE).setValue(now);
+  if (techIds.length > 1 && String(result.row[COL.CUST_TECH_CHANNEL - 1] || '').trim() !== INSPECTION_SHARED) {
+    markInspectionShared_(result.sheet, rowNumber);
+  }
 
   const updated = appendNotificationLine_(result.row[COL.NOTIFICATION - 1], 'السنترال: ' + closeMsg, now);
   result.sheet.getRange(rowNumber, COL.NOTIFICATION).setValue(updated);
 
-  if (techId) {
-    appendMessage_(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, techId, closeMsg, '');
-  }
+  techIds.forEach(function (targetTechId) {
+    appendMessage_(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, targetTechId, closeMsg, '');
+  });
 
-  const ticket = rowToObject_(
-    result.sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0],
-    rowNumber
-  );
+  const freshRow = result.sheet.getRange(rowNumber, 1, 1, HEADERS.length).getValues()[0];
+  const ticket = rowToObject_(freshRow, rowNumber);
+  enrichInspectionFields_(ticket, freshRow, rowNumber);
   ticket.techMessages = getMessagesForTicket_(rowNumber);
   ticket.canCloseInspection = false;
   ticket.archive = getInspectionPageArchive_(ticket.landline, rowNumber);
