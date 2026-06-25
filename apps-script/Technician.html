@@ -538,6 +538,7 @@
       <div class="card">
         <div class="toolbar">
           <button type="button" class="btn btn-outline btn-sm" id="back-btn">← رجوع للمهام</button>
+          <button type="button" class="btn btn-outline btn-sm" id="detail-refresh-btn">🔄 تحديث</button>
           <button type="button" class="archive-btn" id="archive-btn">📁 أرشيف الشكاوى السابقة</button>
         </div>
         <div id="detail-alert" class="alert"></div>
@@ -610,7 +611,6 @@
     var TECH_KEY = 'tech_session';
     var session = { id: '', pin: '', name: '', status: '' };
     var currentTask = null;
-    var refreshTimer = null;
     var unreadItemsCache = [];
     var UNREAD_STORE_PREFIX = 'tech_unread_seen_';
     var TAB_UNREAD_SCOPES = { tasks: ['tasks'] };
@@ -1275,7 +1275,21 @@
       $('main-tasks-panel').classList.toggle('hidden', tab !== 'tasks');
       $('preview-failure-panel').classList.toggle('hidden', tab !== 'preview-failure');
       $('tech-report-panel').classList.toggle('hidden', tab !== 'tech-report');
-      $('refresh-btn').classList.toggle('hidden', tab !== 'tasks');
+    }
+
+    function manualRefresh() {
+      pollUnreadIndicators();
+      if (!$('detail-section').classList.contains('hidden') && currentTask) {
+        openTask(currentTask.row);
+        return;
+      }
+      if (activeMainTab === 'tasks') {
+        loadAnnouncements();
+        loadTasks();
+      } else if (activeMainTab === 'preview-failure') {
+        var serial = $('serial-input').value.trim();
+        if (serial) searchSerialData();
+      }
     }
 
     function renderSerialResult(result) {
@@ -2116,7 +2130,6 @@
       showSection('tasks');
       loadAnnouncements();
       loadTasks();
-      startAutoRefresh();
       pollUnreadIndicators();
     }
 
@@ -2140,20 +2153,6 @@
         .techLogin({ techId: techId, pin: pin });
     }
 
-    function startAutoRefresh() {
-      stopAutoRefresh();
-      pollUnreadIndicators();
-      refreshTimer = setInterval(function () {
-        pollUnreadIndicators();
-        if (!$('tasks-section').classList.contains('hidden') && activeMainTab === 'tasks') {
-          loadAnnouncements();
-          loadTasks();
-        }
-        else if (!$('detail-section').classList.contains('hidden') && currentTask) openTask(currentTask.row);
-      }, 25000);
-    }
-    function stopAutoRefresh() { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } }
-
     $('login-btn').addEventListener('click', function () {
       var techId = $('tech-id-input').value.trim();
       var pin = $('pin-input').value.trim();
@@ -2162,9 +2161,10 @@
       tryLogin(techId, pin);
     });
     $('pin-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('login-btn').click(); });
-    $('refresh-btn').addEventListener('click', function () { loadAnnouncements(); loadTasks(); });
+    $('refresh-btn').addEventListener('click', manualRefresh);
+    $('detail-refresh-btn').addEventListener('click', manualRefresh);
     $('logout-btn').addEventListener('click', function () {
-      stopAutoRefresh(); resetUnreadTracking(); clearSession(); showSection('login');
+      resetUnreadTracking(); clearSession(); showSection('login');
       $('tech-id-input').value = ''; $('pin-input').value = '';
     });
     $('back-btn').addEventListener('click', function () { closeCameraModal(); closeArchiveModal(); showSection('tasks'); currentTask = null; loadTasks(); });

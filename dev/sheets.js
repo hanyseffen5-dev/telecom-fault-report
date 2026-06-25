@@ -164,6 +164,8 @@ const MSG_COL = { ID: 1, TICKET_ROW: 2, SENDER_TYPE: 3, SENDER_ID: 4, RECIPIENT_
 const SENDER_CENTRAL = 'إدارة';
 const SENDER_TECH = 'فني';
 const RECIPIENT_CENTRAL = 'central';
+/** مستلم رسالة سنترال موجّهة لجميع فنيي مهمة الفحص المشتركة */
+const RECIPIENT_ALL_TECHS = 'all-techs';
 
 const TECH_STATUS_AVAILABLE = 'متاح';
 const TECH_STATUS_INACTIVE = 'غير نشط';
@@ -1556,7 +1558,7 @@ async function centralGetTicket(payload) {
   }
   const ticket = rowToCentralObject(data[rowNumber - 1], rowNumber);
   ticket.archive = await getTicketArchive(ticket.landline, ticket.mobile, rowNumber);
-  ticket.techMessages = await getMessagesForTicket(rowNumber);
+  ticket.techMessages = await getMessagesForCentralOnInspection(rowNumber, data[rowNumber - 1]);
   return ticket;
 }
 
@@ -1639,7 +1641,7 @@ async function centralUpdateTicket(payload) {
   const freshData = await getAllRows();
   const ticket = rowToCentralObject(freshData[rowNumber - 1], rowNumber);
   ticket.archive = await getTicketArchive(ticket.landline, ticket.mobile, rowNumber);
-  ticket.techMessages = await getMessagesForTicket(rowNumber);
+  ticket.techMessages = await getMessagesForCentralOnInspection(rowNumber, freshData[rowNumber - 1]);
   return {
     success: true,
     message: 'تم حفظ التحديث وإرساله للعميل',
@@ -1704,7 +1706,7 @@ async function centralForwardTechPhoto(payload) {
   const freshData = await getAllRows();
   const ticket = rowToCentralObject(freshData[rowNumber - 1], rowNumber);
   ticket.archive = await getTicketArchive(ticket.landline, ticket.mobile, rowNumber);
-  ticket.techMessages = await getMessagesForTicket(rowNumber);
+  ticket.techMessages = await getMessagesForCentralOnInspection(rowNumber, freshData[rowNumber - 1]);
   return {
     success: true,
     message: 'تم إرسال الصورة للعميل',
@@ -1987,13 +1989,18 @@ async function getMessagesForTicket(ticketRow) {
   return messages;
 }
 
+function isAllTechsRecipient(recipientId) {
+  return String(recipientId || '').trim().toLowerCase() === RECIPIENT_ALL_TECHS;
+}
+
 function messageBelongsToTech(msg, techId) {
-  const id = String(techId || '').trim();
+  const id = normalizeTechId(techId);
   if (!id || !msg) return false;
-  const sender = String(msg.senderId || '').trim();
+  const sender = normalizeTechId(msg.senderId);
   const recipient = String(msg.recipientId || '').trim();
   if (msg.senderType === SENDER_TECH && sender === id) return true;
-  if (msg.senderType === SENDER_CENTRAL && recipient === id) return true;
+  if (msg.senderType === SENDER_CENTRAL && normalizeTechId(recipient) === id) return true;
+  if (msg.senderType === SENDER_CENTRAL && isAllTechsRecipient(recipient)) return true;
   return false;
 }
 
@@ -2267,7 +2274,40 @@ async function techHasInspectionInvite(ticketRow, techId) {
   const id = normalizeTechId(techId);
   if (!id) return false;
   const messages = await getMessagesForTicket(ticketRow);
-  return messages.some((m) => m.senderType === SENDER_CENTRAL && normalizeTechId(m.recipientId) === id);
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
+    if (m.senderType !== SENDER_CENTRAL) continue;
+    if (isAllTechsRecipient(m.recipientId)) return true;
+    if (normalizeTechId(m.recipientId) === id) return true;
+  }
+  return false;
+}
+
+function dedupeMultiInspectionMessages(messages) {
+  const seen = {};
+  const out = [];
+  (messages || []).forEach(function (m) {
+    if (m.senderType !== SENDER_CENTRAL) {
+      out.push(m);
+      return;
+    }
+    const key = [
+      m.senderType,
+      String(m.text || '').trim(),
+      String(m.attachment || '').trim(),
+      String(m.date || '').trim()
+    ].join('\u0001');
+    if (seen[key]) return;
+    seen[key] = true;
+    out.push(m);
+  });
+  return out;
+}
+
+async function getMessagesForCentralOnInspection(ticketRow, row) {
+  const messages = await getMessagesForTicket(ticketRow);
+  if (!isMultiTechInspection(row)) return messages;
+  return dedupeMultiInspectionMessages(messages);
 }
 
 function hasInspectionTechReply(messages, assignedIds) {
@@ -2310,16 +2350,18 @@ async function inspectionTaskVisibleInTechList(row, rowNumber, techId) {
 }
 
 function filterMessagesForMultiInspection(messages, assignedIds) {
-  return (messages || []).filter((m) => {
+  const filtered = (messages || []).filter((m) => {
     if (m.senderType === SENDER_CENTRAL) {
+      if (isAllTechsRecipient(m.recipientId)) return true;
       const recip = normalizeTechId(m.recipientId);
-      return !recip || assignedIds.includes(recip);
+      return recip && assignedIds.includes(recip);
     }
     if (m.senderType === SENDER_TECH) {
       return assignedIds.includes(normalizeTechId(m.senderId));
     }
     return false;
   });
+  return dedupeMultiInspectionMessages(filtered);
 }
 
 async function getMessagesForTechOnInspection(ticketRow, techId, row) {
@@ -2342,10 +2384,7 @@ async function notifyOtherInspectionTechsOnShare(rowNumber, row, respondingTechI
   const responderName = await getTechNameById(respondingTechId);
   const notifyText = '🔔 ردّ الفني ' + responderName + ' على مهمة الفحص — الخط: ' + landline +
     '. يمكنك الآن متابعة المحادثة مع باقي الفريق.';
-  for (const tid of assignedIds) {
-    if (tid === responder) continue;
-    await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, tid, notifyText, '');
-  }
+  await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, RECIPIENT_ALL_TECHS, notifyText, '');
 }
 
 async function maybeShareInspectionOnTechReply(rowNumber, row, techId) {
@@ -2808,9 +2847,9 @@ async function centralSendTechMessage(payload) {
     ? parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1])
     : [normalizeTechId(assignedRaw)];
 
-  for (const targetTechId of assignedIds) {
-    await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, targetTechId, message, attachment);
-  }
+  const recipientId = inspectionMulti ? RECIPIENT_ALL_TECHS : assignedIds[0];
+
+  await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, recipientId, message, attachment);
   const title = await resolveSheetTitle();
   const sheets = getSheets();
   await sheets.spreadsheets.values.update({
@@ -2823,9 +2862,9 @@ async function centralSendTechMessage(payload) {
   return {
     success: true,
     message: photoUrl
-      ? 'تم إرسال الرسالة والصورة للفني' + (assignedIds.length > 1 ? 'ين' : '')
-      : 'تم إرسال رسالتك إلى الفني' + (assignedIds.length > 1 ? 'ين' : ''),
-    messages: await getMessagesForTicket(rowNumber)
+      ? 'تم إرسال الرسالة والصورة للفني' + (inspectionMulti ? 'ين' : '')
+      : 'تم إرسال رسالتك إلى الفني' + (inspectionMulti ? 'ين' : ''),
+    messages: await getMessagesForCentralOnInspection(rowNumber, row)
   };
 }
 
@@ -2885,15 +2924,13 @@ async function centralCreateTechInspection(payload) {
   if (photoUrl) {
     attachment = JSON.stringify({ photoUrl: photoUrl });
   }
-  const initialTargets = techIds;
-  for (const targetTechId of initialTargets) {
-    await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, targetTechId, msgText, attachment);
-  }
+  const recipientId = techIds.length > 1 ? RECIPIENT_ALL_TECHS : techIds[0];
+  await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, recipientId, msgText, attachment);
 
   const freshData = await getAllRows();
   const ticketFresh = rowToCentralObject(freshData[rowNumber - 1], rowNumber);
   await enrichInspectionFields(ticketFresh, freshData[rowNumber - 1], rowNumber);
-  ticketFresh.techMessages = await getMessagesForTicket(rowNumber);
+  ticketFresh.techMessages = await getMessagesForCentralOnInspection(rowNumber, freshData[rowNumber - 1]);
   ticketFresh.assignedTechName = techNames.join('، ');
 
   return { success: true, message: 'تم إرسال مهمة الفحص إلى: ' + techNames.join('، '), ticket: ticketFresh };
@@ -2946,7 +2983,7 @@ async function centralGetTechInspection(payload) {
   const ticket = rowToCentralObject(row, rowNumber);
   await enrichInspectionFields(ticket, row, rowNumber);
   const techIds = parseInspectionTechIds(row[COL.ASSIGNED_TECH - 1]);
-  ticket.techMessages = await getMessagesForTicket(rowNumber);
+  ticket.techMessages = await getMessagesForCentralOnInspection(rowNumber, row);
   if (techIds.length === 1) {
     const techRows = await getTechRows();
     const found = findTechByIdIn(techRows, techIds[0]);
@@ -2992,14 +3029,13 @@ async function centralCloseTechInspection(payload) {
     spreadsheetId: SPREADSHEET_ID,
     requestBody: { valueInputOption: 'USER_ENTERED', data: batchData }
   });
-  for (const targetTechId of techIds) {
-    await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, targetTechId, closeMsg, '');
-  }
+  const closeRecipient = techIds.length > 1 ? RECIPIENT_ALL_TECHS : techIds[0];
+  await appendMessage(rowNumber, SENDER_CENTRAL, RECIPIENT_CENTRAL, closeRecipient, closeMsg, '');
 
   const freshData = await getAllRows();
   const ticket = rowToCentralObject(freshData[rowNumber - 1], rowNumber);
   await enrichInspectionFields(ticket, freshData[rowNumber - 1], rowNumber);
-  ticket.techMessages = await getMessagesForTicket(rowNumber);
+  ticket.techMessages = await getMessagesForCentralOnInspection(rowNumber, freshData[rowNumber - 1]);
   ticket.canCloseInspection = false;
   ticket.archive = await getInspectionPageArchive(ticket.landline, rowNumber);
   ticket.archiveCount = ticket.archive.length;

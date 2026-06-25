@@ -1813,6 +1813,7 @@
         <div class="detail-header">
           <button type="button" class="back-btn" id="back-btn">← رجوع</button>
           <button type="button" class="archive-btn" id="archive-btn">📁 محادثات سابقة للخط</button>
+          <button type="button" class="btn btn-outline btn-sm" id="detail-refresh-btn">🔄 تحديث</button>
           <div class="card-title" id="detail-title" style="margin:0">تفاصيل المحادثة</div>
         </div>
 
@@ -1900,7 +1901,6 @@
     var currentPin = '';
     var currentFilter = 'active';
     var currentTicket = null;
-    var refreshTimer = null;
     var unreadItemsCache = [];
     var UNREAD_STORE_PREFIX = 'central_unread_seen_';
     var TAB_UNREAD_SCOPES = {
@@ -4588,7 +4588,6 @@
           initRepairedFormDates();
           loadTechnicians();
           loadTickets();
-          startAutoRefresh();
           pollUnreadIndicators();
         })
         .withFailureHandler(function (err) {
@@ -4601,6 +4600,14 @@
 
     function refreshMainData() {
       pollUnreadIndicators();
+      if (document.getElementById('detail-section') && !document.getElementById('detail-section').classList.contains('hidden') && currentTicket) {
+        if (currentInspectionMode) {
+          openInspectionInline(currentTicket.row);
+        } else {
+          openTicket(currentTicket.row);
+        }
+        return;
+      }
       if (currentTab === 'inspections') {
         loadInspections();
       } else if (currentTab === 'preview-failures') {
@@ -4615,15 +4622,6 @@
           loadRatedTickets();
         }
       }
-    }
-
-    function startAutoRefresh() {
-      stopAutoRefresh();
-      refreshTimer = setInterval(refreshMainData, 45000);
-    }
-
-    function stopAutoRefresh() {
-      if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
     }
 
     function todayIsoDate() {
@@ -5110,6 +5108,9 @@
     function techMessageLabel(m) {
       if (m.senderType === 'فني') {
         return '🛠️ ' + (techNameById(m.senderId) || 'الفني');
+      }
+      if (m.recipientId && String(m.recipientId).toLowerCase() === 'all-techs') {
+        return '🏢 الإدارة → جميع الفنيين';
       }
       var to = m.recipientId ? techNameById(m.recipientId) : '';
       return to ? '🏢 الإدارة → ' + to : '🏢 الإدارة';
@@ -5625,7 +5626,6 @@
     });
 
     document.getElementById('logout-btn').addEventListener('click', function () {
-      stopAutoRefresh();
       resetUnreadTracking();
       clearPin();
       showSection('login');
@@ -5633,6 +5633,7 @@
     });
 
     document.getElementById('refresh-btn').addEventListener('click', refreshMainData);
+    document.getElementById('detail-refresh-btn').addEventListener('click', refreshMainData);
     document.getElementById('rated-refresh-btn').addEventListener('click', loadRatedTickets);
     document.getElementById('rated-search-input').addEventListener('input', function () {
       clearTimeout(window._ratedSearchTimer);
@@ -5710,7 +5711,6 @@
       initRepairedFormDates();
       loadTechnicians();
       loadTickets();
-      startAutoRefresh();
       pollUnreadIndicators();
     } else {
       showSection('login');

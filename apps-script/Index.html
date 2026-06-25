@@ -846,6 +846,7 @@
           <h2>محادثة السنترال</h2>
           <p id="chat-line-sub">—</p>
         </div>
+        <button type="button" class="btn btn-outline btn-sm" id="chat-refresh-btn" title="تحديث المحادثة">🔄 تحديث</button>
       </div>
 
       <div class="chat-wrap">
@@ -969,7 +970,6 @@
     /* ===================== الحالة ===================== */
     var session = { landline: '', mobile: '' };
     var ratings = { fault: 0, tech: 0 };
-    var pollTimer = null;
     var lastSignature = '';
     var ratingPromptShown = false;
     var lastTicket = null;
@@ -1352,7 +1352,6 @@
           lastSignature = '';
           showScreen('chat');
           renderChat(data);
-          startPolling();
         })
         .withFailureHandler(function (err) {
           btn.disabled = false;
@@ -1430,14 +1429,6 @@
           deviceFp: deviceFingerprint,
           message: message
         });
-    }
-
-    function startPolling() {
-      stopPolling();
-      pollTimer = setInterval(refreshConversation, 20000);
-    }
-    function stopPolling() {
-      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     }
 
     /* ===================== التقييم ===================== */
@@ -1545,9 +1536,10 @@
     });
 
     $('chat-back').addEventListener('click', function () {
-      stopPolling();
       showScreen('start');
     });
+
+    $('chat-refresh-btn').addEventListener('click', refreshConversation);
 
     $('send-btn').addEventListener('click', sendMessage);
 
@@ -1612,18 +1604,6 @@
           newMobile: newMobile,
           deviceFp: deviceFingerprint
         });
-    });
-
-    document.addEventListener('visibilitychange', function () {
-      if (document.hidden) {
-        stopPolling();
-      } else {
-        if ($('screen-chat').classList.contains('active')) {
-          if (lastTicket) markCustomerChatRead(getNotifications(lastTicket));
-          refreshConversation();
-          startPolling();
-        }
-      }
     });
   </script>
 </body>
