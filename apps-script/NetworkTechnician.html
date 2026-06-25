@@ -510,7 +510,7 @@
     <section id="tasks-section" class="hidden">
       <div class="toolbar">
         <span class="who" id="who-label"></span>
-        <select id="status-select" class="btn-sm" style="border:1.5px solid var(--border);border-radius:10px">
+        <select id="status-select" class="btn-sm hidden" aria-hidden="true" tabindex="-1">
           <option value="متاح">متاح</option>
           <option value="مشغول">مشغول</option>
           <option value="غير نشط">غير نشط</option>
@@ -726,10 +726,11 @@
       <video id="camera-video" autoplay playsinline muted></video>
       <div class="camera-actions">
         <button type="button" class="btn btn-outline btn-sm" id="camera-cancel-btn" style="background:#333;color:#fff;border-color:#555">إلغاء</button>
+        <button type="button" class="btn btn-outline btn-sm" id="camera-flip-btn" style="background:#333;color:#fff;border-color:#555" title="تبديل الكاميرا">🔄 خلفية</button>
         <button type="button" class="btn btn-primary btn-sm" id="camera-capture-btn">📸 التقاط</button>
       </div>
     </div>
-    <p class="camera-hint">اسمح للمتصفح باستخدام الكاميرا. على الموبايل: استخدم Chrome أو Safari.</p>
+    <p class="camera-hint">اسمح للمتصفح باستخدام الكاميرا. اضغط «🔄 خلفية» للتبديل بين الكاميرا الأمامية والخلفية.</p>
   </div>
   <canvas id="camera-canvas" class="hidden"></canvas>
 
@@ -925,6 +926,8 @@
     var networkInspectionLocation = null;
     var welderBaseName = '';
     var inspectionPanelSource = 'ground-fault';
+    var networkInspectionSubmitting = false;
+    var networkInspectionSentKeys = {};
 
     function setWelderBaseName(name) {
       welderBaseName = String(name || '').trim();
@@ -1473,6 +1476,42 @@
       input.click();
     }
 
+    function tryCameraStream(facing) {
+      var videoOpts = facing
+        ? { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        : { width: { ideal: 1280 }, height: { ideal: 720 } };
+      return navigator.mediaDevices.getUserMedia({ video: videoOpts, audio: false });
+    }
+
+    function updateCameraFlipLabel() {
+      var flipBtn = $('camera-flip-btn');
+      if (!flipBtn) return;
+      flipBtn.textContent = cameraFacing === 'environment' ? '🔄 خلفية' : '🔄 أمامية';
+      flipBtn.title = cameraFacing === 'environment' ? 'التبديل إلى الكاميرا الأمامية' : 'التبديل إلى الكاميرا الخلفية';
+    }
+
+    function attachCameraStream(stream) {
+      cameraStream = stream;
+      $('camera-video').srcObject = stream;
+      var track = stream.getVideoTracks && stream.getVideoTracks()[0];
+      if (track && track.getSettings && track.getSettings().facingMode) {
+        cameraFacing = track.getSettings().facingMode;
+      }
+      updateCameraFlipLabel();
+    }
+
+    function openCameraStreamWithFacing(facing, onFail) {
+      return tryCameraStream(facing)
+        .catch(function () { return tryCameraStream(facing === 'environment' ? 'user' : 'environment'); })
+        .catch(function () { return tryCameraStream(null); })
+        .then(function (stream) {
+          attachCameraStream(stream);
+        })
+        .catch(function () {
+          if (onFail) onFail();
+        });
+    }
+
     function startLiveCamera() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         openFilePickerFallback();
@@ -1480,29 +1519,28 @@
       }
 
       stopCameraStream();
-      cameraFacing = isMobileDevice() ? 'environment' : 'user';
+      if (!cameraFacing || (cameraFacing !== 'user' && cameraFacing !== 'environment')) {
+        cameraFacing = isMobileDevice() ? 'environment' : 'user';
+      }
       $('camera-modal').classList.remove('hidden');
       $('camera-modal').setAttribute('aria-hidden', 'false');
+      updateCameraFlipLabel();
 
-      function tryStream(facing) {
-        var videoOpts = facing
-          ? { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } }
-          : { width: { ideal: 1280 }, height: { ideal: 720 } };
-        return navigator.mediaDevices.getUserMedia({ video: videoOpts, audio: false });
-      }
+      openCameraStreamWithFacing(cameraFacing, function () {
+        closeCameraModal();
+        showAlert(activeAlertId(), 'تعذر فتح الكاميرا — اسمح بالكاميرا من المتصفح أو اختر صورة من الملفات', 'error');
+        openFilePickerFallback();
+      });
+    }
 
-      tryStream(isMobileDevice() ? cameraFacing : null)
-        .catch(function () { return tryStream('user'); })
-        .catch(function () { return tryStream(null); })
-        .then(function (stream) {
-          cameraStream = stream;
-          $('camera-video').srcObject = stream;
-        })
-        .catch(function () {
-          closeCameraModal();
-          showAlert(activeAlertId(), 'تعذر فتح الكاميرا — اسمح بالكاميرا من المتصفح أو اختر صورة من الملفات', 'error');
-          openFilePickerFallback();
-        });
+    function switchCameraFacing() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+      cameraFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+      stopCameraStream();
+      updateCameraFlipLabel();
+      openCameraStreamWithFacing(cameraFacing, function () {
+        showAlert(activeAlertId(), 'تعذر التبديل إلى هذه الكاميرا — جرّب الكاميرا الأخرى', 'error');
+      });
     }
 
     function geolocationErrorMessage(err) {
@@ -1999,6 +2037,80 @@
         camBtn.textContent = '📷 التقاط صورة مع الموقع';
       }
       renderNetworkInspectionPreview();
+      updateNetworkInspectionSubmitUi();
+    }
+
+    function getNetworkInspectionSubmitKey(rec) {
+      rec = rec || selectedGroundFault || {};
+      return String(rec.landline || '').trim() + '|' +
+        String(rec.dateTime || '').trim() + '|' +
+        String(rec.row || 0);
+    }
+
+    function loadNetworkInspectionSentKeys() {
+      try {
+        var raw = sessionStorage.getItem('netTechSentKeys');
+        if (raw) networkInspectionSentKeys = JSON.parse(raw) || {};
+      } catch (_e) {
+        networkInspectionSentKeys = {};
+      }
+    }
+
+    function saveNetworkInspectionSentKeys() {
+      try {
+        sessionStorage.setItem('netTechSentKeys', JSON.stringify(networkInspectionSentKeys));
+      } catch (_e) {}
+    }
+
+    function shouldPersistNetworkInspectionBlock() {
+      return inspectionPanelSource !== 'unrepaired-inspection';
+    }
+
+    function isNetworkInspectionBlocked(rec) {
+      var state = networkInspectionSentKeys[getNetworkInspectionSubmitKey(rec)];
+      if (state === 'pending') return true;
+      if (!shouldPersistNetworkInspectionBlock()) return false;
+      return state === true;
+    }
+
+    function markNetworkInspectionPending(rec) {
+      networkInspectionSentKeys[getNetworkInspectionSubmitKey(rec)] = 'pending';
+      saveNetworkInspectionSentKeys();
+    }
+
+    function markNetworkInspectionSent(rec) {
+      if (!shouldPersistNetworkInspectionBlock()) {
+        clearNetworkInspectionPending(rec);
+        return;
+      }
+      networkInspectionSentKeys[getNetworkInspectionSubmitKey(rec)] = true;
+      saveNetworkInspectionSentKeys();
+    }
+
+    function clearNetworkInspectionPending(rec) {
+      var key = getNetworkInspectionSubmitKey(rec);
+      if (networkInspectionSentKeys[key] === 'pending') {
+        delete networkInspectionSentKeys[key];
+        saveNetworkInspectionSentKeys();
+      }
+    }
+
+    function updateNetworkInspectionSubmitUi() {
+      var btn = $('ni-submit-btn');
+      if (!btn) return;
+      if (networkInspectionSubmitting) {
+        btn.disabled = true;
+        btn.textContent = 'جاري الإرسال...';
+        return;
+      }
+      if (selectedGroundFault && isNetworkInspectionBlocked(selectedGroundFault)) {
+        var state = networkInspectionSentKeys[getNetworkInspectionSubmitKey(selectedGroundFault)];
+        btn.disabled = true;
+        btn.textContent = state === 'pending' ? 'جاري الإرسال...' : '✅ تم الإرسال';
+        return;
+      }
+      btn.disabled = false;
+      btn.textContent = 'إرسال';
     }
 
     function clearNetworkInspectionAttachments() {
@@ -2084,6 +2196,15 @@
     }
 
     function submitNetworkInspection() {
+      if (networkInspectionSubmitting) return;
+
+      var rec = selectedGroundFault || {};
+      if (isNetworkInspectionBlocked(rec)) {
+        showAlert('ni-alert', 'تم إرسال فحص هذا العطل مسبقاً — لا يمكن الإرسال مرتين لنفس الرقم', 'error');
+        updateNetworkInspectionSubmitUi();
+        return;
+      }
+
       var errors = collectNetworkInspectionErrors();
       if (errors.length) {
         showFormErrorModal(errors);
@@ -2091,12 +2212,12 @@
       }
 
       var btn = $('ni-submit-btn');
-      var sendLabel = btn.textContent;
+      networkInspectionSubmitting = true;
+      markNetworkInspectionPending(rec);
       btn.disabled = true;
       btn.textContent = 'جاري الإرسال...';
       hideAlert('ni-alert');
 
-      var rec = selectedGroundFault || {};
       var payload = {
         techId: session.id,
         pin: session.pin,
@@ -2123,8 +2244,9 @@
 
       google.script.run
         .withSuccessHandler(function (result) {
-          btn.disabled = false;
-          btn.textContent = sendLabel;
+          networkInspectionSubmitting = false;
+          markNetworkInspectionSent(rec);
+          updateNetworkInspectionSubmitUi();
           showAlert('ni-alert', result.message, 'success');
           resetNetworkInspectionForm();
           if (inspectionPanelSource === 'unrepaired-inspection') {
@@ -2132,10 +2254,13 @@
           }
         })
         .withFailureHandler(function (err) {
-          btn.disabled = false;
-          btn.textContent = sendLabel;
+          networkInspectionSubmitting = false;
+          clearNetworkInspectionPending(rec);
+          updateNetworkInspectionSubmitUi();
           var msg = err && err.message ? err.message : '';
           if (isOpenInspectionErrorMessage(msg)) {
+            markNetworkInspectionSent(rec);
+            updateNetworkInspectionSubmitUi();
             showOpenInspectionModal(rec.landline || '', '');
             return;
           }
@@ -2576,6 +2701,7 @@
     $('send-btn').addEventListener('click', sendMessage);
     $('camera-btn').addEventListener('click', function () { cameraTarget = 'detail'; startLiveCamera(); });
     $('camera-cancel-btn').addEventListener('click', closeCameraModal);
+    $('camera-flip-btn').addEventListener('click', switchCameraFacing);
     $('camera-capture-btn').addEventListener('click', captureFromCamera);
     $('photo-input').addEventListener('change', function () {
       var file = $('photo-input').files && $('photo-input').files[0];
@@ -2666,6 +2792,7 @@
     }
 
     var saved = loadSession();
+    loadNetworkInspectionSentKeys();
     if (saved && saved.id && saved.pin) {
       session = saved;
       enterApp();
